@@ -15,3 +15,5 @@ topics.txt
 melodic-TourGuide.code-workspace
 notebook_plots.ipynb
 **/desktop.ini
+ignored_tmp
+c_cpp_properties.json
