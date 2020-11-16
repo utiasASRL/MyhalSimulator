@@ -1,0 +1,14 @@
+/logs
+/build
+/data
+/devel
+*.vscode
+/.catkin_tools
+topics.txt
+*.pdf
+.catkin_workspace
+*.swp
+*.pyc
+/.ipynb_checkpoints
+**/params/local*
+
