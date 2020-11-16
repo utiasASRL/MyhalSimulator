@@ -11,4 +11,7 @@ topics.txt
 *.pyc
 /.ipynb_checkpoints
 **/params/local*
-
+*.gv
+melodic-TourGuide.code-workspace
+notebook_plots.ipynb
+**/desktop.ini
