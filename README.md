@@ -27,7 +27,7 @@
 
 ROS-melodic and Gazebo9 are used in this simulation, along with various other ROS packages and external dependencies.
 A GPU is required to run the Velodyne VLP-32 LiDAR simulation.
-See [this Dockerfile](https://https://github.com/utiasASRL/MyhalSimulator-docker) for a list of the required programs and environment variables to run the simulation.
+See [this Dockerfile](https://github.com/utiasASRL/MyhalSimulator-docker) for a list of the required programs and environment variables to run the simulation.
 
 ### Installation and Compilation
 
