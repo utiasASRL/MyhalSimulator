@@ -2,6 +2,7 @@
 
 echo $USER
 echo $USER
+echo $USER
 
 source /opt/ros/melodic/setup.bash
 source ~/.bashrc
