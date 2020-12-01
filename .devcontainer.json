@@ -1,0 +1,13 @@
+{
+    "image": "docker_ros_melodic_hugues",
+
+    "workspaceMount": "source=/home/hugues/Experiments/2-MyhalSim/MyhalSimulator,target=/home/hugues/catkin_ws,type=bind,consistency=cached",
+    
+    "workspaceFolder": "/home/hugues/catkin_ws",
+
+    "mounts": [
+      "source=/home/hugues/Experiments/2-MyhalSim/Simulation,target=/home/hugues/Myhal_Simulation,type=bind,consistency=cached"
+          ]
+
+
+}
