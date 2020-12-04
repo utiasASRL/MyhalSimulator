@@ -6,7 +6,7 @@
     "workspaceMount": "source=${localWorkspaceFolder},target=/home/${localEnv:USER}/catkin_ws,type=bind,consistency=cached",
     
     "mounts": [
-      "source=${localWorkspaceFolder}/../Simulation,target=/home/${localEnv:USER}/Myhal_Simulation,type=bind,consistency=cached"
+      "source=${localWorkspaceFolder}/../Simulation_Data,target=/home/${localEnv:USER}/Myhal_Simulation,type=bind,consistency=cached"
           ],
 
     "extensions": ["ms-vscode.cpptools", "twxs.cmake","ms-vscode.cmake-tools", "ms-python.python", "ms-iot.vscode-ros", "redhat.vscode-xml", "dotjoshjohnson.xml"],
