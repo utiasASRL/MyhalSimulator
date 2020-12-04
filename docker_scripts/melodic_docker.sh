@@ -60,11 +60,14 @@ else
 fi
 
 # Running on gpu (Uncomment to enable gpu)
-# docker_args="${docker_args} --gpus all "
+docker_args="${docker_args} --gpus all "
+
+# Create folder for simulation if not already there
+mkdir -p "$PWD/../../Simulation_Data/simulated_runs"
 
 # Volumes (modify with your own path here)
-volumes="-v /home/$USER/MyhalSimulator:/home/$USER/catkin_ws \
--v /home/$USER/Myhal_Simulation/simulated_runs:/home/$USER/Myhal_Simulation "
+volumes="-v $PWD/..:/home/$USER/catkin_ws \
+-v $PWD/../../Simulation_Data:/home/$USER/Myhal_Simulation "
 
 # Additional arguments to be able to open GUI
 XSOCK=/tmp/.X11-unix
