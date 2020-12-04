@@ -55,17 +55,18 @@ fi
 # Running detached
 if [ "$detach" = true ] ; then
     docker_args="-d ${docker_args}"
+fi
 
 # Create folder for simulation if not already there
 mkdir -p "$PWD/../../Simulation_Data/simulated_runs"
 
 # Volumes (modify with your own path here)
 volumes_melodic="-v $PWD/..:/home/$USER/catkin_ws \
--v $PWD/../../Simulation_Data:/home/$USER/Myhal_Simulation"
+-v $PWD/../../Simulation_Data:/home/$USER/Myhal_Simulation "
 
 volumes_noetic="-v $PWD/../../MyhalSimulator-DeepPreds:/home/$USER/catkin_ws \
 -v $PWD/../../Simulation_Data:/home/$USER/Myhal_Simulation \
--v $PWD/../../KPConv_Data:/home/$USER/Data/MyhalSim"
+-v $PWD/../../KPConv_Data:/home/$USER/Data/MyhalSim "
 
 # Additional arguments to be able to open GUI
 XSOCK=/tmp/.X11-unix

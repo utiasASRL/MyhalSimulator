@@ -55,6 +55,7 @@ fi
 # Running detached
 if [ "$detach" = true ] ; then
     docker_args="-d ${docker_args}"
+fi
 
 # Create folder for simulation if not already there
 mkdir -p "$PWD/../../Simulation_Data/simulated_runs"
