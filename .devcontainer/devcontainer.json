@@ -9,6 +9,6 @@
       "source=${localWorkspaceFolder}/../Simulation_Data,target=/home/${localEnv:USER}/Myhal_Simulation,type=bind,consistency=cached"
           ],
 
-    "extensions": ["ms-vscode.cpptools", "twxs.cmake","ms-vscode.cmake-tools", "ms-python.python", "ms-iot.vscode-ros", "redhat.vscode-xml", "dotjoshjohnson.xml", "dlech.chmod"],
+    "extensions": ["ms-vscode.cpptools", "twxs.cmake","ms-vscode.cmake-tools", "ms-python.python", "ms-iot.vscode-ros", "redhat.vscode-xml", "dotjoshjohnson.xml", "dlech.chmod", "donjayamanne.githistory"],
 
 }
