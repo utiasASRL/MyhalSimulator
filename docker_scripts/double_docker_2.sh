@@ -1,5 +1,9 @@
 #!/bin/bash
 
+########
+# Init #
+########
+
 echo ""
 echo "Running ros-melodic and ros-noetic docker. Remember you can set ROSPORT to a custom value"
 echo ""
@@ -37,34 +41,53 @@ gazport=$(($rosport+1))
 export ROSPORT=$(($ROSPORT+2))
 echo "export ROSPORT=$ROSPORT" >> ~/.bashrc
 
+###########################
+# Start docker containers #
+###########################
+
+# Docker run arguments (depending if we run detached or not)
+if [ "$nohup" = true ] ; then
+    docker_args="-i --rm --shm-size=64g --gpus all " 
+else
+    docker_args="-it --rm --shm-size=64g --gpus all "
+fi
+
+# Running detached
+if [ "$detach" = true ] ; then
+    docker_args="-d ${docker_args}"
+
+# Create folder for simulation if not already there
+mkdir -p "$PWD/../../Simulation_Data/simulated_runs"
+
+# Volumes (modify with your own path here)
+volumes="-v $PWD/..:/home/$USER/catkin_ws \
+-v $PWD/../../Simulation_Data:/home/$USER/Myhal_Simulation \
+-v $PWD/../../KPConv_Data:/home/$USER/Data/MyhalSim"
+
+# Additional arguments to be able to open GUI
+XSOCK=/tmp/.X11-unix
+XAUTH=/home/$USER/.Xauthority
+other_args="-v $XSOCK:$XSOCK \
+    -v $XAUTH:$XAUTH \
+    --net=host \
+    --privileged \
+	-e XAUTHORITY=${XAUTH} \
+    -e DISPLAY=$DISPLAY \
+    -e ROS_MASTER_URI=http://$HOSTNAME:$rosport \
+    -e GAZEBO_MASTER_URI=http://$HOSTNAME:$gazport \
+    -e ROSPORT=$rosport "
+
+
+# Execute the command in docker (Example of command: ./master.sh -ve -m 2 -p Sc1_params -t A_tour)
 docker run -d --gpus all -i --rm --shm-size=64g \
--v /raid/Myhal_Simulation/Simulator/JackalTourGuide:/home/$USER/catkin_ws \
--v /raid/Myhal_Simulation:/home/$USER/Myhal_Simulation \
--v /tmp/.X11-unix:/tmp/.X11-unix \
--v /home/$USER/.Xauthority:/home/$USER/.Xauthority \
---net=host \
--e XAUTHORITY=/home/$USER/.Xauthority \
--e DISPLAY=$DISPLAY \
--e ROS_MASTER_URI=http://obelisk:$rosport \
--e GAZEBO_MASTER_URI=http://obelisk:$gazport \
--e ROSPORT=$rosport \
+$volumes_noetic \
+$other_args \
 --name "$USER-melodic-$ROSPORT" \
 docker_ros_melodic_$USER \
 $command &&
-docker run --gpus all -i --rm --shm-size=64g \
--v /raid/Myhal_Simulation:/home/$USER/Myhal_Simulation \
--v /raid/hth/Data/MyhalSim:/home/$USER/Data/MyhalSim \
--v /raid/Myhal_Simulation/Simulator/JackalNoetic:/home/$USER/catkin_ws \
--v /tmp/.X11-unix:/tmp/.X11-unix \
--v /home/$USER/.Xauthority:/home/$USER/.Xauthority \
---net=host \
--e XAUTHORITY=/home/$USER/.Xauthority \
--e DISPLAY=$DISPLAY \
--e ROS_MASTER_URI=http://obelisk:$rosport \
--e GAZEBO_MASTER_URI=http://obelisk:$gazport \
--e ROSPORT=$rosport \
+docker run $docker_args \
+$volumes_melodic \
+$other_args \
 --name "$USER-noetic-$ROSPORT" \
 docker_ros_noetic_$USER \
 "./classifier.sh"
-
-
