@@ -1,0 +1,29 @@
+{
+
+    "cmake.configureOnOpen": true,
+    "python.autoComplete.extraPaths": [
+        "/opt/ros/melodic/lib/python2.7/dist-packages"
+    ],
+    "python.pythonPath": "/usr/bin/python",
+    "python.linting.pylintEnabled": true,
+    "python.linting.enabled": true,
+
+    "files.watcherExclude": {
+        "**/.git/objects/**": true,
+        "**/.git/subtree-cache/**": true,
+        "**/node_modules/*/**": true,
+        ".catkin_tools/**": true,
+        "build/**": true,
+        "imgs/**": true,
+        "scripts/**": true,
+        "logs/**": true
+    
+    },
+    "files.associations": {
+        "*.ipp": "cpp",
+        "map": "cpp",
+        "hash_map": "cpp"
+    },
+    "jupyter.jupyterServerType": "local"
+
+}

@@ -2,7 +2,6 @@
 /build
 /data
 /devel
-*.vscode
 /.catkin_tools
 topics.txt
 *.pdf
