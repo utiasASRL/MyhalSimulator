@@ -60,7 +60,10 @@ if [ "$detach" = true ] ; then
 mkdir -p "$PWD/../../Simulation_Data/simulated_runs"
 
 # Volumes (modify with your own path here)
-volumes="-v $PWD/..:/home/$USER/catkin_ws \
+volumes_melodic="-v $PWD/..:/home/$USER/catkin_ws \
+-v $PWD/../../Simulation_Data:/home/$USER/Myhal_Simulation"
+
+volumes_noetic="-v $PWD/../../MyhalSimulator-DeepPreds:/home/$USER/catkin_ws \
 -v $PWD/../../Simulation_Data:/home/$USER/Myhal_Simulation \
 -v $PWD/../../KPConv_Data:/home/$USER/Data/MyhalSim"
 

@@ -60,7 +60,10 @@ if [ "$detach" = true ] ; then
 mkdir -p "$PWD/../../Simulation_Data/simulated_runs"
 
 # Volumes (modify with your own path here)
-volumes="-v $PWD/..:/home/$USER/catkin_ws \
+volumes_melodic="-v $PWD/..:/home/$USER/catkin_ws \
+-v $PWD/../../Simulation_Data:/home/$USER/Myhal_Simulation"
+
+volumes_noetic="-v $PWD/../../MyhalSimulator-DeepPreds:/home/$USER/catkin_ws \
 -v $PWD/../../Simulation_Data:/home/$USER/Myhal_Simulation \
 -v $PWD/../../KPConv_Data:/home/$USER/Data/MyhalSim"
 
@@ -80,13 +83,13 @@ other_args="-v $XSOCK:$XSOCK \
 
 # Execute the command in docker (Example of command: ./master.sh -ve -m 2 -p Sc1_params -t A_tour)
 docker run -d --gpus all -i --rm --shm-size=64g \
-$volumes_noetic \
+$volumes_melodic \
 $other_args \
 --name "$USER-melodic-$ROSPORT" \
 docker_ros_melodic_$USER \
 $command &&
 docker run $docker_args \
-$volumes_melodic \
+$volumes_noetic \
 $other_args \
 --name "$USER-noetic-$ROSPORT" \
 docker_ros_noetic_$USER \

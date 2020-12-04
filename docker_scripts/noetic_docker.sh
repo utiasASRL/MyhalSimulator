@@ -52,7 +52,7 @@ docker_args="${docker_args} --gpus all "
 mkdir -p "$PWD/../../Simulation_Data/simulated_runs"
 
 # Volumes (modify with your own path here)
-volumes="-v $PWD/..:/home/$USER/catkin_ws \
+volumes="-v $PWD/../../MyhalSimulator-DeepPreds:/home/$USER/catkin_ws \
 -v $PWD/../../Simulation_Data:/home/$USER/Myhal_Simulation \
 -v $PWD/../../KPConv_Data:/home/$USER/Data/MyhalSim"
 

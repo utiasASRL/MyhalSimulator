@@ -1,6 +1,5 @@
 {
 
-    "cmake.configureOnOpen": true,
     "python.autoComplete.extraPaths": [
         "/opt/ros/melodic/lib/python2.7/dist-packages"
     ],
