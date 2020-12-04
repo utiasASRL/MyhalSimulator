@@ -1,5 +1,5 @@
 {
-    "image": "docker_ros_melodic_hugues",
+    "image": "docker_ros_melodic_${localEnv:USER}",
 
     "workspaceFolder": "/home/${localEnv:USER}/catkin_ws",
 
