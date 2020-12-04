@@ -79,3 +79,4 @@ docker_ros_noetic_$USER \
 $1
 
 source ~/.bashrc
+
