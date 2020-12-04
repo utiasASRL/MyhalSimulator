@@ -1,11 +1,15 @@
 # Myhal Tour Guide Project 
 
-## Table of Contents
+![Intro figure](imgs/intro.jpg)
 
+# Table of Contents
+
+  * [Installation](#Installation)
+     * [Build docker images](#build-docker-images)
+     * [File structure](#file-structure)
   * [Usage](#usage)
-     * [Dependencies](#dependencies)
-     * [Installation and Compilation](#installation-and-compilation)
      * [Running the Simulation](#running-the-simulation)
+     * [Using Online Classifications](#using-online-classifications)
      * [World Parameter Specification](#world-parameter-specification)
      * [Robot Parameter Specification](#robot-parameter-specification)
      * [Creating New Tours](#creating-new-tours)
@@ -21,55 +25,55 @@
      * [Ground Truth Classifications](#ground-truth-classifications)
   * [The Dashboard](#the-dashboard)
 
-## Usage
 
-### Dependencies
+# Installation
 
-ROS-melodic and Gazebo9 are used in this simulation, along with various other ROS packages and external dependencies.
-A GPU is required to run the Velodyne VLP-32 LiDAR simulation.
-See [this Dockerfile](https://github.com/utiasASRL/MyhalSimulator-docker) for a list of the required programs and environment variables to run the simulation.
+## Build docker images
 
-### Installation and Compilation
+First you have to build the docker images for the simulator. They are located in the [MyhalSimulator-docker](https://github.com/utiasASRL/MyhalSimulator-docker) repository. Follow the instructions there.
 
-This repository should be located in `/home/$USER/catkin_ws`, meaning the root JackalTourGuide folder should be renamed to `catkin_ws`:
+## File structure
 
-``` bash
-cd ~
-git clone https://github.com/BenAgro314/JackalTourGuide.git catkin_ws 
+You should have a file structure looking like this:
+
+```
+EXP_ROOT_PATH
+│
+└───MyhalSimulator
+│   │   This repository here
+│   │   ...
+│   
+└───MyhalSimulator-docker
+│   │   Docker repository here
+│   │   ...
+│   
+└───MyhalSimulator-DeepPreds
+│   │   DeepPreds repository here
+│   │   ...
+│
+└───Simulation_Data
+│   │   
+│   └───simulated_runs
+│       │   data for each simulation run here
+│       │   ...
+
 ```
 
-For data storage, there must be a directory `~/Myhal_Simulation/simulated_runs/`:
+The folder `Simulation_Data` might not be created yet, if you have not already run the simulation.
 
-``` bash
-cd ~
-mkdir -p Myhal_Simulation/simulated_runs/
+
+# Usage
+
+## Running the Simulation
+
+To run the simulation, we use the melodic_docker.sh script to call `master.sh` in our container: 
+
+```bash
+cd /EXP_ROOT_PATH/MyhalSimulator-docker/
+./melodic_docker.sh -c "./master.sh -OPTIONS"
 ```
 
-To compile, run:
-
-``` bash
-cd ~/catkin_ws
-catkin build
-```
-
-As aforementioned, various environment variables must be set prior to running the simulation.
-Add these lines to your `~/.bashrc`:
-
-``` bash
-source /opt/ros/melodic/setup.bash
-source ~/catkin_ws/devel/setup.bash
-export GAZEBO_PLUGIN_PATH=${GAZEBO_PLUGIN_PATH}:~/catkin_ws/devel/lib
-export GAZEBO_MODEL_PATH=~/catkin_ws/src/myhal_simulator/models:${GAZEBO_MODEL_PATH}
-export GAZEBO_RESOURCE_PATH=~/catkin_ws/src/myhal_simulator/models:${GAZEBO_RESOURCE_PATH}
-```
-
-Finally, `source ~/.bashrc` to make these changes in your current shell.
-
-### Running the Simulation
-
-#### Master Script
-
-To run the simulation, call the `master.sh` script. This script has many options (listed by frequency of use):
+The master.sh script has many options (listed by frequency of use):
 
 -t [arg], the name of the tour being used (default = `A_tour`). The tour files can be found in `src/myhal_simulator/tours/`.
 
@@ -77,7 +81,11 @@ To run the simulation, call the `master.sh` script. This script has many options
 
 -g, if set, the simulation will use ground truth LiDAR classifications.
 
--m, if set, the simulation will use [Gmapping](http://wiki.ros.org/gmapping) for SLAM, otherwise it will use [AMCL](http://wiki.ros.org/amcl) for localization only.
+-m [arg], the ID of the localization algorithm used.
+
+  * 0: [Gmapping](http://wiki.ros.org/gmapping) for SLAM
+  * 1: [AMCL](http://wiki.ros.org/amcl) for localization only (use a precomputed map)
+  * 2: [PointSLAM](TODO) for a 3D ICP-based SLAM algorithm.
 
 -e, if set, various topics (pose estimate, global plan, local plan, and current target) will be visualized in the simulation.
 
@@ -89,37 +97,38 @@ To run the simulation, call the `master.sh` script. This script has many options
 
 For example, some common calls are:
 
-+ `./master.sh -t E_tour -emfg`
-+ `./master.sh -t J_tour -v -l 2020-08-04-17-04-21`
++ `./melodic_docker.sh -c "./master.sh -ve -m 0 -t A_tour"`
++ `./melodic_docker.sh -c "./master.sh -fgve -m 0 -t A_tour -p Sc1_params"`
++ `./melodic_docker.sh -c "./master.sh -fg -m 2 -t B_tour -p Sc1_params -l 2020-08-04-17-04-21"`
 
-The first command would launch the simulation with the tour `E_tour`, visualize topics in the simulation, use Gmapping and ground truth classifications with point-cloud filtering.
-The second command would launch the simulation with the tour `J_tour` along with a GUI, and load the world file from the previous run `2020-08-04-17-04-21`.
+The first command would launch the simulation with the tour `A_tour`, use Gmapping without filtering and lauch a GUI to visualize the simulation.
 
-#### Using Online Classifications
+The second one would do the same, but with different scenario parameters and with groundtruth filtering.
 
-Online classifications can only be used through docker. To obtain the necessary docker images:
+The third one would load the world file from the previous run `2020-08-04-17-04-21`, perform a different tour, and without any GUI open for visulaization.
 
-``` bash
-cd ~
-git clone https://github.com/BenAgro314/ROS-Dockerfiles.git
-cd ~/ROS-Dockerfiles/docker_ros_melodic/ && ./docker_build.sh
-cd ~/ROS-Dockerfiles/docker_ros_noetic/ && ./docker_build.sh
+
+## Using Online Classifications
+
+See the [MyhalSimulator-DeepPreds](https://github.com/utiasASRL/MyhalSimulator-DeepPreds) repository.
+
+### Double docker script
+
+To use online classifications, we need two different containers. One running the simulation of th `docker_ros_melodic` image and oine running the Deep prediction on the `docker_ros_noetic` image. To do this we use the double_docker.sh script: 
+
+```bash
+cd /EXP_ROOT_PATH/MyhalSimulator-docker/
+./double_docker.sh -c "./master.sh -OPTIONS"
 ```
 
-By calling the script `~/ROS-Dockerfiles/run_files/classification_test.sh`, two containers will be launched, one running the Myhal simulation in ROS Melodic, the other running the online classifications in ROS Noetic.
+The noetic docker will be detrached and you will see the output of the melodic docker. For example, a common call is:
 
-Note: the script `classification_test.sh` will have to be modified to suit your needs.
-Currently it mounts directories based on the usernames `bag` and `hth`.
++ `./double_docker.sh -c "./master.sh -fve -m 2 -t A_tour -p Sc1_params"`
 
-To run a specific test in the docker:
+### Choosing the network for predictions
 
-``` bash
-./classification_test.sh -c "./master.sh <insert_flags>"
-```
 
-The containers are by default detached upon creation.
-
-### World Parameter Specification
+## World Parameter Specification
 
 Parameter directories are located in `src/myhal_simulator/params/`. The default parameters are in a directory called `default_params`. 
 The files in this folder can be modified directly, or a copy of this folder can be made.
@@ -134,7 +143,7 @@ The files that have parameters to be modified are (in order of usefulness):
 - `model_params.yaml` 
 - `animation_params.yaml` 
 
-#### Room Parameters
+### Room Parameters
 
 Room parameters are specified in `room_params_V2.yaml`.
 The name of any room to be included in the simulation must be included in the list `room_names`.
@@ -163,7 +172,7 @@ Each room name has a corresponding entry in the form (note that angled braces ar
 Note: the reason for the convoluted yaml specification is because ROS only allows lists and dictionaries of primitive data types to be loaded to the parameter sever.
 This is a problem I am actively working on fixing by bypassing the parameter server all together and reading a yaml file directly.
 
-#### Scenario Parameters
+### Scenario Parameters
 
 Scenario parameters are specified in `scenario_params_V2.yaml`.
 The name of any scenario to be included in the simulation must be included in the list `scenario_names`.
@@ -181,7 +190,7 @@ Each scenario name has a corresponding entry in the form:
     - <table_group_2>
 ```
 
-#### Camera Parameters
+### Camera Parameters
 
 Camera parameters are specified in `camera_params.yaml`.
 There are two ways of placing cameras in the simulation (which can be used together).
@@ -207,7 +216,7 @@ If the camera is a Stalker (mode 2), then then z param is used to set the height
 The next parameter is the orbiting period and is used for the Hoverer. If this param is greater than 0, then the camera will complete one orbit around the robot every T seconds, where T is the period.
 The last parameter is the following distance and is used for the Stalker. It specifies the distance behind the Jackal (on the Jackal's path), that the camera will follow.
 
-#### Model Parameters
+### Model Parameters
 
 Model parameters (including actors) are specified in `model_params.yaml`.
 Any model to be included must have a name specified in `model_names`.
@@ -253,7 +262,7 @@ The other parameter files are rarely modified. They can be customized in a simil
 
 More parameter descriptions are on the way.
 
-#### Creating New Tours
+### Creating New Tours
 
 The files used to specify tours are stored in `src/myhal_simulator/tours/`.
 To create a new tour, make a copy of the directory `template`:
@@ -276,7 +285,7 @@ Upon zooming out as far as possible, the map will look something like this:
 Each black dot is a '#' character. To add a target on the tour, delete the space character where you want to add the target, and replace it with an alphabetical character (from A to Z and a to z).
 The order of the targets on the tour is determined by the ASCII value of that character, so it is alphabetical with all uppercase letters preceding all lowercase letters.
 
-### Robot Parameter Specification
+## Robot Parameter Specification
 
 Various parameters of the mobile base Jackal robot can be modified through files in `src/jackal_velodyne/params/` and `src/jackal_velodyne/launch/`.
 
@@ -307,7 +316,7 @@ Two other launch files contain useful parameters to modify:
 - `src/jackal_velodyne/launch/include/amcl.launch`, which contain various parameters for AMCL, details [here](http://wiki.ros.org/amcl) 
 - `src/jackal_velodyne/launch/include/gmapping.launch`, which contain various parameters for Gmapping, details [here](http://wiki.ros.org/gmapping) 
 
-### The Data
+## The Data
 
 Whenever you run the simulation, a date stamped folder will be created in this directory eg. `~/Myhal_Simulation/simulated_runs/2020-08-06-22-45-03`.
 This folder will contains log files and post-processed data:
@@ -328,7 +337,7 @@ Also contained in this directory is a directory called is a logs-<date> (e.g. lo
 Note that if the run is cut short with SIGTERM (including stopping a docker container), or by running either of the files `scripts/shutdown.sh` or `scripts/clear.sh`, all data files will be deleted.
 To stop a run while saving the data files, run `./scripts/save_shutdown.sh`.
 
-## The Navigation Stack 
+# The Navigation Stack 
 
 The two diagrams below depict two configurations of the navigation stack, the first using AMCL and the second using Gmapping.
 If ground truth classifications are used, then the points go the ground truth classification node instead of the online classifier, following the dotted lines.
@@ -338,7 +347,7 @@ Various nodes of the navigation stack are discussed below.
 
 ![Gmappingstack](imgs/GMAPPING.png)
 
-### Point-cloud conversion and filtering 
+## Point-cloud conversion and filtering 
 
 Currently, the main localization nodes used (see [below](#Localization)) subscribe to 2D laser-scan messages, not 3D point-clouds.
 This means that the 3D point-cloud data must be converted to a 2D laser-scan. This is done via `pcl_filter_nodlet.cpp` located in the `jackal_velodyne` package.
@@ -346,21 +355,21 @@ Moreover, it is in this conversion step that the classified point-cloud is segre
 For example, the global planning node will be given a laser-scan message made from the points classified as non-moving, whereas the local planning node message will include all classes of points. 
 See the figures above for more detail as to where the classes are sent depending on the localization node used.
 
-### Localization
+## Localization
 
 There are currently two available nodes for robot localization: [AMCL](http://wiki.ros.org/amcl) and [Gmapping](http://wiki.ros.org/gmapping). Both nodes subscribe to a 2D laser-scan and publish a transformation from the odom frame to the map frame. 
 
-#### AMCL
+### AMCL
 
 The AMCL node is used purely for localization. It does not create a live map of the environment itself, and thus must be supplied a pre-made occupancy grid map via the map server of the Myhal simulation walls.
 When estimating robot pose, AMCL will compare the laser-scans against the map. Thus, to increase localization accuracy when using AMCL, the node will only receive laser-scans constructed from the LiDAR points in the wall class.
 
-#### Gmapping
+### Gmapping
 
 The Gmapping node provides a SLAM algorithm, not only localizing the robot but providing a building an occupancy grid map at run-time. This means that no pre-made map is needed when using Gmapping.
 The map that Gmapping produces is fed directly to the global planner (see below), and thus it is given laser-scans constructed from all static points (walls, tables, chairs etc), so they can be avoided.
 
-### Cost-maps
+## Cost-maps
 
 Both global and local cost-maps are produced using the ROS package [costmap\_2d](http://wiki.ros.org/costmap_2d).
 If Gmapping is used, it produces a global occupancy grid which is given to costmap\_2d to create the global cost-map.
@@ -369,14 +378,14 @@ Regardless of the localization node, the local cost-map is built off of a laser-
 
 The parameter files for the cost-maps can be found in `src/jackal_velodyne/params/` 
 
-### Planning
+## Planning
 
-#### Global Planner:
+### Global Planner:
 
 The global planner is sent tour goals via the node `navigation_goals_V2.cpp`. Using the global cost-map, it plans a route for the Jackal to follow.
 The ROS package used to generate the plan is [navfn](http://wiki.ros.org/navfn) which uses Dijkstra's algorithm.
 
-#### Local Planner:
+### Local Planner:
 
 The local planner's goal is the position furthest along the global path that is also within the bounds of the local cost-map.
 The local planner has the responsibility of controlling the mobile base, providing the connection between the global plan and the robot.
@@ -384,9 +393,9 @@ This local planner uses the ROS package [base\_local\_planner](http://wiki.ros.o
 
 The parameter files for the planners can be found in `src/jackal_velodyne/params/`.
 
-## Simulation Details
+# Simulation Details
 
-### World Generation
+## World Generation
 
 If the simulation is launched without specifying a world file to use (with the -l tag), then a new world is created.
 To create a world based on the supplied parameters, the file `src/myhal_simulator/worlds/myhal_sim.world` is written by the program `world_factory.cpp` located in the `myhal_simulator` package.
@@ -394,12 +403,12 @@ This file is based off of a template file called `myhal_template.txt` located in
 This program reads the ROS parameter server for the various room, scenario, camera, plugin, and animation parameters and uses this information to write the SDF for the corresponding models into `myhal_sim.world`.
 All the required actors (people), tables, chairs, and cameras are added by this program.
 
-### World Control
+## World Control
 
 The dynamic elements of the world are controlled by a Gazebo world plugin called Puppeteer, located in `src/myhal_simulator/puppeteer.cpp`.
 This plugin is responsible for controlling the motion of the actors and cameras, as well as adding and dynamically modifying the models that allow for topics to be visualized in the Gazebo simulation.
 
-#### Actors
+### Actors
 
 Actors are the people in the simulation. They can have a variety of behaviors, most of which are based off of [Craig W. Reynolds, Steering Behaviors For Autonomous Characters](http://www.red3d.com/cwr/steer/gdc99/) 
 The various types of actors are defined in `src/myhal_simulator/src/vehicles.cpp`. All actors follow some common rules and parameters such as collision avoidance with objects, one another, and the robot, as well as a maximum speed and acceleration. Currently available actor types include:
@@ -412,7 +421,7 @@ The various types of actors are defined in `src/myhal_simulator/src/vehicles.cpp
 - Followers, who will follow the Jackal. [Followers](http://www.red3d.com/cwr/steer/gdc99/) can either blocking (intentionally try and get in the way of the robot) or non-blocking (targeting some position behind the robot and attempting to avoid obstructing it).
 - PathFollowers, who will follow a provided gradient map, allowing them to exhibit intelligent path finding.
 
-#### Cameras
+### Cameras
 
 While the cameras are added to the world on creation of the `myhal_sim.world` file, they are controlled by two plugins, the Puppeteer world plugin and the CameraController sensor plugin located in `src/jackal_velodyne/src/camera_controller.cpp`. 
 
@@ -425,7 +434,7 @@ The Puppeteer plugin is responsible for moving the camera. There are a three typ
 - Hoverer: a moving camera that hovers at a specified relative position with respect to its target. It will point towards the target and can optionally orbit around the target.  
 - Stalker: a moving camera that follows it's targets path a specified distance behind, while always pointing at it's target.
 
-#### Topic Visualization
+### Topic Visualization
 
 By passing the -e flag when running [master.sh](#Master-Script), the simulation will visualize four ROS topics in Gazebo:
 
@@ -436,7 +445,7 @@ By passing the -e flag when running [master.sh](#Master-Script), the simulation 
 
 The visualization of these topics is managed by the Puppeteer world plugin.
 
-### Ground Truth Classifications 
+## Ground Truth Classifications 
 
 By passing the -g flag when running [master.sh](#Master-Script), the point-clouds produced by the simulation of the VLP-32 LiDAR sensor will have accompanying ground truth classifications. 
 This is achieved with a Gazebo sensor plugin, located in `src/myhal_simulator/src/custom_velodyne.cpp`. 
@@ -447,7 +456,7 @@ This sensor plugin is based on [the official velodyne\_simulator package](https:
 
 This means that despite the extra time taken for ground truth classifications, there is 0 latency from the simulation perspective, and no LiDAR frames are dropped.
 
-## The Dashboard 
+# The Dashboard 
 
 The Dashboard is a python module that allows for organization and analysis of data gathered from the simulation.
 First, ensure the module can be imported by adding it to the `PYTHONPATH` environment variable:
@@ -534,3 +543,52 @@ Some other useful functions include:
 >>> d.rviz_run(0) # play the bag file for a run and view it in rviz (by name or index)
 >>> d.remove_series_dirs('series_name') # this will delete the directories of all runs in the series 
 ```
+
+
+
+
+
+
+
+
+# (Deprecated) Running without a docker container
+
+## Dependencies
+
+ROS-melodic and Gazebo9 are used in this simulation, along with various other ROS packages and external dependencies. See the Dockerfiles in the [MyhalSimulator-docker](https://github.com/utiasASRL/MyhalSimulator-docker) repository for a list of the required programs and environment variables to run the simulation.
+
+## Installation and Compilation
+
+This repository should be located in `/home/$USER/catkin_ws`, meaning the root JackalTourGuide folder should be renamed to `catkin_ws`:
+
+``` bash
+cd ~
+git clone https://github.com/utiasASRL/MyhalSimulator catkin_ws 
+```
+
+For data storage, there must be a directory `~/Myhal_Simulation/simulated_runs/`:
+
+``` bash
+cd ~
+mkdir -p Myhal_Simulation/simulated_runs/
+```
+
+To compile, run:
+
+``` bash
+cd ~/catkin_ws
+catkin build
+```
+
+As aforementioned, various environment variables must be set prior to running the simulation.
+Add these lines to your `~/.bashrc`:
+
+``` bash
+source /opt/ros/melodic/setup.bash
+source ~/catkin_ws/devel/setup.bash
+export GAZEBO_PLUGIN_PATH=${GAZEBO_PLUGIN_PATH}:~/catkin_ws/devel/lib
+export GAZEBO_MODEL_PATH=~/catkin_ws/src/myhal_simulator/models:${GAZEBO_MODEL_PATH}
+export GAZEBO_RESOURCE_PATH=~/catkin_ws/src/myhal_simulator/models:${GAZEBO_RESOURCE_PATH}
+```
+
+Finally, `source ~/.bashrc` to make these changes in your current shell.
