@@ -127,6 +127,7 @@ The files that have parameters to be modified are (in order of usefulness):
 - `plugin_params.yaml` 
 - `model_params.yaml` 
 - `animation_params.yaml` 
+- `custom_simulation_params.yaml`
 
 ### Room Parameters
 
@@ -246,6 +247,13 @@ The other parameter files are rarely modified. They can be customized in a simil
 - `myhal_walls.ply`: this specifies the bounding boxes for the walls of the Myhal model. This should not be modified unless the model used changes.
 
 More parameter descriptions are on the way.
+
+### Custom Simulation Parameters
+This optional parameter file allow to code simple behaviors into the actors and robot. So far, it accepts: 
+  - custom_actor_spawn: Set this parameter to select the spawning coordinates of the actors. 
+  - custom_robot_goal: Control the robot goal by sending (x, y) as robot's goal. 
+  - custom_actor_goal: Contre the actor's goal by sending (x, y) coordinates as actor's goal. 
+
 
 ### Creating New Tours
 
