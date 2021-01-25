@@ -67,6 +67,8 @@ class Puppeteer: public gazebo::WorldPlugin{
 
         std::map<std::string, double> vehicle_params;
 
+        std::map<std::string, double> custom_actor_goal;
+
         std::map<std::string, double> boid_params;
         
         boost::shared_ptr<QuadTree> static_quadtree; 

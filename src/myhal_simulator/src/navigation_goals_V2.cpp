@@ -65,11 +65,11 @@ int main(int argc, char ** argv){
 	ros::Publisher pub = nh.advertise<geometry_msgs::PoseStamped>("tour_data", 1000);
 	ros::Publisher tot_pub = nh.advertise<std_msgs::Int32>("tour_length", 1000);
     ros::Publisher shutdown_pub = nh.advertise<std_msgs::Bool>("shutdown_signal", 1000);
-	// Here ewe want to publish in another topicSubscribe to the topic "velodyne_points"
+	// Here we want to publish in another topicSubscribe to the topic "velodyne_points"
 
     std::string tour_name("test1");
 
-
+    
     if (!nh.getParam("tour_name", tour_name)){
         std::cout << "ERROR READING TOUR NAME\n";
     }
@@ -96,10 +96,10 @@ int main(int argc, char ** argv){
     ROS_WARN("USING TOUR %s\n", tour_name.c_str());
 
 	// Subscribe to the topic "velodyne_points".
-	// seconbd number in a queue in which the messages are stored
-	// THird argument is a function that is called on the message that the topic send
+	// Seconb number in a queue in which the messages are stored
+	// Third argument is a function that is called on the message that the topic send
 
-	// ros::spin() to block until recieving a new message (kind of while true loop)
+	// ros::spin() to block until receiving a new message (kind of while true loop)
 	// Here the waiting is more advanced see ros doc
 
     ros::Subscriber lidar_sub = nh.subscribe("velodyne_points", 1000, LidarCallback);
@@ -135,30 +135,60 @@ int main(int argc, char ** argv){
     std::string shutdown_file = "/home/"+username+"/catkin_ws/shutdown.sh";
 
     int count = 0;
+    int use_custom_goal_bool(0); // 0 = False, other value = True
+    if(!nh.getParam("/custom_robot_goal/use_custom_goal_bool", use_custom_goal_bool)){
+        ROS_INFO("ERROR READING ROBOT CUSTOM PARAMS: use_custom_goal_bool");
+    }
 
     log_file << "\nTour diagnostics: " << std::endl;
-    for (auto pose: route){
-        count++;
-        ROS_WARN("Sending Command (%d/%ld):", count, (long) route.size());
-        ROS_WARN("Target -> (%f, %f, %f)", pose.Pos().X(), pose.Pos().Y(), pose.Pos().Z());
-        
-        auto goal = PoseToGoal(pose);
-        
-        ac.sendGoal(goal);
-        ac.waitForResult();
-
-        if(ac.getState() == actionlib::SimpleClientGoalState::SUCCEEDED){
-            ROS_INFO("Target Reached");
-            
-            log_file << "Reached target (" << count << "/" << route.size() << ") at position (" << std::fixed << std::setprecision(1) << pose.Pos().X() << "m, " << std::fixed << std::setprecision(1) << pose.Pos().Y()<< "m, " << std::fixed << std::setprecision(1) << pose.Pos().Z()<<  "m) at time: " << std::fixed << std::setprecision(1) << ros::Time::now().toSec() << "s" << std::endl;
-        } else {
-            ROS_INFO("Target Failed");
-            log_file << "Failed to reach target (" << count << "/" << route.size() << ") at position (" << std::fixed << std::setprecision(1) << pose.Pos().X() << "m, " << std::fixed << std::setprecision(1) << pose.Pos().Y()<< "m, " << std::fixed << std::setprecision(1) << pose.Pos().Z()<<  "m) at time: " << std::fixed << std::setprecision(1) << ros::Time::now().toSec() << "s" << std::endl;
+    if (use_custom_goal_bool){
+        for (auto pose:route){
+            ROS_WARN("SENDING CUSTOM GOAL TO THE ROBOT");
+            double x_target(0), y_target(0);
+            if(!nh.getParam("/custom_robot_goal/goal_x", x_target)){
+                ROS_INFO("ERROR READING ROBOT GOAL_X");
+            }
+            if(!nh.getParam("/custom_robot_goal/goal_y", y_target)){
+                ROS_INFO("ERROR READING ROBOT GOAL_Y");
+            }
+            ROS_WARN("Target -> (%f, %f, %f)", pose.Pos().X(), pose.Pos().Y(), pose.Pos().Z());
+            auto goal = PoseToHardcodedGoal(pose, x_target, y_target);
+            ac.sendGoal(goal);
+            ac.waitForResult();
+            if(ac.getState() == actionlib::SimpleClientGoalState::SUCCEEDED){
+                ROS_INFO("Target Reached");
+                
+                log_file << "Reached target (" << count << "/" << route.size() << ") at position (" << std::fixed << std::setprecision(1) << pose.Pos().X() << "m, " << std::fixed << std::setprecision(1) << pose.Pos().Y()<< "m, " << std::fixed << std::setprecision(1) << pose.Pos().Z()<<  "m) at time: " << std::fixed << std::setprecision(1) << ros::Time::now().toSec() << "s" << std::endl;
+            } else {
+                ROS_INFO("Target Failed");
+                log_file << "Failed to reach target (" << count << "/" << route.size() << ") at position (" << std::fixed << std::setprecision(1) << pose.Pos().X() << "m, " << std::fixed << std::setprecision(1) << pose.Pos().Y()<< "m, " << std::fixed << std::setprecision(1) << pose.Pos().Z()<<  "m) at time: " << std::fixed << std::setprecision(1) << ros::Time::now().toSec() << "s" << std::endl;
+            }
         }
-        
-
     }
-    
+
+    else{
+        for (auto pose: route){
+            count++;
+            ROS_WARN("Sending Command (%d/%ld):", count, (long) route.size());
+            ROS_WARN("Target -> (%f, %f, %f)", pose.Pos().X(), pose.Pos().Y(), pose.Pos().Z());
+
+            auto goal = PoseToGoal(pose);
+
+            ac.sendGoal(goal);
+            ac.waitForResult();
+
+            if(ac.getState() == actionlib::SimpleClientGoalState::SUCCEEDED){
+                ROS_INFO("Target Reached");
+                
+                log_file << "Reached target (" << count << "/" << route.size() << ") at position (" << std::fixed << std::setprecision(1) << pose.Pos().X() << "m, " << std::fixed << std::setprecision(1) << pose.Pos().Y()<< "m, " << std::fixed << std::setprecision(1) << pose.Pos().Z()<<  "m) at time: " << std::fixed << std::setprecision(1) << ros::Time::now().toSec() << "s" << std::endl;
+            } else {
+                ROS_INFO("Target Failed");
+                log_file << "Failed to reach target (" << count << "/" << route.size() << ") at position (" << std::fixed << std::setprecision(1) << pose.Pos().X() << "m, " << std::fixed << std::setprecision(1) << pose.Pos().Y()<< "m, " << std::fixed << std::setprecision(1) << pose.Pos().Z()<<  "m) at time: " << std::fixed << std::setprecision(1) << ros::Time::now().toSec() << "s" << std::endl;
+            }
+        }  
+ 
+    }
+
     
     std_msgs::Bool shutdown_msg;
     shutdown_msg.data = true;

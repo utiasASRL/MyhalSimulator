@@ -1,0 +1,27 @@
+custom_scenario_params_list:
+  - custom_actor_spawn
+  - custom_robot_goal
+  - custom_actor_goal
+
+custom_actor_spawn: # world_factory.cpp
+  use_custom_spawn_bool: 1 # boolean: 0 false, 1 true
+  num_actors: 3
+  spawn_x_0: 0 # Specify spawn for each actor. First one: spawn_x_0, spawn_y_0. Second one: spawn_x_1, spawn_y_1 ...
+  spawn_y_0: -3
+  spawn_x_1: 2
+  spawn_y_1: -2
+  spawn_x_2: 5
+  spawn_y_2: -1
+
+custom_robot_goal: # robot spawn is parametrized in p2.launch
+  use_custom_goal_bool: 0 # boolean: 0 false, 1 true 
+  goal_x: 5
+  goal_y: 2
+
+custom_actor_goal: # the custom goal act as an offset from the spawning coordinates. Actor spawned in spawn_x=2 with goal_x=7 will try to go to x=9 in the sim. 
+  goal_x_0: 2
+  goal_y_0: 0
+  goal_x_1: 0
+  goal_y_1: 2
+  goal_x_2: 0
+  goal_y_2: 0

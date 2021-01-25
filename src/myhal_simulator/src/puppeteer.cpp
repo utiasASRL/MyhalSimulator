@@ -301,9 +301,16 @@ boost::shared_ptr<Vehicle> Puppeteer::CreateVehicle(gazebo::physics::ActorPtr ac
 
             res = boost::make_shared<Wanderer>(actor, this->vehicle_params["mass"], this->vehicle_params["max_force"], max_speed, actor->WorldPose(), ignition::math::Vector3d(0,0,0), this->collision_entities);
         
+        } else if (actor_info["vehicle_type"] == "custom_wanderer"){
+
+            res = boost::make_shared<Custom_Wanderer>(actor, this->vehicle_params["mass"], this->vehicle_params["max_force"], max_speed, actor->WorldPose(), ignition::math::Vector3d(0,0,0), this->collision_entities, this->custom_actor_goal);
+        
         } else if (actor_info["vehicle_type"] == "random_walker"){
             res = boost::make_shared<RandomWalker>(actor, this->vehicle_params["mass"], this->vehicle_params["max_force"], max_speed, actor->WorldPose(), ignition::math::Vector3d(0,0,0), this->collision_entities);
             
+        } else if (actor_info["vehicle_type"] == "extendedSF_actor"){
+            res = boost::make_shared<ExtendedSocialForce_Actor>(actor, this->vehicle_params["mass"], this->vehicle_params["max_force"], max_speed, actor->WorldPose(), ignition::math::Vector3d(0,0,0), this->collision_entities);
+
         } else if (actor_info["vehicle_type"] == "boid"){
             auto random_vel = ignition::math::Vector3d(ignition::math::Rand::DblUniform(-1,1),ignition::math::Rand::DblUniform(-1,1),0);
             random_vel.Normalize(); 
@@ -380,6 +387,10 @@ void Puppeteer::ReadParams(){
         vehicle_params["obstacle_margin"] = 0.6;
         vehicle_params["blocking"] = 0;
         vehicle_params["start_mode"] = 2;
+    }
+
+    if (!nh.getParam("custom_actor_goal", this->custom_actor_goal)){
+        ROS_ERROR("ERROR READING CUSTOM ACTOR GOAL PARAMS");    
     }
 
     if (!nh.getParam("common_boid_params", this->boid_params)){

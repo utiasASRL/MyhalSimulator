@@ -119,6 +119,8 @@ class WorldHandler{
         //std::map<std::string, std::shared_ptr<SDFPlugin>> vehicle_plugins; //one per actor
 
         std::map<std::string, std::vector<std::shared_ptr<SDFPlugin>>> vehicle_plugins; //one per actor
+        std::map<std::string, double> custom_actor_spawn_parameters;
+        double use_custom_spawn_bool;
 
         std::vector<std::shared_ptr<SDFAnimation>> animation_list; //added to all actors 
         std::map<std::string, std::shared_ptr<ModelInfo>> model_info;

@@ -70,6 +70,7 @@ roscore -p $ROSPORT&
 
 until rostopic list; do sleep 0.5; done #wait until rosmaster has started 
 
+rosparam load src/myhal_simulator/params/$PARAMS/custom_simulation_params.yaml
 rosparam load src/myhal_simulator/params/$PARAMS/common_vehicle_params.yaml
 rosparam load src/myhal_simulator/params/$PARAMS/animation_params.yaml
 rosparam load src/myhal_simulator/params/$PARAMS/room_params_V2.yaml

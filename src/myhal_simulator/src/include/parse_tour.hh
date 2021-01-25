@@ -19,6 +19,7 @@
 #include <algorithm>
 
 move_base_msgs::MoveBaseGoal PoseToGoal(ignition::math::Pose3d pose);
+move_base_msgs::MoveBaseGoal PoseToHardcodedGoal(ignition::math::Pose3d pose, double x_target, double y_target);
 
 
 class TourParser{
