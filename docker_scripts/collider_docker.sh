@@ -5,27 +5,22 @@
 ########
 
 echo ""
-echo "Running ros-melodic docker. Remember you can set ROSPORT to a custom value"
+echo "Running ros-collider docker"
 echo ""
 
-rosport=$ROSPORT
-detach=false
-nohup=false
-command=""
-
-while getopts dnc: option
-do
-case "${option}"
-in
-d) detach=true;;
-n) nohup=true;;
-c) command=${OPTARG};;
-esac
-done
-
-if [ -n "$command" ]; then
-  echo -e "Running command $command\n"
+if [ -n "$1" ]; then
+  echo -e "Running command $1\n"
 fi
+
+rosport=$ROSPORT
+
+# while getopts p: option
+# do
+# case "${option}"
+# in
+# p) rosport=${OPTARG};; 
+# esac
+# done
 
 if [[ -z "$ROSPORT" ]]; then
     echo "WARNING: didn't provide ROSPORT, setting it to 1100"
@@ -43,21 +38,12 @@ gazport=$(($rosport+1))
 export ROSPORT=$(($ROSPORT+2))
 echo "export ROSPORT=$ROSPORT" >> ~/.bashrc
 
-
 ##########################
 # Start docker container #
 ##########################
 
-# Docker run arguments (depending if we run detached or not)
-if [ "$detach" = true ] ; then
-    docker_args="-d -it --rm --shm-size=64g "
-else
-    if [ "$nohup" = true ] ; then
-        docker_args="-i --rm --shm-size=64g " 
-    else
-        docker_args="-it --rm --shm-size=64g "
-    fi 
-fi
+# Docker run arguments
+docker_args="-it --rm --shm-size=64g "
 
 # Running on gpu (Uncomment to enable gpu)
 docker_args="${docker_args} --gpus all "
@@ -66,8 +52,10 @@ docker_args="${docker_args} --gpus all "
 mkdir -p "$PWD/../../Simulation_Data/simulated_runs"
 
 # Volumes (modify with your own path here)
-volumes="-v $PWD/..:/home/$USER/catkin_ws \
--v $PWD/../../Simulation_Data:/home/$USER/Myhal_Simulation "
+volumes="-v $PWD/../../MyhalSimulator-DeepCollider:/home/$USER/catkin_ws \
+-v $PWD/../../Simulation_Data:/home/$USER/Myhal_Simulation \
+-v $PWD/../../MyhalSimulator:/home/$USER/MyhalSimulator \
+-v $PWD/../../KPConv_Data:/home/$USER/Data/MyhalSim"
 
 # Additional arguments to be able to open GUI
 XSOCK=/tmp/.X11-unix
@@ -87,12 +75,9 @@ other_args="-v $XSOCK:$XSOCK \
 docker run $docker_args \
 $volumes \
 $other_args \
---name "$USER-melodic-$ROSPORT" \
-docker_ros_melodic_$USER \
-$command 
+--name "$USER-training-$ROSPORT" \
+docker_ros_collider_$USER \
+$1
 
-# Finish
-echo "Final Sourcing ..."
 source ~/.bashrc
-
 

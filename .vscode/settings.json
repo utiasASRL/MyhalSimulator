@@ -23,6 +23,8 @@
         "map": "cpp",
         "hash_map": "cpp"
     },
-    "jupyter.jupyterServerType": "local"
+    "jupyter.jupyterServerType": "local",
+    "cmake.configureOnOpen": true,
+    "C_Cpp.errorSquiggles": "Disabled"
 
 }
