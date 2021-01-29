@@ -127,6 +127,7 @@ The files that have parameters to be modified are (in order of usefulness):
 - `plugin_params.yaml` 
 - `model_params.yaml` 
 - `animation_params.yaml` 
+- `custom_simulation_params.yaml`
 
 ### Room Parameters
 
@@ -246,6 +247,14 @@ The other parameter files are rarely modified. They can be customized in a simil
 - `myhal_walls.ply`: this specifies the bounding boxes for the walls of the Myhal model. This should not be modified unless the model used changes.
 
 More parameter descriptions are on the way.
+
+### Custom Simulation Parameters
+This optional parameter file allow to code simple behaviors into the actors and robot. So far, it accepts: 
+  - custom_actor_spawn: Set this parameter to select the spawning coordinates of the actors. 
+  - custom_robot_goal: Control the robot goal by sending (x, y) as robot's goal. 
+  - custom_actor_goal: Contre the actor's goal by sending (x, y) coordinates as actor's goal.Only works with "Custom_Wanderer" actor type (set in `room_params.yaml` 
+
+One prepared param file is available in `custom_params_mgsa/custom_simulation_params.yaml`. 
 
 ### Creating New Tours
 
@@ -405,6 +414,8 @@ The various types of actors are defined in `src/myhal_simulator/src/vehicles.cpp
 - Sitters, who sit in chairs (currently they do not start walking).
 - Followers, who will follow the Jackal. [Followers](http://www.red3d.com/cwr/steer/gdc99/) can either blocking (intentionally try and get in the way of the robot) or non-blocking (targeting some position behind the robot and attempting to avoid obstructing it).
 - PathFollowers, who will follow a provided gradient map, allowing them to exhibit intelligent path finding.
+- ExtendedSF, who follow the Extended Social Force Model of [Anvari et al., IROS 2020](http://ras.papercept.net/images/temp/IROS/files/0962.pdf)
+- CustomWanderer, who has a similar behavior as Wanderers but are parametrizable with `custom_simulation_params.yaml` file. 
 
 ### Cameras
 
