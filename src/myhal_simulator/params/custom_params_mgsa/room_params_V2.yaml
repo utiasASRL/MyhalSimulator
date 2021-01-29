@@ -37,13 +37,13 @@ lounge_532:
   geometry: g532
   positions: p532
   enclosed: "0"
-  scenario: test_custom_wanderer
+  scenario: empty
 
 study_space_546:
   geometry: g546
   positions: p546
   enclosed: "0"
-  scenario: empty
+  scenario: test_custom_wanderer
 
 irm_lab_580:
   geometry: g580

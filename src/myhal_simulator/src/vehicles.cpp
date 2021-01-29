@@ -1159,9 +1159,11 @@ double _max_speed,
 ignition::math::Pose3d initial_pose, 
 ignition::math::Vector3d initial_velocity, 
 std::vector<gazebo::physics::EntityPtr> objects, 
-std::map<std::string, double> _custom_actor_goal)
+std::map<std::string, double> _custom_actor_goal,
+std::vector<std::string> _vehicle_names)
 : Vehicle(_actor, _mass, _max_force, _max_speed, initial_pose, initial_velocity, objects){
     this->custom_actor_goal = _custom_actor_goal;
+    this->vehicle_names = _vehicle_names;
 }
 
 void Custom_Wanderer::OnUpdate(const gazebo::common::UpdateInfo &_info, double dt, std::vector<boost::shared_ptr<Vehicle>> vehicles, std::vector<gazebo::physics::EntityPtr> objects){
@@ -1176,25 +1178,32 @@ void Custom_Wanderer::OnUpdate(const gazebo::common::UpdateInfo &_info, double d
 }
 
 /*
-* SetNextTarget seek the current actor name, find out to which actor it corresponds in the custom_simulation_params.yaml
-* file and send the corresponding actor goal goal_x_(), goal_y_() to the actor in the simulation.
+* SetNextTarget sort all actor names, and send a custom goal to one Custom_Wanderer agent following the spawning order.
+* The objective is to keep the same order as in params/custom_simulation_params.yaml; in order to send the corresponding
+* goal_x, goal_y to each actor. 
+*
 * Using the custom_wanderer type implies that a custom_simulation_params file exists with the right structure.
+* If there are more custom_wanderers than goal specified, the first goal (x_0,y_0) is passed to all the undefined actors. 
 */
 void Custom_Wanderer::SetNextTarget(std::vector<boost::shared_ptr<Vehicle>> vehicles){
     int count(0);
-    for (auto other: vehicles){
-        if (other->GetName() == this->GetName()){
-            break;;
+    for (auto name: this->vehicle_names){
+        if(this->GetName() == name){
+            break;
         }
-        if (other->GetName().find("actor_custom_") != std::string::npos){
-            count += 1;
+        if(name.find("actor_custom_") != std::string::npos){
+            count+=1;
         }
     }
-    ignition::math::v4::Vector3d goal(this->custom_actor_goal["goal_x_"+std::to_string(count)],
-                this->custom_actor_goal["goal_y_"+std::to_string(count)], 
-                0);
+
+    ignition::math::v4::Vector3d goal;
+    if ( this->custom_actor_goal.find("goal_x_"+std::to_string(count)) == custom_actor_goal.end() ) {
+        goal.Set(this->custom_actor_goal["goal_x_0"], this->custom_actor_goal["goal_y_0"], 0);
+    } else {
+        goal.Set(this->custom_actor_goal["goal_x_"+std::to_string(count)], this->custom_actor_goal["goal_y_"+std::to_string(count)], 0);
+    }
 
     this->curr_target = this->pose.Pos() + goal;
-    this->curr_target.Z() = this->height;
-
+    this->curr_target.Z() = this->height; 
+    
 }

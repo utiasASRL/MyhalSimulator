@@ -74,7 +74,6 @@ int main(int argc, char ** argv){
         std::cout << "ERROR READING TOUR NAME\n";
     }
 
-    
     TourParser parser(tour_name);
     std::vector<ignition::math::Pose3d> route = parser.GetRoute();
 
@@ -96,7 +95,7 @@ int main(int argc, char ** argv){
     ROS_WARN("USING TOUR %s\n", tour_name.c_str());
 
 	// Subscribe to the topic "velodyne_points".
-	// Seconb number in a queue in which the messages are stored
+	// Second number in a queue in which the messages are stored
 	// Third argument is a function that is called on the message that the topic send
 
 	// ros::spin() to block until receiving a new message (kind of while true loop)

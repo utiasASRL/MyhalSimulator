@@ -221,7 +221,7 @@ bool Costmap::Integrate(ignition::math::Vector3d goal){
         
         for (int c = 0; c< this->cols; ++c){
             this->integration_field[r][c] = 10e9;
-        }
+        }   
         
     }
     

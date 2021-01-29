@@ -396,6 +396,7 @@ class Custom_Wanderer: public Vehicle{
     protected:
 
         std::map<std::string, double> custom_actor_goal;
+        std::vector<std::string> vehicle_names;
 
         void SetNextTarget(std::vector<boost::shared_ptr<Vehicle>> vehicles); 
 
@@ -407,7 +408,8 @@ class Custom_Wanderer: public Vehicle{
          ignition::math::Pose3d initial_pose, 
          ignition::math::Vector3d initial_velocity, 
          std::vector<gazebo::physics::EntityPtr> objects, 
-         std::map<std::string, double> _custom_actor_goal);
+         std::map<std::string, double> _custom_actor_goal,
+         std::vector<std::string> _vehicle_names);
 
         void OnUpdate(const gazebo::common::UpdateInfo &_info, double dt, std::vector<boost::shared_ptr<Vehicle>> vehicles, std::vector<gazebo::physics::EntityPtr> objects);
 

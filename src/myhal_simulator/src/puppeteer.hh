@@ -49,6 +49,8 @@ class Puppeteer: public gazebo::WorldPlugin{
 
         std::vector<boost::shared_ptr<Vehicle>> vehicles;
 
+        std::vector<std::string> vehicles_names;
+
         std::vector<gazebo::physics::EntityPtr> collision_entities;
 
         std::string building_name;
