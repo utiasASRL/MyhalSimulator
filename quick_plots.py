@@ -750,7 +750,7 @@ def tmp():
 
     D = Dashboard()  # optionally we can specify the verbosity of the output messages. default is logger.INFO
 
-    D.list_runs()
+    D.list_runs(30)
 
     #D.plot_run('2020-09-29-02-05-05', TrajectoryPlot(only_gt=False))
 
@@ -772,8 +772,8 @@ if __name__ == '__main__':
     # clear_failed_tours()
     # a = 1/0
 
-    # tmp()
-    # a = 1/0
+    tmp()
+    a = 1/0
 
     # plots1()
 
