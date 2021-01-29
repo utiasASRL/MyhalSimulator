@@ -49,6 +49,8 @@ class Puppeteer: public gazebo::WorldPlugin{
 
         std::vector<boost::shared_ptr<Vehicle>> vehicles;
 
+        std::vector<std::string> vehicles_names;
+
         std::vector<gazebo::physics::EntityPtr> collision_entities;
 
         std::string building_name;
@@ -66,6 +68,8 @@ class Puppeteer: public gazebo::WorldPlugin{
         gazebo::common::Time last_update;
 
         std::map<std::string, double> vehicle_params;
+
+        std::map<std::string, double> custom_actor_goal;
 
         std::map<std::string, double> boid_params;
         

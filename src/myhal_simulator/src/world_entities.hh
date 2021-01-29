@@ -140,6 +140,8 @@ namespace myhal{
 
             bool AddModelRandomly(std::shared_ptr<Model> model); 
 
+            bool AddModelSelectively(std::shared_ptr<Model> model, double x, double y); 
+
             void AddToWorld(std::string &world_string);
 
             double Area();

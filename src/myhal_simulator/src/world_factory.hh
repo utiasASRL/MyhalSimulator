@@ -25,9 +25,10 @@ class RoomInfo{
         std::shared_ptr<myhal::Room> room;
         std::string scenario;
         std::vector<std::vector<double>> positions;
+        std::string room_name;
 
-        RoomInfo(std::shared_ptr<myhal::Room> _room, std::string _scenario, std::vector<std::vector<double>> _positions):
-        room(_room), scenario(_scenario), positions(_positions){}
+        RoomInfo(std::shared_ptr<myhal::Room> _room, std::string _scenario, std::vector<std::vector<double>> _positions, std::string _room_name):
+        room(_room), scenario(_scenario), positions(_positions), room_name(_room_name){}
 
 };
 
@@ -119,6 +120,8 @@ class WorldHandler{
         //std::map<std::string, std::shared_ptr<SDFPlugin>> vehicle_plugins; //one per actor
 
         std::map<std::string, std::vector<std::shared_ptr<SDFPlugin>>> vehicle_plugins; //one per actor
+        std::map<std::string, double> custom_actor_spawn_parameters;
+        std::string use_custom_spawn_room;
 
         std::vector<std::shared_ptr<SDFAnimation>> animation_list; //added to all actors 
         std::map<std::string, std::shared_ptr<ModelInfo>> model_info;

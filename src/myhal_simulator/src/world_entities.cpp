@@ -507,6 +507,21 @@ bool Room::AddModelRandomly(std::shared_ptr<Model> model)
     return found;
 }
 
+/* 
+* AddModelSelectively spawn the actor model at given position (x, y, 0, 0, 0).  
+* Does not check if the position is valid!
+* TODO: Add rotation definition for the spawn
+*/
+bool Room::AddModelSelectively(std::shared_ptr<Model> model, double x, double y)
+{
+
+    bool found = true;
+    model->Reposition(x, y);
+    this->AddModel(model);
+    return found;
+}
+
+
 void Room::AddToWorld(std::string &world_string)
 {
     for (std::shared_ptr<Model> model : this->models)

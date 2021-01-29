@@ -14,8 +14,8 @@ int main(int argc, char ** argv){
     auto world_handler = WorldHandler();
 
     world_handler.Load();
-    
 
+    
     return 0;
 }
 
@@ -456,6 +456,18 @@ void WorldHandler::LoadParams(){
         this->scenarios[name] = scenario;
     }
 
+    //READ CUSTOM SCENARIO INFO
+
+    if (!nh.getParam("/custom_actor_spawn/use_custom_spawn_room", this->use_custom_spawn_room)){
+        ROS_INFO("COULD NOT READ USE CUSTOM ACTOR SPAWN PARAMETER. SET TO FALSE.");
+        this->use_custom_spawn_room = "";
+    }
+
+    if (!this->use_custom_spawn_room.empty()){
+        if(!nh.getParam("/custom_actor_spawn_coordinates", this->custom_actor_spawn_parameters)){
+            ROS_ERROR("COULD NOT READ ACTOR SPAWN COORDINATES WHILE CUSTOM ACTOR SPAWN IS ACTIVATED. CHECK FILE STRUCTURE: custom_simulation_params.yaml");
+        }
+    }
 
     /// READ ROOM INFO
 
@@ -493,8 +505,8 @@ void WorldHandler::LoadParams(){
             positions.push_back({poses[j],poses[j+1]});
         }
   
-       
-        auto r_info = std::make_shared<RoomInfo>(room, info["scenario"], positions);
+
+        auto r_info = std::make_shared<RoomInfo>(room, info["scenario"], positions, name);
         this->rooms.push_back(r_info);
         
     }
@@ -572,33 +584,65 @@ void WorldHandler::FillRoom(std::shared_ptr<RoomInfo> room_info){
 
          
     }
+   
+    if (this->use_custom_spawn_room.find(room_info->room_name) != std::string::npos){
+        int num_actors = (int) ((scenario->pop_density)*(room_info->room->Area()));
+        // todo: replace by function that divide the density to get desired number of actors while avoiding empty rooms
+        // To avoid empty rooms, only apply to room that have a non-zero density. Originally wanted to use room names but its not available here
+        if (num_actors!=0){
 
+            num_actors = this->custom_actor_spawn_parameters["num_actors"];
+            auto a_info = this->actor_info[scenario->actor];
 
-    int num_actors = (int) ((scenario->pop_density)*(room_info->room->Area()));
-    auto a_info = this->actor_info[scenario->actor];
-    //auto plugin = this->vehicle_plugins[a_info->plugin];
+            for (int i =0; i<num_actors; i++){
+                auto new_actor = std::make_shared<myhal::Actor>(a_info->name, ignition::math::Pose3d(0,0,2,0,0,ignition::math::Rand::DblUniform(0,6.28)), a_info->filename, a_info->width, a_info->length); //TODO randomize initial Rot
 
-    for (int i =0; i<num_actors; i++){
-        auto new_actor = std::make_shared<myhal::Actor>(a_info->name, ignition::math::Pose3d(0,0,1,0,0,ignition::math::Rand::DblUniform(0,6.28)), a_info->filename, a_info->width, a_info->length); //TODO randomize initial Rot
-
-        for (auto animation: this->animation_list){
-            new_actor->AddAnimation(animation);
+                for (auto animation: this->animation_list){
+                    new_actor->AddAnimation(animation);
+                    
+                }
+                auto plugin_list = this->vehicle_plugins[a_info->plugin];
             
+                for (auto plugin: plugin_list){ 
+                    new_actor->AddPlugin(plugin);
+                }
+
+                double x_spawn, y_spawn;
+                x_spawn = (double) this->custom_actor_spawn_parameters["spawn_x_" + std::to_string(i)];
+                y_spawn = (double) this->custom_actor_spawn_parameters["spawn_y_" + std::to_string(i)];
+                room_info->room->AddModelSelectively(new_actor, x_spawn, y_spawn);
+
+            }
         }
-        auto plugin_list = this->vehicle_plugins[a_info->plugin];
-       
-        for (auto plugin: plugin_list){
-            new_actor->AddPlugin(plugin);
-        }
-        
-        
-        //new_actor->AddPlugin(plugin);
-        
-        
-       
-        room_info->room->AddModelRandomly(new_actor);
+        return;
     }
 
+    else{
+        int num_actors = (int) ((scenario->pop_density)*(room_info->room->Area()));
+        auto a_info = this->actor_info[scenario->actor];
+        //auto plugin = this->vehicle_plugins[a_info->plugin];
+
+        for (int i =0; i<num_actors; i++){
+            auto new_actor = std::make_shared<myhal::Actor>(a_info->name, ignition::math::Pose3d(0,0,1,0,0,ignition::math::Rand::DblUniform(0,6.28)), a_info->filename, a_info->width, a_info->length); //TODO randomize initial Rot
+
+            for (auto animation: this->animation_list){
+                new_actor->AddAnimation(animation);
+            }
+            auto plugin_list = this->vehicle_plugins[a_info->plugin];
+        
+            for (auto plugin: plugin_list){
+                new_actor->AddPlugin(plugin);
+            }
+            
+            
+            //new_actor->AddPlugin(plugin);
+            
+            
+        
+            room_info->room->AddModelRandomly(new_actor);
+        }
+        return;
+    }
 }
 
 

@@ -921,3 +921,289 @@ void PathFollower::RePath(){
     } while (!this->costmap->AStar(this->pose.Pos(), next_goal, this->curr_path, false));
     
 }
+
+
+
+
+////////////////////////////////////
+// ExtendedSocialForce_Actor
+void ExtendedSocialForce_Actor::OnUpdate(const gazebo::common::UpdateInfo &_info, double dt, std::vector<boost::shared_ptr<Vehicle>> vehicles, std::vector<gazebo::physics::EntityPtr> objects){
+
+
+    if ((this->pose.Pos() - this->curr_target).Length()<this->arrival_distance){
+        this->SetNextTarget(this->all_objects); //TODO: Include the relaxation time
+    }
+
+    this->Seek(this->curr_target); //TODO: include weight to see the effect
+    this->ExtendedSFHuman(vehicles);
+    this->ExtendedSFRobot(objects);
+    this->ExtendedSFObstacle(objects);
+    
+    this->UpdatePosition(dt);
+    this->UpdateModel();
+}
+
+void ExtendedSocialForce_Actor::SetNextTarget(std::vector<gazebo::physics::EntityPtr> objects){
+    bool target_found = false;
+
+    while (!target_found){
+        
+        auto dir = this->velocity;
+		if (dir.Length() < 1e-6){
+			dir = ignition::math::Vector3d(ignition::math::Rand::DblUniform(-1, 1),ignition::math::Rand::DblUniform(-1, 1),0);
+		}
+        dir.Normalize();
+        auto rotation =  ignition::math::Quaterniond::EulerToQuaternion(0,0,ignition::math::Rand::DblUniform(-3, 3)); 
+		dir = rotation.RotateVector(dir);
+        dir*=10000;
+		auto ray = ignition::math::Line3d(this->pose.Pos().X(), this->pose.Pos().Y(), this->pose.Pos().X() + dir.X(), this->pose.Pos().Y() + dir.Y());
+		ignition::math::Vector3d closest_intersection;
+        ignition::math::Line3d closest_edge;
+		double min_dist = 100000;
+
+        for (auto object: objects){
+           
+            auto box = object->BoundingBox();
+
+            std::vector<ignition::math::Line3d> edges = utilities::get_box_edges(box);
+
+            for (ignition::math::Line3d edge: edges){
+    
+				ignition::math::Vector3d test_intersection;
+
+				if (ray.Intersect(edge, test_intersection)){ //if the ray intersects the boundary
+                    ignition::math::Vector3d zero_z = this->pose.Pos();
+                    zero_z.Z() = 0;
+					double dist_to_int = (test_intersection-zero_z).Length();
+					if (dist_to_int < min_dist){
+						min_dist = dist_to_int;
+						closest_intersection = test_intersection;
+                        closest_edge = edge;
+					}
+
+				}
+						
+			}
+        }
+
+        auto zero_z = this->pose.Pos();
+        zero_z.Z() = 0;
+        auto final_ray = closest_intersection - zero_z;
+		auto v_to_add = final_ray*ignition::math::Rand::DblUniform(0.1,0.9);
+
+        ignition::math::Vector3d normal;
+        if (utilities::get_normal_to_edge(this->pose.Pos(), closest_edge, normal) && (normal.Length() < this->obstacle_margin)){
+            continue;
+      
+        } 
+
+        if ((final_ray-v_to_add).Length() < (this->obstacle_margin)){ 
+			v_to_add.Normalize();
+			auto small_subtraction = (v_to_add*this->obstacle_margin)*2;
+			v_to_add = final_ray - small_subtraction;
+			if (small_subtraction.Length() > final_ray.Length()){
+				v_to_add*=0;
+			}
+		}
+		
+		this->curr_target = v_to_add + this->pose.Pos();
+        this->curr_target.Z() = this->height;
+		target_found = true;
+    }
+
+    
+}
+
+/**
+ * Define the social interaction forces (social and physical) for human interactions according to 
+ *      Anvari et al., IROS 2020. All the constant parameter used in calculation are calculated using
+ *      the paper recommended values. They should be calibrated for different interaction types, 
+ *      and represent a starting point for this analysis.
+ * 
+ * @param vehicles pointer to all actors in the scene 
+ * 
+ */
+void ExtendedSocialForce_Actor::ExtendedSFHuman(std::vector<boost::shared_ptr<Vehicle>> vehicles){
+    //ignition::math::Rand::Seed(42);
+    ignition::math::Vector3d steer = ignition::math::Vector3d(0,0,0);
+    double interaction_strength = 0.8 + ignition::math::Rand::DblUniform(-0.1,0.1);
+    double interaction_range = 1 + ignition::math::Rand::DblUniform(-0.25,0.25);
+
+    for (int i =0; i<(int) vehicles.size(); i++){
+        auto other = vehicles[i]->GetActor();
+        if (other == this->actor){
+            continue;
+        }
+        ignition::math::Vector3d this_pos = this->pose.Pos();
+		this_pos.Z() = 0;
+		ignition::math::Vector3d other_pos = other->WorldPose().Pos();
+		other_pos.Z() = 0;
+		ignition::math::Vector3d rad = this_pos-other_pos;
+		double dist = rad.Length();
+        dist = std::max(0.0, dist-0.2); //acounting for the radius of the person
+
+        auto dir = this->curr_target;
+        dir.Normalize();
+        rad.Normalize();
+        double angle_rad_dir = std::acos(dir.Dot(rad));
+        double SF_form_factor = 0.2 + 0.4 * (1 + std::cos(angle_rad_dir));
+        rad *= 5 * interaction_strength * std::exp(-dist/interaction_range) * SF_form_factor;
+        steer += rad;
+
+		if (dist<this->actor_margin && dist > 0){ //Add physical force for when there is a collision	
+			rad/=dist;
+			steer += rad;
+		}
+
+    if (steer.Length()>this->max_force){
+			steer.Normalize();
+			steer*=this->max_force;
+	}
+    steer.Z() = 0;
+
+    this->ApplyForce(steer);
+    }
+}
+
+/*
+SEE https://pdfs.semanticscholar.org/9fe0/8e8f61e1a173e7487ebc712bf429e3e9f213.pdf?_ga=2.196497262.372224845.1607942871-148799776.1607942871
+FOR FORCES DESCRIPTION
+
+WORK ON CONTACT FORCE
+*/
+void ExtendedSocialForce_Actor::ExtendedSFRobot(std::vector<gazebo::physics::EntityPtr> objects){
+    //ignition::math::Rand::Seed(42);
+    ignition::math::Vector3d boundary_force = ignition::math::Vector3d(0,0,0);
+    double interaction_strength = 1.2;
+    double interaction_range = 2.6;
+
+    for (gazebo::physics::EntityPtr object: objects){
+        if (object->GetName() == "jackal"){
+
+            //std::cout<<"applying robot force"<< std::endl;
+            ignition::math::Box box = object->BoundingBox();
+
+            ignition::math::Vector3d rad = this->pose.Pos() - box.Center();
+            double dist = rad.Length();
+            dist = std::max(0.0, dist-0.2); //acounting for the radius of the person
+
+            auto dir = this->curr_target;
+            dir.Normalize();
+            rad.Normalize();
+            double angle_rad_dir = std::acos(dir.Dot(rad));
+            double SF_form_factor = 0.2 + 0.4 * (1 + std::cos(angle_rad_dir));
+            rad *= interaction_strength * std::exp(-dist/interaction_range) * SF_form_factor;
+
+            if (dist < this->obstacle_margin){
+                rad *= 100; //multiply force if we're too close
+               // std::cout<<"Too close to the robot: " << this->GetName() <<std::endl;
+		    }
+            boundary_force += rad;
+        }
+    }
+    boundary_force.Z() = 0;
+    this->ApplyForce(boundary_force);
+}
+
+/**
+* Define the obstacle avoidance forces that act on humans in the scene according to the Extended
+*       Social Force Model of Anvari et al., IROS 2020. All the constant parameter used in calculation 
+*       are calculated using the paper recommended values. They should be calibrated for different 
+*       interaction types, and represent a starting point for this analysis.
+*
+* @param objects pointer to all objects in the scene. 
+**/
+
+void ExtendedSocialForce_Actor::ExtendedSFObstacle(std::vector<gazebo::physics::EntityPtr> objects){
+    ignition::math::Vector3d boundary_force = ignition::math::Vector3d(0,0,0);
+    double interaction_strength = 0.8 + ignition::math::Rand::DblUniform(-0.1,0.1);
+    double interaction_range = 1 + ignition::math::Rand::DblUniform(-0.25,0.25);
+
+    for (gazebo::physics::EntityPtr object: objects){
+        ignition::math::Box box = object->BoundingBox();
+
+        ignition::math::Vector3d rad = this->pose.Pos() - box.Center();
+		double dist = rad.Length();
+        dist = std::max(0.0, dist-0.2); //acounting for the radius of the person
+
+        auto dir = this->curr_target;
+        dir.Normalize();
+        rad.Normalize();
+        double angle_rad_dir = std::acos(dir.Dot(rad));
+        double SF_form_factor = 0.2 + 0.4 * (1 + std::cos(angle_rad_dir));
+        rad *= interaction_strength * std::exp(-dist/interaction_range) * SF_form_factor;
+
+        if (dist < this->obstacle_margin){
+			rad *= 100; //multiply force if we're too close
+            std::cout<<"Too close to the obstacle : " << this->GetName() <<std::endl;
+		}
+        boundary_force += rad;
+    }
+    boundary_force.Z() = 0;
+    this->ApplyForce(boundary_force);
+}
+
+ 
+
+// CUSTOM_WANDERER
+/*
+* Custom_Wanderer will follow the goals defined in custom_simulation_params.yaml. 
+* They have the same behavior as a Wanderer otherwise. 
+* TODO: Add options to change the type of behavior: sitter, extendedSF, custom: yield/no-yield behavior etc...
+*/
+
+Custom_Wanderer::Custom_Wanderer(gazebo::physics::ActorPtr _actor,
+double _mass,
+double _max_force, 
+double _max_speed, 
+ignition::math::Pose3d initial_pose, 
+ignition::math::Vector3d initial_velocity, 
+std::vector<gazebo::physics::EntityPtr> objects, 
+std::map<std::string, double> _custom_actor_goal,
+std::vector<std::string> _vehicle_names)
+: Vehicle(_actor, _mass, _max_force, _max_speed, initial_pose, initial_velocity, objects){
+    this->custom_actor_goal = _custom_actor_goal;
+    this->vehicle_names = _vehicle_names;
+}
+
+void Custom_Wanderer::OnUpdate(const gazebo::common::UpdateInfo &_info, double dt, std::vector<boost::shared_ptr<Vehicle>> vehicles, std::vector<gazebo::physics::EntityPtr> objects){
+
+    this->SetNextTarget(vehicles);
+    this->Seek(this->curr_target);
+    this->AvoidActors(vehicles);
+    this->AvoidObstacles(objects);
+    
+    this->UpdatePosition(dt);
+    this->UpdateModel();
+}
+
+/*
+* SetNextTarget sort all actor names, and send a custom goal to one Custom_Wanderer agent following the spawning order.
+* The objective is to keep the same order as in params/custom_simulation_params.yaml; in order to send the corresponding
+* goal_x, goal_y to each actor. 
+*
+* Using the custom_wanderer type implies that a custom_simulation_params file exists with the right structure.
+* If there are more custom_wanderers than goal specified, the first goal (x_0,y_0) is passed to all the undefined actors. 
+*/
+void Custom_Wanderer::SetNextTarget(std::vector<boost::shared_ptr<Vehicle>> vehicles){
+    int count(0);
+    for (auto name: this->vehicle_names){
+        if(this->GetName() == name){
+            break;
+        }
+        if(name.find("actor_custom_") != std::string::npos){
+            count+=1;
+        }
+    }
+
+    ignition::math::v4::Vector3d goal;
+    if ( this->custom_actor_goal.find("goal_x_"+std::to_string(count)) == custom_actor_goal.end() ) {
+        goal.Set(this->custom_actor_goal["goal_x_0"], this->custom_actor_goal["goal_y_0"], 0);
+    } else {
+        goal.Set(this->custom_actor_goal["goal_x_"+std::to_string(count)], this->custom_actor_goal["goal_y_"+std::to_string(count)], 0);
+    }
+
+    this->curr_target = this->pose.Pos() + goal;
+    this->curr_target.Z() = this->height; 
+    
+}

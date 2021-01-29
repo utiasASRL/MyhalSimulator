@@ -14,6 +14,24 @@ move_base_msgs::MoveBaseGoal PoseToGoal(ignition::math::Pose3d pose){
     return goal;
 }
 
+/*
+* PoseToHardcodedGoal send a parametrized goal to the robot (x_target, y_target) to create simple scenario for testing purposes.
+*/
+move_base_msgs::MoveBaseGoal PoseToHardcodedGoal(ignition::math::Pose3d pose, double x_target, double y_target){
+
+    move_base_msgs::MoveBaseGoal goal;
+    goal.target_pose.header.frame_id = "map";
+    goal.target_pose.header.stamp = ros::Time::now();
+    goal.target_pose.pose.position.x = x_target;
+    goal.target_pose.pose.position.y = y_target;
+    goal.target_pose.pose.position.z = 0;
+    goal.target_pose.pose.orientation.w = pose.Rot().W();
+    goal.target_pose.pose.orientation.x = pose.Rot().X();
+    goal.target_pose.pose.orientation.y = pose.Rot().Y();
+    goal.target_pose.pose.orientation.z = pose.Rot().Z();
+    return goal;
+}
+
 TourParser::TourParser(std::string name){
     this->username = "default";
     if (const char * user = std::getenv("USER")){

@@ -56,7 +56,7 @@ else
         docker_args="-i --rm --shm-size=64g " 
     else
         docker_args="-it --rm --shm-size=64g "
-    fi
+    fi 
 fi
 
 # Running on gpu (Uncomment to enable gpu)
