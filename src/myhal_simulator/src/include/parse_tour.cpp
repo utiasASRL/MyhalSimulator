@@ -32,7 +32,12 @@ move_base_msgs::MoveBaseGoal PoseToHardcodedGoal(ignition::math::Pose3d pose, do
     return goal;
 }
 
-TourParser::TourParser(std::string name){
+/*
+* TourParser constructor. 
+* @param name Tour name.
+* @param parse_digits  Optional. Default value = false.
+*/
+TourParser::TourParser(std::string name, bool _parse_digits){
     this->username = "default";
     if (const char * user = std::getenv("USER")){
         this->username = user;
@@ -40,6 +45,7 @@ TourParser::TourParser(std::string name){
 
     this->tour_name = name;
     this->tour_path = "/home/" + this->username + "/catkin_ws/src/myhal_simulator/tours/" + name + "/";
+    this->parse_digits = _parse_digits;
     this->ReadTourParams();
     this->ParseTour();
 }
@@ -75,6 +81,7 @@ void TourParser::ParseTour(){
     int row = 0;
     
     std::vector<TrajPoint> traj;
+    std::vector<TrajPoint> traj_digits;
 
    
     while (std::getline(tour_file, line)){
@@ -87,6 +94,16 @@ void TourParser::ParseTour(){
                 map.IndiciesToPos(loc, row, col);
                 ignition::math::Pose3d pose = ignition::math::Pose3d(loc, ignition::math::Quaterniond(0,0,0,1));
                 traj.push_back(TrajPoint(pose, (double) order));
+            }
+
+            if(this->parse_digits){
+                if (std::isdigit(line[col])){
+                    int order = (int)line[col];
+                    ignition::math::Vector3d loc;
+                    map.IndiciesToPos(loc, row, col);
+                    ignition::math::Pose3d pose = ignition::math::Pose3d(loc, ignition::math::Quaterniond(0,0,0,1));
+                    traj_digits.push_back(TrajPoint(pose, (double) order));
+                }
             }
             
         }
@@ -103,8 +120,26 @@ void TourParser::ParseTour(){
         this->route.push_back(point.pose);
     }
 
+    if(this->parse_digits){
+        std::sort(traj_digits.begin(), traj_digits.end());
+        for (auto point: traj_digits){
+            this->route_digits.push_back(point.pose);
+        }
+    }
+
 }
 
+/*
+* GetRoute return the parsed route from alphanumerical characters (A-Z) in /worlds/map.txt.
+*/
 std::vector<ignition::math::Pose3d> TourParser::GetRoute(){
     return this->route;
+}
+
+/*
+* GetDigitsCoordinates return the parsed coordinates from digit characters (1-9) in /worlds/map.txt. 
+* Coordinates are intended to be passed as randomly selected objectives for path_followers actor type (and not as an explicit route from a given start to a given finish).
+*/
+std::vector<ignition::math::Pose3d> TourParser::GetDigitsCoordinates(){
+    return this->route_digits;
 }

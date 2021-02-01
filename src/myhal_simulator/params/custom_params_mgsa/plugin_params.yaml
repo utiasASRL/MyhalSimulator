@@ -7,6 +7,7 @@ plugin_names:
   - long_term_stander
   - advanced_extendedSF
   - custom_wanderer
+  - path_follower
 
 basic_wanderer:
   vehicle_type: wanderer
@@ -43,4 +44,8 @@ advanced_extendedSF:
 
 custom_wanderer:
   vehicle_type: custom_wanderer
+  max_speed: "1"
+
+path_follower: 
+  vehicle_type: "path_follower"
   max_speed: "1"

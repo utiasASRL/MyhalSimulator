@@ -16,6 +16,7 @@ scenario_names:
   - long_term_standers
   - med_tables
   - dem_people
+  - path_follower_low_density
   - test_SF
   - no_tables_random_walker
   - test_custom_wanderer
@@ -135,6 +136,12 @@ long_term_standers:
   pop_density: "0.1"
   table_percentage: "0"
   actor: actor_long_term_stander
+  table_group_list: mixed_group
+
+path_follower_low_density:
+  pop_density: "0.1"
+  table_percentage: "0"
+  actor: actor_path_follower
   table_group_list: mixed_group
 
 test_SF:

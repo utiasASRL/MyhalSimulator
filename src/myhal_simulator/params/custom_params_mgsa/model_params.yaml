@@ -100,6 +100,7 @@ actor_names:
   - actor_long_term_stander
   - actor_extendedSF
   - actor_custom_wanderer
+  - actor_path_follower
   
 actor_basic_wanderer: 
   filename: model://actor/meshes/SKIN_man_blue_shirt.dae
@@ -139,6 +140,11 @@ actor_extendedSF:
 actor_custom_wanderer: 
   filename: model://actor/meshes/SKIN_man_blue_shirt.dae
   plugin: custom_wanderer
+  obstacle_margin: "0.3"
+
+actor_path_follower: 
+  filename: model://actor/meshes/SKIN_man_blue_shirt.dae
+  plugin: path_follower
   obstacle_margin: "0.3"
 
 # table group parameters 

@@ -30,7 +30,7 @@ void Puppeteer::Load(gazebo::physics::WorldPtr _world, sdf::ElementPtr _sdf){
 
     this->path_pub = this->nh.advertise<geometry_msgs::PoseStamped>("optimal_path",1000);
 
-    auto building = this->world->ModelByName(this->building_name);
+    auto building = this->world->ModelByName(this->building_name); 
 
     this->building_box = building->BoundingBox();
     this->building_box.Min().X()-=1;
@@ -40,6 +40,18 @@ void Puppeteer::Load(gazebo::physics::WorldPtr _world, sdf::ElementPtr _sdf){
     this->static_quadtree = boost::make_shared<QuadTree>(this->building_box);
     this->vehicle_quadtree = boost::make_shared<QuadTree>(this->building_box);
     this->costmap = boost::make_shared<Costmap>(this->building_box, 0.2);
+    this->digits_coordinates = boost::make_shared<std::vector<ignition::math::Pose3d>>();
+
+    // Parse digit coordinates in ./worlds/map.txt for path_followers
+    bool parse_digits(true);
+    if (parse_digits == true){
+
+        TourParser parser_path_follower = TourParser(this->tour_name, parse_digits);
+        std::vector<ignition::math::Pose3d> _digits_coordinates = parser_path_follower.GetDigitsCoordinates();
+        for (auto v: _digits_coordinates){
+            this->digits_coordinates->push_back(v);
+        }
+    }
  
     for (unsigned int i = 0; i < world->ModelCount(); ++i) {
         auto model = world->ModelByIndex(i);
@@ -92,6 +104,7 @@ void Puppeteer::Load(gazebo::physics::WorldPtr _world, sdf::ElementPtr _sdf){
         }
     }
 
+    // Parse robot tour from ./worlds/map.txt
     if (this->tour_name != ""){
         TourParser parser = TourParser(this->tour_name);
         auto route = parser.GetRoute();
@@ -364,7 +377,7 @@ boost::shared_ptr<Vehicle> Puppeteer::CreateVehicle(gazebo::physics::ActorPtr ac
             }
         } else if (actor_info["vehicle_type"] == "path_follower"){
 
-            res = boost::make_shared<PathFollower>(actor, this->vehicle_params["mass"], this->vehicle_params["max_force"], max_speed, actor->WorldPose(), ignition::math::Vector3d(0,0,0), this->collision_entities, this->costmap);
+            res = boost::make_shared<PathFollower>(actor, this->vehicle_params["mass"], this->vehicle_params["max_force"], max_speed, actor->WorldPose(), ignition::math::Vector3d(0,0,0), this->collision_entities, this->costmap, this->digits_coordinates);
             
         } else {
             std::cout << "INVALID VEHICLE TYPE\n";

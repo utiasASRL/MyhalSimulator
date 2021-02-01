@@ -352,6 +352,8 @@ class PathFollower: public Wanderer{
 
         boost::shared_ptr<Costmap> costmap;
 
+        boost::shared_ptr<std::vector<ignition::math::Pose3d>> digits_coordinates;
+
         std::vector<ignition::math::Vector3d> curr_path;
 
         int path_ind;
@@ -367,7 +369,8 @@ class PathFollower: public Wanderer{
          ignition::math::Pose3d initial_pose, 
          ignition::math::Vector3d initial_velocity, 
          std::vector<gazebo::physics::EntityPtr> objects,
-         boost::shared_ptr<Costmap> costmap);
+         boost::shared_ptr<Costmap> costmap,
+         boost::shared_ptr<std::vector<ignition::math::Pose3d>> digits_coordinates);
 
         void OnUpdate(const gazebo::common::UpdateInfo &_info, double dt, std::vector<boost::shared_ptr<Vehicle>> vehicles, std::vector<gazebo::physics::EntityPtr> objects);
 };

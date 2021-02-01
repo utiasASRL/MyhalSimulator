@@ -101,6 +101,8 @@ class Puppeteer: public gazebo::WorldPlugin{
 
         ros::Subscriber tf_sub;
 
+        boost::shared_ptr<std::vector<ignition::math::Pose3d>> digits_coordinates;
+
         std::vector<std::vector<ignition::math::Vector3d>> paths;
 
         std::vector<ignition::math::Vector3d> robot_traj;

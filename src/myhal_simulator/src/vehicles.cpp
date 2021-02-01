@@ -888,9 +888,11 @@ double _max_speed,
 ignition::math::Pose3d initial_pose, 
 ignition::math::Vector3d initial_velocity, 
 std::vector<gazebo::physics::EntityPtr> objects,
-boost::shared_ptr<Costmap> costmap)
+boost::shared_ptr<Costmap> costmap,
+boost::shared_ptr<std::vector<ignition::math::Pose3d>> digits_coordinates)
 : Wanderer(_actor, _mass, _max_force, _max_speed, initial_pose, initial_velocity, objects){
     this->costmap = costmap;
+    this->digits_coordinates = digits_coordinates;
     this->path_ind =0;
     
     this->RePath();
@@ -901,7 +903,7 @@ boost::shared_ptr<Costmap> costmap)
 
 void PathFollower::OnUpdate(const gazebo::common::UpdateInfo &_info, double dt, std::vector<boost::shared_ptr<Vehicle>> vehicles, std::vector<gazebo::physics::EntityPtr> objects){
     
-    
+
     this->Follow();
     this->AvoidActors(vehicles);
     this->AvoidObstacles(objects);
@@ -916,8 +918,14 @@ void PathFollower::RePath(){
     ignition::math::Vector3d next_goal;
     this->curr_path.clear();
     do{
-        next_goal = this->costmap->RandPos();
-        //std::cout << "GOAL: " << next_goal << std::endl;
+        if (this->digits_coordinates->size() == 0){
+            next_goal = this->costmap->RandPos();
+        }
+        else {
+            auto& digits_ref = *this->digits_coordinates;
+            next_goal = digits_ref[rand() % this->digits_coordinates->size()].Pos();
+        } 
+       // std::cout << "GOAL: " << next_goal << std::endl;
     } while (!this->costmap->AStar(this->pose.Pos(), next_goal, this->curr_path, false));
     
 }
