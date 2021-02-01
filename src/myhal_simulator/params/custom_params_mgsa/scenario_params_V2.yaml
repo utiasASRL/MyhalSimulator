@@ -144,7 +144,7 @@ test_SF:
   table_group_list: big_table_group
 
 test_custom_wanderer:
-  pop_density: "0.05"
+  pop_density: "0.09"
   table_percentage: "0"
   actor: actor_custom_wanderer
   table_group_list: big_table_group
