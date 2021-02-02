@@ -23,6 +23,8 @@ class Costmap
 private:
 	ignition::math::Box boundary;
 
+	std::string start_time;
+
 	double resolution;
 
 	ignition::math::Vector3d top_left;
@@ -63,15 +65,25 @@ public:
 
     int obj_count;
 
+	std::vector<std::vector<ignition::math::Vector3d>> flow_field_offsets;
+
+	std::vector<std::vector<double>> flow_field_angles;
+
 	bool PosToIndicies(ignition::math::Vector3d pos, int &r, int &c);
 
 	bool IndiciesToPos(ignition::math::Vector3d &pos, int r, int c);
 
 	bool Integrate(ignition::math::Vector3d goal);
 
+	void ComputeFlowField(ignition::math::Vector3d end);
+
+	void SaveFlowField(ignition::math::Vector3d end);
+
+	double GetNeighbourAngle(std::vector<int> curr_ind, std::vector<int> neighbour_ind);
+
 	std::vector<std::vector<int>> GetNeighbours(std::vector<int> curr_ind, bool diag = false);
 
-	Costmap(ignition::math::Box boundary, double resolution);
+	Costmap(ignition::math::Box boundary, double resolution, std::string start_time = (""));
 
 	void AddObject(ignition::math::Box object);
 

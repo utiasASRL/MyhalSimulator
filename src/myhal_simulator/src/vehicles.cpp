@@ -234,6 +234,10 @@ void Vehicle::Seek(ignition::math::Vector3d target, double weight){
     }
 
     ApplyForce(steer);
+    // if(steer.Length() != 0){
+    //     std::cout << this->GetName() << " steer force: " << steer << std::endl;
+    // }
+    
 }
 
 void Vehicle::Arrival(ignition::math::Vector3d target, double weight){ 
@@ -262,13 +266,40 @@ void Vehicle::Arrival(ignition::math::Vector3d target, double weight){
 }
 
 void Vehicle::AvoidObstacles(std::vector<gazebo::physics::EntityPtr> objects){
+//     ignition::math::Vector3d boundary_force = ignition::math::Vector3d(0,0,0);
+//     double interaction_strength = 0.8 + ignition::math::Rand::DblUniform(-0.1,0.1);
+//     double interaction_range = 1 + ignition::math::Rand::DblUniform(-0.25,0.25);
 
+//     for (gazebo::physics::EntityPtr object: objects){
+//         ignition::math::Box box = object->BoundingBox();
+
+//         ignition::math::Vector3d rad = this->pose.Pos() - box.Center();
+// 		double dist = rad.Length();
+//         dist = std::max(0.0, dist-0.2); //acounting for the radius of the person
+
+//         auto dir = this->curr_target;
+//         dir.Normalize();
+//         rad.Normalize();
+//         double angle_rad_dir = std::acos(dir.Dot(rad));
+//         double SF_form_factor = 0.2 + 0.4 * (1 + std::cos(angle_rad_dir));
+//         rad *= interaction_strength * std::exp(-dist/interaction_range) * SF_form_factor;
+
+//         if (dist < this->obstacle_margin){
+// 			rad *= 100; //multiply force if we're too close
+//             std::cout<<"Too close to the obstacle : " << this->GetName() <<std::endl;
+// 		}
+//         boundary_force += rad;
+//         std::cout << this->GetName() << " boundary force: " << boundary_force << std::endl;
+//     }
+//     boundary_force.Z() = 0;
+//     this->ApplyForce(boundary_force);
+// }
     ignition::math::Vector3d boundary_force = ignition::math::Vector3d(0,0,0);
     for (gazebo::physics::EntityPtr object: objects){
         ignition::math::Box box = object->BoundingBox();
         // inflate the box slightly
 
-        double inflate = 0.1;
+        double inflate = 0.05;
         if (object->GetName() == "jackal"){
             inflate = 0.2;
         }
@@ -292,11 +323,19 @@ void Vehicle::AvoidObstacles(std::vector<gazebo::physics::EntityPtr> objects){
 		double dist = min_normal.Length();
 		if (dist < this->obstacle_margin){
 			min_normal.Normalize();
-			boundary_force += min_normal/(dist*dist);
+			boundary_force += min_normal/exp(dist*dist);
 		}
+    }
+    if (boundary_force.Length()>this->max_force){
+        boundary_force.Normalize();
+        boundary_force*=this->max_force;
     }
     boundary_force.Z() =0;
     this->ApplyForce(boundary_force);
+    if(boundary_force.Length() !=0){
+        std::cout << this->GetName() << " boundary force: " << boundary_force << std::endl;
+    }
+    
 }
 
 void Vehicle::AvoidActors(std::vector<boost::shared_ptr<Vehicle>> vehicles){
@@ -328,6 +367,9 @@ void Vehicle::AvoidActors(std::vector<boost::shared_ptr<Vehicle>> vehicles){
 	}
     steer.Z() = 0;
     this->ApplyForce(steer);
+    if(steer.Length() != 0){
+        std::cout << this->GetName() << " avoid actor force: " << steer << std::endl;
+    }
 }
 
 void Vehicle::SetAllObjects(std::vector<gazebo::physics::EntityPtr> objects){
@@ -877,7 +919,7 @@ void PathFollower::Follow(){
         //std::cout << "TARGET: " << this->curr_target << std::endl;
     }
     
-    this->Seek(this->curr_target);
+    this->Seek(this->curr_target, 7);
 
 }
 
@@ -926,8 +968,16 @@ void PathFollower::RePath(){
             next_goal = digits_ref[rand() % this->digits_coordinates->size()].Pos();
         } 
        // std::cout << "GOAL: " << next_goal << std::endl;
-    } while (!this->costmap->AStar(this->pose.Pos(), next_goal, this->curr_path, false));
-    
+    }while (!this->costmap->AStar(this->pose.Pos(), next_goal, this->curr_path, false));
+    std::cout <<" Coucou" << std::endl;
+    this->costmap->ComputeFlowField(next_goal);
+    this->costmap->SaveFlowField(next_goal);
+    //
+    //while (!this->costmap->FindPath(this->pose.Pos(), next_goal, this->curr_path));
+    // std::string costmap_string;
+    // costmap_string = this->costmap->ToString();
+    // std::ofstream out("output.txt");
+    // out << costmap_string;
 }
 
 

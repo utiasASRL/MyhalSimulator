@@ -1,8 +1,8 @@
 common_vehicle_params:
-  mass: 1
+  mass: 0.1
   max_force: 10
-  slowing_distance: 2
-  arrival_distance: 0.5
+  slowing_distance: 1
+  arrival_distance: 1
   obstacle_margin: 0.6
   blocking: 1
   start_mode: 0 #2 for random, 1 for walking, 0 for standing

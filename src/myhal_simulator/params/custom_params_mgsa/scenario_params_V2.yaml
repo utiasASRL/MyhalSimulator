@@ -139,7 +139,7 @@ long_term_standers:
   table_group_list: mixed_group
 
 path_follower_low_density:
-  pop_density: "0.1"
+  pop_density: "0.08"
   table_percentage: "0"
   actor: actor_path_follower
   table_group_list: mixed_group

@@ -39,7 +39,7 @@ void Puppeteer::Load(gazebo::physics::WorldPtr _world, sdf::ElementPtr _sdf){
     this->building_box.Max().Y()+=1;
     this->static_quadtree = boost::make_shared<QuadTree>(this->building_box);
     this->vehicle_quadtree = boost::make_shared<QuadTree>(this->building_box);
-    this->costmap = boost::make_shared<Costmap>(this->building_box, 0.2);
+    this->costmap = boost::make_shared<Costmap>(this->building_box, 0.2, this->start_time);
     this->digits_coordinates = boost::make_shared<std::vector<ignition::math::Pose3d>>();
 
     // Parse digit coordinates in ./worlds/map.txt for path_followers
@@ -390,13 +390,18 @@ boost::shared_ptr<Vehicle> Puppeteer::CreateVehicle(gazebo::physics::ActorPtr ac
 
 void Puppeteer::ReadParams(){
 
+    if (!nh.getParam("start_time", this->start_time)){
+        std::cout << "ERROR READING START TIME: ANY VIDEOS WILL BE SAVED TO /tmp/\n";
+        this->start_time = "";
+    }
+
     if (!nh.getParam("common_vehicle_params", this->vehicle_params)){
         ROS_ERROR("ERROR READING COMMON VEHICLE PARAMS");
         vehicle_params["mass"] = 1;
         vehicle_params["max_force"] = 10;
         vehicle_params["slowing_distance"] =  2;
         vehicle_params["arrival_distance"] = 0.5;
-        vehicle_params["obstacle_margin"] = 0.6;
+        vehicle_params["obstacle_margin"] = 0.5;
         vehicle_params["blocking"] = 0;
         vehicle_params["start_mode"] = 2;
     }

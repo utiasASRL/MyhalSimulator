@@ -1,6 +1,6 @@
 #include "costmap.hh"
 
-Costmap::Costmap(ignition::math::Box boundary, double resolution){
+Costmap::Costmap(ignition::math::Box boundary, double resolution, std::string start_time){
     this->boundary = boundary;
     this->resolution = resolution;
 
@@ -24,6 +24,7 @@ Costmap::Costmap(ignition::math::Box boundary, double resolution){
 
     this->last_path = this->costmap;
     this->obj_count = 0;
+    this->start_time = start_time;
 
 }
 
@@ -76,6 +77,38 @@ std::string Costmap::ToString(){
     return out.str();
 }
 
+/*
+* SaveFlowField writes the angles and offsets of the costmap flow field to a file.
+* The flowfield is saved as a txt (angles, x_offset, y_offset, z_offset) in the "FlowField" folder where simulated runs are stored. 
+* The name of the flowfield includes the endgoal to which the fields points to.
+*
+* @param end Goal where the flowfield converges.
+*/
+void Costmap::SaveFlowField(ignition::math::Vector3d end){
+
+    std::string user_name = "default";
+    if (const char * user = std::getenv("USER")){
+        user_name = user;
+    } 
+
+    std::string out_string = "/home/" + user_name + "/Myhal_Simulation/simulated_runs/" + this->start_time + "/logs-" + this->start_time + "/FlowField/flowfield_" + std::to_string(std::trunc(end.X())) + "_" + std::to_string(std::trunc(end.Y())) + "_" + std::to_string(std::trunc(end.Z()));
+
+    std::ofstream out;
+    out.open(out_string);
+
+    for (int r = 0; r<this->rows; r++){
+        for (int c= 0; c<this->cols; c++){
+            out << this->flow_field_angles[r][c]; 
+            out << ", ";
+            out << this->flow_field_offsets[r][c];
+            out << "\n";
+        }
+    }
+    out.close();
+}
+
+
+
 std::string Costmap::PathString(std::vector<TrajPoint> path){
 
     this->last_path = this->costmap;
@@ -105,6 +138,10 @@ std::string Costmap::PathString(std::vector<TrajPoint> path){
     return out.str();
 }
 
+/*
+* FindPath will search the Integration Field from the starting pose to the goal pose by looking for the lowest cost neighbour. 
+*
+*/
 bool Costmap::FindPath(ignition::math::Vector3d start, ignition::math::Vector3d end,  std::vector<ignition::math::Vector3d> &path){
     if (!this->Integrate(end)){
         return false;
@@ -165,7 +202,7 @@ bool Costmap::FindPath(ignition::math::Vector3d start, ignition::math::Vector3d 
         ignition::math::Vector3d pos1, pos2;
         this->IndiciesToPos(pos1, curr_ind[0], curr_ind[1]);
         this->IndiciesToPos(pos2, min_n[0], min_n[1]);
-        
+
         auto offset = pos2 - pos1;
         curr_pos += offset;
         path.push_back(curr_pos);
@@ -192,6 +229,107 @@ bool Costmap::FindPath(ignition::math::Vector3d start, ignition::math::Vector3d 
     return true;
 }
 
+/*
+* ComputeFlowField will compute a flow field offset and angle at each point of the costmap to a given goal.
+*  It finds the lowest cost neighbours at each point in the grid, and compute the vector from the current position to this neighbour. 
+* 
+* @param end goal to reach
+*/
+void Costmap::ComputeFlowField(ignition::math::Vector3d end){
+    if (!this->Integrate(end)){
+        std::cout << "ERROR INTEGRATING COSTMAP INTEGRATION FIELD." << std::endl;
+        return;
+    }
+
+    int goal_r, goal_c;
+    this->PosToIndicies(end, goal_r, goal_c);
+    
+    std::vector<int> curr_ind; 
+    ignition::math::Vector3d zero(0,0,0);
+
+    for (int r = 0; r<this->rows; r++){
+        std::vector<ignition::math::Vector3d> new_row_offsets;
+        std::vector<double> new_row_angles;
+
+        for (int c = 0; c<this->cols; c++){
+            // Set offset and angle of flow field to 0 on the sides of the map 
+            if(r==0 || r==this->rows-1){ 
+                new_row_offsets.push_back(zero);
+                new_row_angles.push_back(0);
+            }
+            else{
+                if(c==0 || c==this->cols-1){
+                    new_row_offsets.push_back(zero);
+                    new_row_angles.push_back(0);
+                }
+                else{
+                    curr_ind = {r, c};
+                    auto neighbours = this->GetNeighbours(curr_ind, true);
+                    std::vector<int> min_n;
+                    double min_val = 10e9;
+                    for (auto n : neighbours){
+                        double val = this->integration_field[n[0]][n[1]];
+
+                        if (val < min_val){
+                            min_val = val;
+                            min_n = n;
+                        }
+                    }
+                    if (min_val == 10e9){ //if within an obstacle, set flowfield to zero and continue
+                        new_row_offsets.push_back(zero);
+                        new_row_angles.push_back(0);
+                        continue;
+                    }
+
+                    std::cout << curr_ind[0]<< std::endl;
+                    std::cout << curr_ind[1]<< std::endl;
+                    std::cout << min_n[0] << std::endl;
+                    std::cout << min_n[1] << std::endl;
+
+                    ignition::math::Vector3d pos1, pos2;
+                    this->IndiciesToPos(pos1, curr_ind[0], curr_ind[1]);
+                    this->IndiciesToPos(pos2, min_n[0], min_n[1]);
+                    new_row_offsets.push_back(pos2 - pos1);
+                    new_row_angles.push_back(GetNeighbourAngle(curr_ind, min_n));
+                }
+            }
+        }
+        this->flow_field_offsets.push_back(new_row_offsets);
+        this->flow_field_angles.push_back(new_row_angles);
+    }
+
+    
+    // for (int r = 1; r<this->rows-1, r++){
+    //     for (int c=1, c<this->cols-1, c++){
+    //         curr_ind[0] = r; 
+    //         curr_ind[1] = c;
+    //         auto neighbours = this->GetNeighbours(curr_ind, true);
+            
+    //         std::vector<int> min_n;
+    //         double min_val = 10e9;
+    //         for (auto n : neighbours){
+    //             double val = this->integration_field[n[0]][n[1]];
+            
+    //             if (val != 10e9){
+    //                 found = true;
+    //             }
+                
+    //             if (val < min_val){
+    //                 min_val = val;
+    //                 min_n = n;
+    //             }
+    //         }
+
+    //         ignition::math::Vector3d pos1, pos2;
+    //         this->IndiciesToPos(pos1, curr_ind[0], curr_ind[1]);
+    //         this->IndiciesToPos(pos2, min_n[0], min_n[1]);
+    //         this->flow_field_offsets.push_back(pos2 - pos1);
+    //         this->flow_field_angles.push_back(GetNeighbourAngle(curr_ind, min_n));
+    //     }
+    // }
+}
+
+
 bool Costmap::Walkable(ignition::math::Vector3d start, ignition::math::Vector3d end){
     // sample points every 1/5th of resolution along the line and check if it is in an occupied cell.
 
@@ -214,7 +352,10 @@ bool Costmap::Walkable(ignition::math::Vector3d start, ignition::math::Vector3d 
 
     return true;
 }
-
+/*
+* Integrate initialized the integration field at 10e9. It sets the goal position to 0 in the field, then iteratively calculate the value of the integration field from the goal following the algorithm here
+* https://leifnode.com/2013/12/flow-field-pathfinding/.
+*/
 bool Costmap::Integrate(ignition::math::Vector3d goal){
 
     for (int r = 0; r <this->rows; ++r){
@@ -299,6 +440,27 @@ std::vector<std::vector<int>> Costmap::GetNeighbours(std::vector<int> curr_ind, 
     }
 
     return res;
+}
+
+/*
+* GetNeighbourAngle returns the angle in degres between the current grid position and a given neighbouring positions. 
+* Works on the [x_min-1, x_max-1][y_min-1, y_max-1] range of the grid. Intended to use for Flow Field generation.
+*
+* @param curr_ind current grid indices
+* @param neighbour_ind neighbour grid indices
+*/
+double Costmap::GetNeighbourAngle(std::vector<int> curr_ind, std::vector<int> neighbour_ind){
+    static const double TWOPI = 6.2831853071795865;
+    static const double RAD2DEG = 57.2957795130823209;
+    std::cout << "Saving flowfield..." << std::endl;
+    if (curr_ind == neighbour_ind){
+        return 0;
+    }
+    double theta = std::atan2(neighbour_ind[0] - curr_ind[0], curr_ind[1] - neighbour_ind[1]);
+    if(theta<0.0){
+        theta += TWOPI;
+    }
+    return RAD2DEG * theta;
 }
 
 bool Costmap::PosToIndicies(ignition::math::Vector3d pos, int &r, int &c){

@@ -137,7 +137,7 @@ class Vehicle{
 
         double slowing_distance = 1;
 
-        double arrival_distance  = 0.5;
+        double arrival_distance  = 1; //0.5
 
         std::vector<gazebo::physics::EntityPtr> all_objects;
 

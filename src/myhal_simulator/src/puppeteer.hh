@@ -37,6 +37,8 @@ class Puppeteer: public gazebo::WorldPlugin{
 
     private:
 
+        std::string start_time;
+
         boost::shared_ptr<PathViz> global_path_viz;
 
         boost::shared_ptr<PathViz> local_path_viz;
