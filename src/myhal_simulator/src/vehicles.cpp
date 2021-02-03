@@ -969,9 +969,6 @@ void PathFollower::RePath(){
         } 
        // std::cout << "GOAL: " << next_goal << std::endl;
     }while (!this->costmap->AStar(this->pose.Pos(), next_goal, this->curr_path, false));
-    std::cout <<" Coucou" << std::endl;
-    this->costmap->ComputeFlowField(next_goal);
-    this->costmap->SaveFlowField(next_goal);
     //
     //while (!this->costmap->FindPath(this->pose.Pos(), next_goal, this->curr_path));
     // std::string costmap_string;

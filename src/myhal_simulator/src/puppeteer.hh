@@ -37,8 +37,6 @@ class Puppeteer: public gazebo::WorldPlugin{
 
     private:
 
-        std::string start_time;
-
         boost::shared_ptr<PathViz> global_path_viz;
 
         boost::shared_ptr<PathViz> local_path_viz;
@@ -174,6 +172,8 @@ class Puppeteer: public gazebo::WorldPlugin{
         void ManagePoseEstimate(geometry_msgs::Pose est_pose);
 
         void AddPathMarkers(std::string name, const nav_msgs::Path::ConstPtr& plan, ignition::math::Vector4d color);
+
+        void AddFlowFieldMarker(std::string name, boost::shared_ptr<Costmap> costmap, ignition::math::Vector4d color);
 
         void AddGoalMarker(std::string name, const move_base_msgs::MoveBaseActionGoal::ConstPtr& goal, ignition::math::Vector4d color);
 

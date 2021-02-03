@@ -24,7 +24,6 @@ Costmap::Costmap(ignition::math::Box boundary, double resolution, std::string st
 
     this->last_path = this->costmap;
     this->obj_count = 0;
-    this->start_time = start_time;
 
 }
 
@@ -82,7 +81,7 @@ std::string Costmap::ToString(){
 * The flowfield is saved as a txt (angles, x_offset, y_offset, z_offset) in the "FlowField" folder where simulated runs are stored. 
 * The name of the flowfield includes the endgoal to which the fields points to.
 *
-* @param end Goal where the flowfield converges.
+* @param end Goal where the flowfield converges (x, y, z)
 */
 void Costmap::SaveFlowField(ignition::math::Vector3d end){
 
@@ -91,20 +90,57 @@ void Costmap::SaveFlowField(ignition::math::Vector3d end){
         user_name = user;
     } 
 
-    std::string out_string = "/home/" + user_name + "/Myhal_Simulation/simulated_runs/" + this->start_time + "/logs-" + this->start_time + "/FlowField/flowfield_" + std::to_string(std::trunc(end.X())) + "_" + std::to_string(std::trunc(end.Y())) + "_" + std::to_string(std::trunc(end.Z()));
-
-    std::ofstream out;
-    out.open(out_string);
+    std::string path = "/home/" + user_name + "/Simulation_Data/FlowField/flowfield_" + std::to_string(std::trunc(end.X())) + "_" + std::to_string(std::trunc(end.Y())) + "_" + std::to_string(std::trunc(end.Z())) + ".txt";
+    std::cout << path << std::endl;
+    std::ofstream out(path);
 
     for (int r = 0; r<this->rows; r++){
         for (int c= 0; c<this->cols; c++){
-            out << this->flow_field_angles[r][c]; 
+            out << std::to_string(this->flow_field_angles[r][c]); 
             out << ", ";
-            out << this->flow_field_offsets[r][c];
+            out << std::to_string(this->flow_field_offsets[r][c].X());
+            out << " ";
+            out << std::to_string(this->flow_field_offsets[r][c].Y());
+            out << " ";
+            out << std::to_string(this->flow_field_offsets[r][c].Z());
             out << "\n";
         }
     }
+    out.flush();
     out.close();
+}
+
+/*
+* ReadFlowField search if the flowfield to a given goal exists, if so it loads it into the current costmap, erasing the current values for flow_field_offsets and flow_field_angles
+*
+* @param end Goal where the flowfield converges (x, y, z)
+*/
+bool Costmap::ReadFlowField(ignition::math::Vector3d end){
+    bool read = false;
+
+    std::string user_name = "default";
+    if (const char * user = std::getenv("USER")){
+        user_name = user;
+    } 
+
+    std::string path = "/home/" + user_name + "/Simulation_Data/FlowField/flowfield_" + std::to_string(std::trunc(end.X())) + "_" + std::to_string(std::trunc(end.Y())) + "_" + std::to_string(std::trunc(end.Z())) + ".txt";
+
+    std::ifstream in;
+    in.open(path);
+    if (in){
+        read = true; 
+        std::string line;
+        std::cout << "Load flow field for goal " << end.X() << " " << end.Y() << " " << end.Z() << std::endl;
+        while(getline(in, line)){
+            std::cout << "line : " << line << std::endl;
+        }
+    }
+
+    else{
+        std::cout << "Cant read flowfield. " << std::endl;
+        return read;
+    }
+    std::cout << path << std::endl;
 }
 
 
@@ -275,16 +311,12 @@ void Costmap::ComputeFlowField(ignition::math::Vector3d end){
                             min_n = n;
                         }
                     }
+
                     if (min_val == 10e9){ //if within an obstacle, set flowfield to zero and continue
                         new_row_offsets.push_back(zero);
                         new_row_angles.push_back(0);
                         continue;
                     }
-
-                    std::cout << curr_ind[0]<< std::endl;
-                    std::cout << curr_ind[1]<< std::endl;
-                    std::cout << min_n[0] << std::endl;
-                    std::cout << min_n[1] << std::endl;
 
                     ignition::math::Vector3d pos1, pos2;
                     this->IndiciesToPos(pos1, curr_ind[0], curr_ind[1]);
@@ -452,7 +484,7 @@ std::vector<std::vector<int>> Costmap::GetNeighbours(std::vector<int> curr_ind, 
 double Costmap::GetNeighbourAngle(std::vector<int> curr_ind, std::vector<int> neighbour_ind){
     static const double TWOPI = 6.2831853071795865;
     static const double RAD2DEG = 57.2957795130823209;
-    std::cout << "Saving flowfield..." << std::endl;
+
     if (curr_ind == neighbour_ind){
         return 0;
     }

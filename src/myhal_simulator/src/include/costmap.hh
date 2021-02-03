@@ -23,8 +23,6 @@ class Costmap
 private:
 	ignition::math::Box boundary;
 
-	std::string start_time;
-
 	double resolution;
 
 	ignition::math::Vector3d top_left;
@@ -78,6 +76,8 @@ public:
 	void ComputeFlowField(ignition::math::Vector3d end);
 
 	void SaveFlowField(ignition::math::Vector3d end);
+
+	bool ReadFlowField(ignition::math::Vector3d end);
 
 	double GetNeighbourAngle(std::vector<int> curr_ind, std::vector<int> neighbour_ind);
 
