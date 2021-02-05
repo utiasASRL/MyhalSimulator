@@ -127,6 +127,7 @@ void Puppeteer::Load(gazebo::physics::WorldPtr _world, sdf::ElementPtr _sdf){
 
 }
 
+
 void Puppeteer::OnUpdate(const gazebo::common::UpdateInfo &_info){
 
     double dt = (_info.simTime - this->last_update).Double();
@@ -262,6 +263,7 @@ void Puppeteer::OnUpdate(const gazebo::common::UpdateInfo &_info){
 
 }
 
+
 void Puppeteer::ReadSDF(){
 
     if (this->sdf->HasElement("building_name")){
@@ -275,6 +277,7 @@ void Puppeteer::ReadSDF(){
     }
 
 }
+
 
 boost::shared_ptr<Vehicle> Puppeteer::CreateVehicle(gazebo::physics::ActorPtr actor){
 
@@ -375,6 +378,7 @@ boost::shared_ptr<Vehicle> Puppeteer::CreateVehicle(gazebo::physics::ActorPtr ac
     return res;
 }
 
+
 void Puppeteer::ReadParams(){
 
     if (!nh.getParam("common_vehicle_params", this->vehicle_params)){
@@ -446,6 +450,7 @@ void Puppeteer::ReadParams(){
 
 }
 
+
 SmartCamPtr Puppeteer::CreateCamera(gazebo::physics::ModelPtr model){
     auto tokens = utilities::split(model->GetName(), '_');
     SmartCamPtr new_cam;
@@ -463,6 +468,7 @@ SmartCamPtr Puppeteer::CreateCamera(gazebo::physics::ModelPtr model){
     }
     return new_cam;
 }
+
 
 void Puppeteer::TFCallback(const tf2_msgs::TFMessage::ConstPtr& msg){
 
@@ -488,6 +494,7 @@ void Puppeteer::TFCallback(const tf2_msgs::TFMessage::ConstPtr& msg){
 
 }
 
+
 void Puppeteer::GlobalPlanCallback(const nav_msgs::Path::ConstPtr& path){
     if (path->poses.size() > 0){
         std::cout << utilities::color_text("Global plan recieved by simulator", BLUE) << std::endl;
@@ -495,6 +502,7 @@ void Puppeteer::GlobalPlanCallback(const nav_msgs::Path::ConstPtr& path){
         this->new_global_ind++;
     }
 }
+
 
 void Puppeteer::LocalPlanCallback(const nav_msgs::Path::ConstPtr& path){
     if (path->poses.size() > 0){
@@ -504,10 +512,12 @@ void Puppeteer::LocalPlanCallback(const nav_msgs::Path::ConstPtr& path){
     }
 }
         
+
 void Puppeteer::NavGoalCallback(const move_base_msgs::MoveBaseActionGoal::ConstPtr& goal){
     this->nav_goal = goal;
     this->new_nav_ind++;
 }
+
 
 void Puppeteer::AddPathMarkers(std::string name, const nav_msgs::Path::ConstPtr& plan, ignition::math::Vector4d color){
 
@@ -583,6 +593,7 @@ void Puppeteer::AddGoalMarker(std::string name, const move_base_msgs::MoveBaseAc
 
     this->world->InsertModelSDF(*sdf);
 }
+
 
 void Puppeteer::ManagePoseEstimate(geometry_msgs::Pose est_pose){
     auto pos = est_pose.position;
