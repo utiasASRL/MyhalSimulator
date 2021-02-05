@@ -332,9 +332,9 @@ void Vehicle::AvoidObstacles(std::vector<gazebo::physics::EntityPtr> objects){
     }
     boundary_force.Z() =0;
     this->ApplyForce(boundary_force);
-    if(boundary_force.Length() !=0){
-        std::cout << this->GetName() << " boundary force: " << boundary_force << std::endl;
-    }
+    // if(boundary_force.Length() !=0){
+    //     std::cout << this->GetName() << " boundary force: " << boundary_force << std::endl;
+    // }
     
 }
 
@@ -367,9 +367,9 @@ void Vehicle::AvoidActors(std::vector<boost::shared_ptr<Vehicle>> vehicles){
 	}
     steer.Z() = 0;
     this->ApplyForce(steer);
-    if(steer.Length() != 0){
-        std::cout << this->GetName() << " avoid actor force: " << steer << std::endl;
-    }
+    // if(steer.Length() != 0){
+    //     std::cout << this->GetName() << " avoid actor force: " << steer << std::endl;
+    // }
 }
 
 void Vehicle::SetAllObjects(std::vector<gazebo::physics::EntityPtr> objects){

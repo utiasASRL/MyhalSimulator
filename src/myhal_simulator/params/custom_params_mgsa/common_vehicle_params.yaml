@@ -6,6 +6,7 @@ common_vehicle_params:
   obstacle_margin: 0.6
   blocking: 1
   start_mode: 0 #2 for random, 1 for walking, 0 for standing
+  parse_digits: 1 # boolean: 0=false, 1=true. Set to true to parse digits objectives in map.txt.
 
 common_boid_params:
   alignement: 0.1

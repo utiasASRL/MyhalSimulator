@@ -173,7 +173,7 @@ class Puppeteer: public gazebo::WorldPlugin{
 
         void AddPathMarkers(std::string name, const nav_msgs::Path::ConstPtr& plan, ignition::math::Vector4d color);
 
-        void AddFlowFieldMarker(std::string name, boost::shared_ptr<Costmap> costmap, ignition::math::Vector4d color);
+        //void AddFlowFieldMarker(std::string name, boost::shared_ptr<Costmap> costmap, ignition::math::Vector4d color);
 
         void AddGoalMarker(std::string name, const move_base_msgs::MoveBaseActionGoal::ConstPtr& goal, ignition::math::Vector4d color);
 

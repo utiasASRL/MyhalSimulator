@@ -35,11 +35,7 @@ private:
 
 	int cols;
 
-	std::vector<std::vector<int>> costmap;
-
 	std::vector<std::vector<int>> last_path;
-
-	std::vector<std::vector<double>> integration_field;
 
     std::map<std::vector<int>, double> g_cost;
 
@@ -62,10 +58,14 @@ private:
 public:
 
     int obj_count;
+	
+	std::vector<std::vector<int>> costmap;
 
-	std::vector<std::vector<ignition::math::Vector3d>> flow_field_offsets;
+	std::vector<std::vector<double>> flow_field_offsets;
 
 	std::vector<std::vector<double>> flow_field_angles;
+
+	std::vector<std::vector<double>> integration_field;
 
 	bool PosToIndicies(ignition::math::Vector3d pos, int &r, int &c);
 
@@ -83,7 +83,7 @@ public:
 
 	std::vector<std::vector<int>> GetNeighbours(std::vector<int> curr_ind, bool diag = false);
 
-	Costmap(ignition::math::Box boundary, double resolution, std::string start_time = (""));
+	Costmap(ignition::math::Box boundary, double resolution);
 
 	void AddObject(ignition::math::Box object);
 
