@@ -175,19 +175,6 @@ void WorldHandler::LoadParams(){
             this->walls.push_back(box);
         }
     }
-    // //
-    // std::cout <<" Test costmap" << std::endl;
-    // bool read=false;
-    // ignition::math::Vector3d next_goal(5, 0, 0);
-    // read = this->costmap->ReadFlowField(next_goal);
-    // std::cout << "Read 1: " << read << std::endl; 
-    // this->costmap->ComputeFlowField(next_goal);
-    // std::cout << "kek" << std::endl;
-    // this->costmap->SaveFlowField(next_goal);
-    // read = this->costmap->ReadFlowField(next_goal);
-    // std::cout << "Read 2: " << read << std::endl;
-
-    // //
 
     std::vector<ignition::math::Vector3d> paths;
 

@@ -10,12 +10,14 @@ echo ""
 
 rosport=$ROSPORT
 detach=false
+command=""
 
-while getopts d option
+while getopts dc: option
 do
 case "${option}"
 in
 d) detach=true;; 
+c) command=${OPTARG};;
 esac
 done
 
@@ -77,10 +79,14 @@ other_args="-v $XSOCK:$XSOCK \
     -e ROSPORT=$rosport "
 
 # python command started in the docker
-if [ "$detach" = true ] ; then
-    py_command="./collision_trainer.sh results/Log_$now"
+if [ ! "$command" ] ; then
+    if [ "$detach" = true ] ; then
+        py_command="./collision_trainer.sh results/Log_$now"
+    else
+        py_command="./collision_trainer.sh"
+    fi
 else
-    py_command="./collision_trainer.sh"
+    py_command="./start_script.sh $command"
 fi
 
 echo -e "Running command $py_command\n"

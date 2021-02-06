@@ -31,10 +31,6 @@ private:
 
 	double height;
 
-	int rows;
-
-	int cols;
-
 	std::vector<std::vector<int>> last_path;
 
     std::map<std::vector<int>, double> g_cost;
@@ -56,6 +52,10 @@ private:
     double Heuristic(std::vector<int> loc1, std::vector<int> loc2);
 
 public:
+
+	int rows;
+
+	int cols;
 
     int obj_count;
 	

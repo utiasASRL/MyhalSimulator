@@ -3,6 +3,7 @@
 
 #include <cmath>
 #include <ignition/math/Pose3.hh>
+#include <ignition/math/Quaternion.hh>
 #include <ignition/math/Vector3.hh>
 #include <ignition/math/Vector4.hh>
 #include "gazebo/physics/physics.hh"
@@ -23,6 +24,7 @@
 #include "frame.hh"
 #include "gazebo/msgs/msgs.hh"
 #include <geometry_msgs/PoseStamped.h>
+#include <geometry_msgs/PoseArray.h>
 #include <nav_msgs/Path.h>
 #include <move_base_msgs/MoveBaseActionGoal.h>
 #include "sensor_msgs/PointCloud2.h"
@@ -101,6 +103,8 @@ class Puppeteer: public gazebo::WorldPlugin{
 
         ros::Subscriber tf_sub;
 
+        ros::Publisher flow_pub;
+
         boost::shared_ptr<std::vector<ignition::math::Pose3d>> digits_coordinates;
 
         std::vector<std::vector<ignition::math::Vector3d>> paths;
@@ -176,6 +180,8 @@ class Puppeteer: public gazebo::WorldPlugin{
         //void AddFlowFieldMarker(std::string name, boost::shared_ptr<Costmap> costmap, ignition::math::Vector4d color);
 
         void AddGoalMarker(std::string name, const move_base_msgs::MoveBaseActionGoal::ConstPtr& goal, ignition::math::Vector4d color);
+        
+        void PublishFlowMarkers();
 
 };
 

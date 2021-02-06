@@ -135,8 +135,17 @@ void Puppeteer::Load(gazebo::physics::WorldPtr _world, sdf::ElementPtr _sdf){
         this->nav_goal_sub = this->nh.subscribe("/move_base/goal", 1, &Puppeteer::NavGoalCallback, this);
         this->tf_sub = this->nh.subscribe("/tf", 1, &Puppeteer::TFCallback, this);
     }
+    
 
+    // Compute FlowField
+    std::cout <<" Test costmap" << std::endl;
+    ignition::math::Vector3d next_goal(5, 0, 0);
+    this->costmap->ComputeFlowField(next_goal);
+
+    // Create a publisher for the flow field
+    flow_pub = nh.advertise<geometry_msgs::PoseArray>( "flow_field", 5);
 }
+
 
 void Puppeteer::OnUpdate(const gazebo::common::UpdateInfo &_info){
 
@@ -250,6 +259,9 @@ void Puppeteer::OnUpdate(const gazebo::common::UpdateInfo &_info){
         this->local_path_viz->OnUpdate(this->local_plan);
     }
 
+    // Publish the flow
+    PublishFlowMarkers();
+
     if (this->old_nav_ind != this->new_nav_ind){
         std::string name = "nav_goal";
         if (this->old_nav_ind == 0){
@@ -273,6 +285,7 @@ void Puppeteer::OnUpdate(const gazebo::common::UpdateInfo &_info){
 
 }
 
+
 void Puppeteer::ReadSDF(){
 
     if (this->sdf->HasElement("building_name")){
@@ -286,6 +299,7 @@ void Puppeteer::ReadSDF(){
     }
 
 }
+
 
 boost::shared_ptr<Vehicle> Puppeteer::CreateVehicle(gazebo::physics::ActorPtr actor){
 
@@ -386,6 +400,7 @@ boost::shared_ptr<Vehicle> Puppeteer::CreateVehicle(gazebo::physics::ActorPtr ac
     return res;
 }
 
+
 void Puppeteer::ReadParams(){
 
     if (!nh.getParam("start_time", this->start_time)){
@@ -463,6 +478,7 @@ void Puppeteer::ReadParams(){
 
 }
 
+
 SmartCamPtr Puppeteer::CreateCamera(gazebo::physics::ModelPtr model){
     auto tokens = utilities::split(model->GetName(), '_');
     SmartCamPtr new_cam;
@@ -480,6 +496,7 @@ SmartCamPtr Puppeteer::CreateCamera(gazebo::physics::ModelPtr model){
     }
     return new_cam;
 }
+
 
 void Puppeteer::TFCallback(const tf2_msgs::TFMessage::ConstPtr& msg){
 
@@ -505,6 +522,7 @@ void Puppeteer::TFCallback(const tf2_msgs::TFMessage::ConstPtr& msg){
 
 }
 
+
 void Puppeteer::GlobalPlanCallback(const nav_msgs::Path::ConstPtr& path){
     if (path->poses.size() > 0){
         std::cout << utilities::color_text("Global plan recieved by simulator", BLUE) << std::endl;
@@ -512,6 +530,7 @@ void Puppeteer::GlobalPlanCallback(const nav_msgs::Path::ConstPtr& path){
         this->new_global_ind++;
     }
 }
+
 
 void Puppeteer::LocalPlanCallback(const nav_msgs::Path::ConstPtr& path){
     if (path->poses.size() > 0){
@@ -521,10 +540,12 @@ void Puppeteer::LocalPlanCallback(const nav_msgs::Path::ConstPtr& path){
     }
 }
         
+
 void Puppeteer::NavGoalCallback(const move_base_msgs::MoveBaseActionGoal::ConstPtr& goal){
     this->nav_goal = goal;
     this->new_nav_ind++;
 }
+
 
 void Puppeteer::AddPathMarkers(std::string name, const nav_msgs::Path::ConstPtr& plan, ignition::math::Vector4d color){
 
@@ -715,4 +736,51 @@ void Puppeteer::ManagePoseEstimate(geometry_msgs::Pose est_pose){
         }
     }
 
+}
+
+
+// Function that publishes the flow field as a PoseArray
+void Puppeteer::PublishFlowMarkers()
+{
+    geometry_msgs::PoseArray flow_field;
+
+	//make sure to set the header information
+	flow_field.header.stamp = ros::Time::now();
+    flow_field.header.frame_id = "map";
+
+    // Initiate poses
+    int rows = this->costmap->rows;
+    int cols = this->costmap->cols;
+    flow_field.poses = std::vector<geometry_msgs::Pose>(rows * cols);
+
+    int i = 0;
+    for (auto& pose: flow_field.poses)
+    {
+        // get indices of column and row
+        int c = i % cols;
+        int r = i / cols;
+
+        // Get position of this grid cell
+        ignition::math::Vector3d pos;
+        costmap->IndiciesToPos(pos, r, c);
+
+        // Get flow orientation
+        double angle(costmap->flow_field_angles[r][c]);
+        angle *= 3.14 / 180;
+        
+        // Convert to quaternion
+        ignition::math::Vector3d axis(0.0, 0.0, 1.0);
+        ignition::math::Quaternion<double> quat(axis, angle);
+        pose.position.x = pos.X();
+        pose.position.y = pos.Y();
+        pose.position.z = pos.Z();
+        pose.orientation.x = quat.X();
+        pose.orientation.y = quat.Y();
+        pose.orientation.z = quat.Z();
+        pose.orientation.w = quat.W();
+        i++;
+    }
+
+    // Publish message
+    flow_pub.publish(flow_field);
 }
