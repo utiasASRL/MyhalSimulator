@@ -361,12 +361,58 @@ void Costmap::ComputeFlowFieldFine(ignition::math::Vector3d end){
     double farid_5_dd[5]= {-0.104550,  -0.292315,  0.000000, 0.292315, 0.104550};
 
     // Init convolve derivative
+    std::vector<std::vector<double>> int_field_2(rows, std::vector<double>(cols, 0));
     std::vector<std::vector<double>> dx_final(rows, std::vector<double>(cols, 0));
     std::vector<std::vector<double>> dy_final(rows, std::vector<double>(cols, 0));
     std::vector<std::vector<double>> dx_tmp(rows, std::vector<double>(cols, 0));
     std::vector<std::vector<double>> dy_tmp(rows, std::vector<double>(cols, 0));
 
-    // First convolution along columns
+    // First get rid of the 10e9 values in range of the convolution kernel. Set them to the highest value in the kernel range
+    for (int c = 0; c<this->cols; c++)
+    {
+        int c1 = -farid_n;
+        if (c + c1 < 0)
+            c1 = -c;
+
+        int c2 = farid_n;
+        if (c + c2 > cols-1)
+            c2 = cols - 1 - c;
+
+        for (int r = 0; r<this->rows; r++)
+        {
+            int r1 = -farid_n;
+            if (r + r1 < 0)
+                r1 = -r;
+
+            int r2 = farid_n;
+            if (r + r2 > rows-1)
+                r2 = rows - 1 - r;
+
+            double v0 = integration_field[r][c];
+            if (v0 < 10e8)
+            {
+                int_field_2[r][c] = v0;
+            }
+            else
+            {
+                double max_v = v0;
+                for (int cc = c1; cc <= c2; cc++)
+                {
+                    for (int rr = r1; rr <= r2; rr++)
+                    {
+                        double v = integration_field[r + rr][c + cc];
+                    }
+                }
+
+            }
+
+            double dx = 0.0;
+            double dy = 0.0;
+            double v0 = integration_field[r][c];
+        }
+    }
+
+    // Convolution along columns
     for (int c = 0; c<this->cols; c++)
     {
         int b1 = -farid_n;
@@ -389,9 +435,9 @@ void Costmap::ComputeFlowFieldFine(ignition::math::Vector3d end){
             {
                 double integration_v = integration_field[r][c + b];
                 if (integration_v > 10e8)
-                    integration_v = v0 + 3;
-                dx += integration_v * farid_5_k[b1 + b];
-                dy += integration_v * farid_5_d[b1 + b];
+                    integration_v = v0 + 1;
+                dx += integration_v * farid_5_d[b - b1];
+                dy += integration_v * farid_5_k[b - b1];
             }
             dx_tmp[r][c] = dx;
             dy_tmp[r][c] = dy;
@@ -417,8 +463,8 @@ void Costmap::ComputeFlowFieldFine(ignition::math::Vector3d end){
             // First convolve each column
             for (int b = b1; b <= b2; b++)
             {
-                dx += dx_tmp[r + b][c] * farid_5_d[b1 + b];
-                dy += dy_tmp[r + b][c] * farid_5_k[b1 + b];
+                dx += dx_tmp[r + b][c] * farid_5_k[b - b1];
+                dy += dy_tmp[r + b][c] * farid_5_dd[b - b1];
             }
             dx_final[r][c] = dx;
             dy_final[r][c] = dy;
@@ -434,6 +480,12 @@ void Costmap::ComputeFlowFieldFine(ignition::math::Vector3d end){
 
         for (int c = 0; c<this->cols; c++)
         {
+            if (integration_field[r][c] > 10e8){// set to 0 if within an obstacle
+                new_row_offsets.push_back(0);
+                new_row_angles.push_back(0);
+                continue;
+            }
+
             new_row_offsets.push_back(sqrt(dx_final[r][c] * dx_final[r][c] + dy_final[r][c] * dy_final[r][c]));
             double theta = std::atan2(dy_final[r][c], dx_final[r][c]);
             if(theta<0.0)

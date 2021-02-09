@@ -626,58 +626,6 @@ void Puppeteer::AddGoalMarker(std::string name, const move_base_msgs::MoveBaseAc
     this->world->InsertModelSDF(*sdf);
 }
 
-// The intent of AddFlowFieldMarker was to display the flowfield within gazebo. So far, it is just too heavy, and I could not set the proper orientation to the boxes. 
-
-// void Puppeteer::AddFlowFieldMarker(std::string name, boost::shared_ptr<Costmap> costmap, ignition::math::Vector4d color){
-
-//     boost::shared_ptr<sdf::SDF> sdf = boost::make_shared<sdf::SDF>();
-//     sdf->SetFromString(
-//        "<sdf version ='1.6'>\
-//           <model name ='path'>\
-//           </model>\
-//         </sdf>");
-
-//     double z = 0.2;
-//     for(double x = -10.0; x<10.0; x+=2.5){
-//         for(double y = -10.0; y<10.0; y+=2.5){
-//             int r, c;
-//             ignition::math::Vector3d pos(x, y, z);
-//             costmap->PosToIndicies(pos, r, c);
-
-//             double offset(costmap->flow_field_offsets[r][c]);
-//             double angle(costmap->flow_field_angles[r][c]);
-//             angle *= 3.14 / 180;
-//             ignition::math::Vector3d size(offset * std::cos(angle), offset * std::sin(angle), 0.001);
-//             size.Normalize();
-//             std::cout << "Pose: " << pos.X() << " " << pos.Y() << std::endl;
-//             std::cout << "Size: " << size.X() << " " << size.Y() << std::endl;
-//             std::cout << "Offset / angle: " << offset << " " << angle * 180 / 3.14 << std::endl; 
-//             std::cout << "---" << std::endl;
-            
-
-
-//             // auto model = sdf->Root()->GetElement("model");
-//             // model->GetElement("static")->Set(true);
-//             // model->GetAttribute("name")->SetFromString(name + "_" + std::to_string(pos.X()) + "_" + std::to_string(pos.Y()));
-//             // model->GetElement("pose")->Set(pos);
-
-//             // auto link1 = model->AddElement("link");
-//             // link1->GetAttribute("name")->SetFromString(name + "_" + std::to_string(x) + "_" + std::to_string(y));
-//             // auto box1 = link1->GetElement("visual")->GetElement("geometry")->GetElement("box");
-//             // box1->GetElement("size")->Set(size);
-//             // auto mat1 = link1->GetElement("visual")->GetElement("material");
-//             // mat1->GetElement("ambient")->Set(color);
-//             // mat1->GetElement("diffuse")->Set(color);
-//             // mat1->GetElement("specular")->Set(color);
-//             // mat1->GetElement("emissive")->Set(color);
-
-//             // this->world->InsertModelSDF(*sdf);
-
-//         }
-//     }
-
-    
-// }
 
 void Puppeteer::ManagePoseEstimate(geometry_msgs::Pose est_pose){
     auto pos = est_pose.position;
@@ -773,7 +721,7 @@ void Puppeteer::PublishFlowMarkers()
             // Get flow orientation
             double angle(costmap->flow_field_angles[r][c]);
             angle *= M_PI / 180;
-            angle += M_PI;
+            //angle += M_PI;
             
             // Convert to quaternion
             ignition::math::Vector3d axis(0.0, 0.0, 1.0);
