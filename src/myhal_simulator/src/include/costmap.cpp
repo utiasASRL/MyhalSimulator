@@ -336,6 +336,120 @@ void Costmap::ComputeFlowField(ignition::math::Vector3d end){
     // std::cout << "costmap row col: " << this->rows << " x " << this->cols << std::endl; 
 }
 
+/*
+* ComputeFlowFieldFine compute a flow field offset (difference in integration field between current grid pose and lowest neighbouring integration field) and angle at each point of the costmap to a given goal.
+*  This finer version computes the local gradient value in the integration map
+* 
+* @param end goal to reach
+*/
+void Costmap::ComputeFlowFieldFine(ignition::math::Vector3d end){
+    static const double TWOPI = 6.2831853071795865;
+    static const double RAD2DEG = 57.2957795130823209;
+
+    if (!this->Integrate(end)){
+        std::cout << "ERROR INTEGRATING COSTMAP INTEGRATION FIELD." << std::endl;
+        return;
+    }
+
+    int goal_r, goal_c;
+    this->PosToIndicies(end, goal_r, goal_c);
+
+    // We get gradient with Farid and Simocelly filter
+    int farid_n = 2;
+    double farid_5_k[5]= {0.030320,  0.249724,  0.439911,  0.249724,  0.030320};
+    double farid_5_d[5]= {0.104550,  0.292315,  0.000000, -0.292315, -0.104550};
+
+    // Init convolve derivative
+    std::vector<std::vector<double>> dx_final(rows, std::vector<double>(cols, 0));
+    std::vector<std::vector<double>> dy_final(rows, std::vector<double>(cols, 0));
+    std::vector<std::vector<double>> dx_tmp(rows, std::vector<double>(cols, 0));
+    std::vector<std::vector<double>> dy_tmp(rows, std::vector<double>(cols, 0));
+
+    // First convolution along columns
+    for (int r = 0; r<this->rows; r++)
+    {
+        for (int c = 0; c<this->cols; c++)
+        {
+            double dx = 0.0;
+            double dy = 0.0;
+            double v0 = integration_field[r][c];
+
+            // First convolve each column
+            for (int b = -farid_n; b < farid_n + 1; b++)
+            {
+                if (c + b >= 0 && c + b < cols-1)
+                {
+                    double integration_v = integration_field[r][c + b];
+                    if (integration_v > 10e8)
+                        integration_v = v0 + 3;
+                    dx += integration_v * farid_5_k[b];
+                    dy += integration_v * farid_5_d[b];
+                }
+            }
+            dx_tmp[r][c] = dx;
+            dy_tmp[r][c] = dy;
+        }
+    }
+
+    // Second convolution along rows
+    for (int r = 0; r<this->rows; r++)
+    {
+        for (int c = 0; c<this->cols; c++)
+        {
+            double dx = 0.0;
+            double dy = 0.0;
+            double v0 = dx_tmp[r][c];
+
+            // First convolve each column
+            for (int b = -farid_n; b < farid_n + 1; b++)
+            {
+                if (r + b >= 0 && r + b < rows-1)
+                {
+                    double integration_v = dx_tmp[r + b][c];
+                    if (integration_v > 10e8)
+                        integration_v = v0 + 3;
+                    dx += integration_v * farid_5_d[b];
+
+                    
+                    integration_v = dy_tmp[r + b][c];
+                    if (integration_v > 10e8)
+                        integration_v = v0 + 3;
+                    dy += integration_v * farid_5_k[b];
+                }
+            }
+            dx_final[r][c] = dx;
+            dy_final[r][c] = dy;
+        }
+    }
+
+    
+    for (int r = 0; r<this->rows; r++)
+    {
+
+        std::vector<double> new_row_offsets;
+        std::vector<double> new_row_angles;
+
+        for (int c = 0; c<this->cols; c++)
+        {
+
+
+            new_row_offsets.push_back(sqrt(dx_final[r][c] * dx_final[r][c] + dy_final[r][c] * dy_final[r][c]));
+            double theta = std::atan2(dy_final[r][c], dx_final[r][c]);
+            if(theta<0.0)
+                theta += TWOPI;
+            new_row_angles.push_back(RAD2DEG * theta);
+        }
+        flow_field_offsets.push_back(new_row_offsets);
+        flow_field_angles.push_back(new_row_angles);
+    }
+    // std::cout << "Count: " << count << std::endl;
+    // std::cout << "Size of flow_field_offset: " << this->flow_field_offsets.size() << " rows " << this->flow_field_offsets[1].size() << " columns" << std::endl;
+    // std::cout << "Size of flow_field_angles: " << this->flow_field_angles.size() << " rows " << this->flow_field_angles[1].size() << " columns" << std::endl;
+    // std::cout << "costmap width x height: " << this->width << " x " << this->height << std::endl;
+    // std::cout << "costmap resolution; " << this->resolution << std::endl; 
+    // std::cout << "costmap row col: " << this->rows << " x " << this->cols << std::endl; 
+}
+
 
 bool Costmap::Walkable(ignition::math::Vector3d start, ignition::math::Vector3d end){
     // sample points every 1/5th of resolution along the line and check if it is in an occupied cell.
@@ -359,13 +473,17 @@ bool Costmap::Walkable(ignition::math::Vector3d start, ignition::math::Vector3d 
 
     return true;
 }
+
+
 /*
 * Integrate initialized the integration field at 10e9. It sets the goal position to 0 in the field, then iteratively calculate the value of the integration field from the goal following the algorithm here
 * https://leifnode.com/2013/12/flow-field-pathfinding/
 *
 */
 bool Costmap::Integrate(ignition::math::Vector3d goal){
+    double sqrt2 = sqrt(2);
 
+    // Init integration field to very high value
     for (int r = 0; r <this->rows; ++r){
         
         for (int c = 0; c< this->cols; ++c){
@@ -374,28 +492,55 @@ bool Costmap::Integrate(ignition::math::Vector3d goal){
         
     }
     
+    // Check if goal is in boundary
     if (goal.X() < this->top_left.X() || goal.X() > this->boundary.Max().X() || goal.Y() > this->top_left.Y() || goal.Y() < this->boundary.Min().Y()){
         return false;
     }
+
+    // Get position of the goal in the costmap
     int goal_r, goal_c;
     this->PosToIndicies(goal, goal_r, goal_c);
 
+    // Set value for goal at 0
     this->integration_field[goal_r][goal_c] = 0;
 
+    // Init the region growing container
     std::vector<std::vector<int>> open_list;
     open_list.push_back({goal_r, goal_c});
 
-    while (open_list.size() > 0){
+    // Grow region
+    while (open_list.size() > 0)
+    {
+        // Get current candidate. This could be better implemented with pop()
         auto curr_ind = open_list.front();
         open_list.erase(open_list.begin());
 
+
+        // Get list of neighbors of the candidate
         auto neighbours = this->GetNeighbours(curr_ind, true);
 
-        for (auto n: neighbours){
-            auto n_cost = ((double) this->costmap[n[0]][n[1]]) + this->integration_field[curr_ind[0]][curr_ind[1]];
-            if (n_cost < this->integration_field[n[0]][n[1]] && this->costmap[n[0]][n[1]] < 255){
+        // Deal with all neighbors
+        for (auto n: neighbours)
+        {
+            // Init cost at the current value
+            double n_cost = this->integration_field[curr_ind[0]][curr_ind[1]];
+            
+            // Add cost of getting to a costmap pixel.
+            if ((n[0] - curr_ind[0]) * (n[1] -curr_ind[1]) == 0)
+            {
+                n_cost += (double)costmap[n[0]][n[1]];
+            }
+            else
+            {
+                n_cost += sqrt2 * (double)costmap[n[0]][n[1]];
+            }
+
+            // If we are not in an obstacle and the computed cost is lower than current cost, update it
+            if (n_cost < this->integration_field[n[0]][n[1]] && this->costmap[n[0]][n[1]] < 255)
+            {
                 this->integration_field[n[0]][n[1]] = n_cost;
-                if (std::find(open_list.begin(), open_list.end(), n) == open_list.end()){
+                if (std::find(open_list.begin(), open_list.end(), n) == open_list.end())
+                {
                     open_list.push_back(n); 
                 }
             }
@@ -496,9 +641,12 @@ double Costmap::GetNeighbourAngle(std::vector<int> curr_ind, std::vector<int> ne
 
 bool Costmap::PosToIndicies(ignition::math::Vector3d pos, int &r, int &c){
     
-    r = 0;
-    c = 0;
+    r = (int)floor((top_left.Y() - pos.Y()) / resolution);
+    c = (int)floor((pos.X() - top_left.X()) / resolution);
 
+    /*
+    int r0 = 0;
+    int c0 = 0;
     while ((this->top_left.Y() - r*this->resolution - this->resolution) > pos.Y()){
         r++;
     }
@@ -506,6 +654,14 @@ bool Costmap::PosToIndicies(ignition::math::Vector3d pos, int &r, int &c){
     while ((this->top_left.X() + c*this->resolution + this->resolution) < pos.X()){
         c++;
     }
+    if (r != r0 || c != c0)
+    {
+        std::cout << "----------------------------------- " << std::endl;
+        std::cout << "---------------------> r0 = " << r0 << " but r = " << r << "  / max = " << rows << std::endl;
+        std::cout << "---------------------> c0 = " << c0 << " but c = " << c << "  / max = " << cols << std::endl;
+        std::cout << "----------------------------------- " << std::endl;
+    }
+    */
 
     return utilities::inside_box(this->boundary, pos, true);
 }

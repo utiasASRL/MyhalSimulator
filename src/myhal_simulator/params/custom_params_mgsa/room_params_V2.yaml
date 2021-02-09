@@ -38,7 +38,7 @@ lounge_532:
   geometry: g532
   positions: p532
   enclosed: "1"
-  scenario: empty
+  scenario: all_tables_wanderer_study
 
 study_space_546:
   geometry: g546

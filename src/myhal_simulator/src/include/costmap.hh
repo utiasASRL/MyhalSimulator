@@ -21,11 +21,6 @@ class Costmap
 {
 
 private:
-	ignition::math::Box boundary;
-
-	double resolution;
-
-	ignition::math::Vector3d top_left;
 
 	double width;
 
@@ -56,6 +51,12 @@ public:
 	int rows;
 
 	int cols;
+	
+	double resolution;
+
+	ignition::math::Box boundary;
+
+	ignition::math::Vector3d top_left;
 
     int obj_count;
 	
@@ -74,6 +75,8 @@ public:
 	bool Integrate(ignition::math::Vector3d goal);
 
 	void ComputeFlowField(ignition::math::Vector3d end);
+
+	void ComputeFlowFieldFine(ignition::math::Vector3d end);
 
 	void SaveFlowField(ignition::math::Vector3d end);
 

@@ -25,6 +25,7 @@
 #include "gazebo/msgs/msgs.hh"
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/PoseArray.h>
+#include <nav_msgs/OccupancyGrid.h>
 #include <nav_msgs/Path.h>
 #include <move_base_msgs/MoveBaseActionGoal.h>
 #include "sensor_msgs/PointCloud2.h"
@@ -104,6 +105,7 @@ class Puppeteer: public gazebo::WorldPlugin{
         ros::Subscriber tf_sub;
 
         ros::Publisher flow_pub;
+        ros::Publisher flow_v_pub;
 
         boost::shared_ptr<std::vector<ignition::math::Pose3d>> digits_coordinates;
 
@@ -183,6 +185,7 @@ class Puppeteer: public gazebo::WorldPlugin{
         
         void PublishFlowMarkers();
 
+        void PublishIntegrationValue();
 };
 
 

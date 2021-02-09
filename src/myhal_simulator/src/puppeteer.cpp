@@ -39,7 +39,7 @@ void Puppeteer::Load(gazebo::physics::WorldPtr _world, sdf::ElementPtr _sdf){
     this->building_box.Max().Y()+=1;
     this->static_quadtree = boost::make_shared<QuadTree>(this->building_box);
     this->vehicle_quadtree = boost::make_shared<QuadTree>(this->building_box);
-    this->costmap = boost::make_shared<Costmap>(this->building_box, 0.2);
+    this->costmap = boost::make_shared<Costmap>(this->building_box, 0.1);
     this->digits_coordinates = boost::make_shared<std::vector<ignition::math::Pose3d>>();
 
     // Parse digit coordinates in ./worlds/map.txt for path_followers (parameter set in common_vehicle_params)
@@ -139,11 +139,14 @@ void Puppeteer::Load(gazebo::physics::WorldPtr _world, sdf::ElementPtr _sdf){
 
     // Compute FlowField
     std::cout <<" Test costmap" << std::endl;
-    ignition::math::Vector3d next_goal(5, 0, 0);
-    this->costmap->ComputeFlowField(next_goal);
+    ignition::math::Vector3d next_goal(8, 6, 0);
+    //this->costmap->ComputeFlowField(next_goal);
+    this->costmap->ComputeFlowFieldFine(next_goal);
+    int vcdssdfa = 0;
 
     // Create a publisher for the flow field
     flow_pub = nh.advertise<geometry_msgs::PoseArray>( "flow_field", 5);
+    flow_v_pub = nh.advertise<nav_msgs::OccupancyGrid>( "value_field", 5);
 }
 
 
@@ -261,6 +264,7 @@ void Puppeteer::OnUpdate(const gazebo::common::UpdateInfo &_info){
 
     // Publish the flow
     PublishFlowMarkers();
+    PublishIntegrationValue();
 
     if (this->old_nav_ind != this->new_nav_ind){
         std::string name = "nav_goal";
@@ -751,10 +755,9 @@ void Puppeteer::PublishFlowMarkers()
     // Initiate poses
     int rows = this->costmap->rows;
     int cols = this->costmap->cols;
-    flow_field.poses = std::vector<geometry_msgs::Pose>(rows * cols);
+    flow_field.poses = std::vector<geometry_msgs::Pose>();
 
-    int i = 0;
-    for (auto& pose: flow_field.poses)
+    for (int i=0; i<rows * cols; i++)
     {
         // get indices of column and row
         int c = i % cols;
@@ -764,23 +767,105 @@ void Puppeteer::PublishFlowMarkers()
         ignition::math::Vector3d pos;
         costmap->IndiciesToPos(pos, r, c);
 
-        // Get flow orientation
-        double angle(costmap->flow_field_angles[r][c]);
-        angle *= 3.14 / 180;
-        
-        // Convert to quaternion
-        ignition::math::Vector3d axis(0.0, 0.0, 1.0);
-        ignition::math::Quaternion<double> quat(axis, angle);
-        pose.position.x = pos.X();
-        pose.position.y = pos.Y();
-        pose.position.z = pos.Z();
-        pose.orientation.x = quat.X();
-        pose.orientation.y = quat.Y();
-        pose.orientation.z = quat.Z();
-        pose.orientation.w = quat.W();
-        i++;
+        // Only add pose if valid flow
+        if (costmap->flow_field_offsets[r][c] > 0)
+        {
+            // Get flow orientation
+            double angle(costmap->flow_field_angles[r][c]);
+            angle *= M_PI / 180;
+            angle += M_PI;
+            
+            // Convert to quaternion
+            ignition::math::Vector3d axis(0.0, 0.0, 1.0);
+            ignition::math::Quaternion<double> quat(axis, angle);
+
+            // Create pose object
+            geometry_msgs::Pose pose;
+            pose.position.x = pos.X() + 0.5 * costmap->resolution;
+            pose.position.y = pos.Y() - 0.5 * costmap->resolution;
+            pose.position.z = pos.Z();
+            pose.orientation.x = quat.X();
+            pose.orientation.y = quat.Y();
+            pose.orientation.z = quat.Z();
+            pose.orientation.w = quat.W();
+            flow_field.poses.push_back(pose);
+        }
+
     }
 
     // Publish message
     flow_pub.publish(flow_field);
+}
+
+// Function that publishes the value function for flow field as a a Map
+void Puppeteer::PublishIntegrationValue()
+{
+
+	// Init occuppancy grid
+    nav_msgs::OccupancyGrid map;
+
+	// Set the header information
+	map.header.stamp = ros::Time::now();
+    map.header.frame_id = "map";
+
+    // Set the map information
+    int rows = this->costmap->rows;
+    int cols = this->costmap->cols;
+
+	map.info.width = cols;
+	map.info.height = rows;
+	map.info.origin.position.x = costmap->boundary.Min().X();
+	map.info.origin.position.y = costmap->boundary.Min().Y();
+	map.info.origin.position.z = 0;
+	map.info.origin.orientation.x = 0.0;
+	map.info.origin.orientation.y = 0.0;
+	map.info.origin.orientation.z = 0.0;
+	map.info.origin.orientation.w = 1.0;
+	map.info.resolution = costmap->resolution;
+
+    // Get max integration field elem
+    double min_v = costmap->integration_field[0][0];
+    double max_v = -1;
+    for (auto& integration_row: costmap->integration_field)
+    {
+        for (auto& value: integration_row)
+        {
+            if (value < 10e8 && max_v < value)
+                max_v = value;
+            if (min_v > value)
+                min_v = value;
+        }
+    }
+    double factor = 98.0 / max_v;
+    factor = 98.0 / 10.0;
+
+	// Fill the ROS map object
+	map.data = std::vector<int8_t>(map.info.width * map.info.height, 0);
+    int i = 0;
+    for (auto& pix: map.data)
+    {
+        // get indices of column and row
+        int c = i % cols;
+        int r = (rows - 1) - i / cols;
+
+        // Fill pixel
+        double value = costmap->integration_field[r][c];
+        if (value < 10e8)
+        {
+            double int8_value = value * factor;
+            if (int8_value > 98)
+                int8_value = 98;
+            pix = (int8_t)floor(int8_value);
+            if (pix == 0)
+                pix = 110;
+        }
+        else
+            pix = 100;
+
+        i++;
+    }
+
+
+	// Publish map and map metadata
+	flow_v_pub.publish(map);
 }
