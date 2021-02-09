@@ -395,20 +395,18 @@ void Costmap::ComputeFlowFieldFine(ignition::math::Vector3d end){
             }
             else
             {
-                double max_v = v0;
+                double max_v = 0;
                 for (int cc = c1; cc <= c2; cc++)
                 {
                     for (int rr = r1; rr <= r2; rr++)
                     {
                         double v = integration_field[r + rr][c + cc];
+                        if (v < 10e8 && v > max_v)
+                            max_v = v;
                     }
                 }
-
+                int_field_2[r][c] = max_v;
             }
-
-            double dx = 0.0;
-            double dy = 0.0;
-            double v0 = integration_field[r][c];
         }
     }
 
@@ -428,14 +426,12 @@ void Costmap::ComputeFlowFieldFine(ignition::math::Vector3d end){
 
             double dx = 0.0;
             double dy = 0.0;
-            double v0 = integration_field[r][c];
+            double v0 = int_field_2[r][c];
 
             // First convolve each column
             for (int b = b1; b <= b2; b++)
             {
-                double integration_v = integration_field[r][c + b];
-                if (integration_v > 10e8)
-                    integration_v = v0 + 1;
+                double integration_v = int_field_2[r][c + b];
                 dx += integration_v * farid_5_d[b - b1];
                 dy += integration_v * farid_5_k[b - b1];
             }

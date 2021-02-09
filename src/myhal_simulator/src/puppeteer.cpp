@@ -785,7 +785,7 @@ void Puppeteer::PublishIntegrationValue()
         }
     }
     double factor = 98.0 / max_v;
-    factor = 98.0 / 10.0;
+    factor = 98.0 / 98.0;
 
 	// Fill the ROS map object
 	map.data = std::vector<int8_t>(map.info.width * map.info.height, 0);
@@ -808,7 +808,7 @@ void Puppeteer::PublishIntegrationValue()
                 pix = 110;
         }
         else
-            pix = 100;
+            pix = 99;
 
         i++;
     }
