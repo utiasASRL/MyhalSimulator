@@ -127,7 +127,7 @@
 						</clip>
 					</camera>
 					<plugin name="camera_controller" filename="libcamera_controller.so">
-						<filepath>/home/hth/Myhal_Simulation/simulated_runs/2021-02-08-23-59-38/logs-2021-02-08-23-59-38/videos/CAM_1_-1.000000_-1.000000_-2.000000_-5.000000_30.000000/</filepath>
+						<filepath>/home/hth/Myhal_Simulation/simulated_runs/2021-02-09-19-13-17/logs-2021-02-09-19-13-17/videos/CAM_1_-1.000000_-1.000000_-2.000000_-5.000000_30.000000/</filepath>
 					</plugin>
 					<always_on>1</always_on>
 					<update_rate>24</update_rate>
@@ -193,26 +193,11 @@
 		</include>
 		<include>
 			<name>chair_77</name>
-			<pose>-2.419315 -0.000152 0.000000 0.000000 -0.000000 -1.485859</pose>
+			<pose>-5.799153 0.000173 0.000000 0.000000 -0.000000 -0.502754</pose>
 			<uri>model://kitchen_chair</uri>
 		</include>
-		<include>
-			<name>chair_79</name>
-			<pose>-5.836761 0.000177 0.000000 0.000000 -0.000000 2.465868</pose>
-			<uri>model://kitchen_chair</uri>
-		</include>
-		<include>
-			<name>chair_80</name>
-			<pose>-4.000167 -1.728524 0.000000 0.000000 -0.000000 -2.814084</pose>
-			<uri>model://kitchen_chair</uri>
-		</include>
-		<include>
-			<name>chair_83</name>
-			<pose>3.000000 -1.643935 0.000000 0.000000 -0.000000 -1.071311</pose>
-			<uri>model://chair_2</uri>
-		</include>
-		<actor name="sitter_86">
-			<pose>3.000000 -1.643935 0.650000 0.000000 -0.000000 -1.071311</pose>
+		<actor name="sitter_80">
+			<pose>-5.799153 0.000173 1.000000 0.000000 -0.000000 -0.502754</pose>
 			<skin>
 				<filename>sitting.dae</filename>
 			</skin>
@@ -234,18 +219,18 @@
 			</animation>
 			<plugin name="vehicle_type" filename="sitter">
 			</plugin>
-			<plugin name="chair" filename="chair_83">
+			<plugin name="chair" filename="chair_77">
 			</plugin>
 		</actor>
 		<include>
-			<name>chair_84</name>
-			<pose>5.636711 0.000000 0.000000 0.000000 -0.000000 -1.059658</pose>
-			<uri>model://chair_2</uri>
+			<name>chair_78</name>
+			<pose>-4.000151 -1.562703 0.000000 0.000000 -0.000000 -1.631292</pose>
+			<uri>model://kitchen_chair</uri>
 		</include>
-		<actor name="actor_basic_wanderer_87">
-			<pose>2.329470 -2.775129 1.000000 0.000000 -0.000000 0.883697</pose>
+		<actor name="sitter_81">
+			<pose>-4.000151 -1.562703 1.000000 0.000000 -0.000000 -1.631292</pose>
 			<skin>
-				<filename>model://actor/meshes/SKIN_man_blue_shirt.dae</filename>
+				<filename>sitting.dae</filename>
 			</skin>
 			<animation name="walking">
 				<filename>model://actor/meshes/ANIMATION_walking.dae</filename>
@@ -263,15 +248,20 @@
 				<filename>model://actor/meshes/ANIMATION_sitting.dae</filename>
 				<interpolate_x>true</interpolate_x>
 			</animation>
-			<plugin name="max_speed" filename="1">
+			<plugin name="vehicle_type" filename="sitter">
 			</plugin>
-			<plugin name="vehicle_type" filename="wanderer">
+			<plugin name="chair" filename="chair_78">
 			</plugin>
 		</actor>
-		<actor name="actor_basic_wanderer_88">
-			<pose>4.787448 -3.548285 1.000000 0.000000 -0.000000 -0.769433</pose>
+		<include>
+			<name>chair_79</name>
+			<pose>-2.271633 -0.000166 0.000000 0.000000 -0.000000 0.327191</pose>
+			<uri>model://kitchen_chair</uri>
+		</include>
+		<actor name="sitter_82">
+			<pose>-2.271633 -0.000166 1.000000 0.000000 -0.000000 0.327191</pose>
 			<skin>
-				<filename>model://actor/meshes/SKIN_man_blue_shirt.dae</filename>
+				<filename>sitting.dae</filename>
 			</skin>
 			<animation name="walking">
 				<filename>model://actor/meshes/ANIMATION_walking.dae</filename>
@@ -289,13 +279,54 @@
 				<filename>model://actor/meshes/ANIMATION_sitting.dae</filename>
 				<interpolate_x>true</interpolate_x>
 			</animation>
-			<plugin name="max_speed" filename="1">
+			<plugin name="vehicle_type" filename="sitter">
 			</plugin>
-			<plugin name="vehicle_type" filename="wanderer">
+			<plugin name="chair" filename="chair_79">
 			</plugin>
 		</actor>
+		<include>
+			<name>table_coffee_set_1_83</name>
+			<pose>3.000000 0.000000 0.000000 0.000000 -0.000000 1.570700</pose>
+			<uri>model://coffee_table_set_1</uri>
+		</include>
+		<include>
+			<name>chair_85</name>
+			<pose>4.519398 -0.000146 0.000000 0.000000 -0.000000 0.062377</pose>
+			<uri>model://chair_1</uri>
+		</include>
+		<actor name="sitter_88">
+			<pose>4.519398 -0.000146 0.650000 0.000000 -0.000000 0.062377</pose>
+			<skin>
+				<filename>sitting.dae</filename>
+			</skin>
+			<animation name="walking">
+				<filename>model://actor/meshes/ANIMATION_walking.dae</filename>
+				<interpolate_x>true</interpolate_x>
+			</animation>
+			<animation name="talking">
+				<filename>model://actor/meshes/ANIMATION_talking_a.dae</filename>
+				<interpolate_x>true</interpolate_x>
+			</animation>
+			<animation name="standing">
+				<filename>model://actor/meshes/ANIMATION_talking_a.dae</filename>
+				<interpolate_x>true</interpolate_x>
+			</animation>
+			<animation name="sitting">
+				<filename>model://actor/meshes/ANIMATION_sitting.dae</filename>
+				<interpolate_x>true</interpolate_x>
+			</animation>
+			<plugin name="vehicle_type" filename="sitter">
+			</plugin>
+			<plugin name="chair" filename="chair_85">
+			</plugin>
+		</actor>
+		<include>
+			<name>chair_87</name>
+			<pose>1.518598 0.000143 0.000000 0.000000 -0.000000 1.563752</pose>
+			<uri>model://chair_1</uri>
+		</include>
 		<actor name="actor_basic_wanderer_89">
-			<pose>-0.956911 -3.588565 1.000000 0.000000 -0.000000 -1.112304</pose>
+			<pose>5.768011 -3.233832 1.000000 0.000000 -0.000000 0.991814</pose>
 			<skin>
 				<filename>model://actor/meshes/SKIN_man_blue_shirt.dae</filename>
 			</skin>
@@ -321,7 +352,7 @@
 			</plugin>
 		</actor>
 		<actor name="actor_basic_wanderer_90">
-			<pose>0.902270 -6.661100 1.000000 0.000000 -0.000000 -2.217002</pose>
+			<pose>1.896210 0.966103 1.000000 0.000000 -0.000000 2.754790</pose>
 			<skin>
 				<filename>model://actor/meshes/SKIN_man_blue_shirt.dae</filename>
 			</skin>
@@ -347,7 +378,7 @@
 			</plugin>
 		</actor>
 		<actor name="actor_basic_wanderer_91">
-			<pose>3.947704 -2.809739 1.000000 0.000000 -0.000000 2.611079</pose>
+			<pose>-5.230748 -4.086908 1.000000 0.000000 -0.000000 2.081728</pose>
 			<skin>
 				<filename>model://actor/meshes/SKIN_man_blue_shirt.dae</filename>
 			</skin>
@@ -373,7 +404,7 @@
 			</plugin>
 		</actor>
 		<actor name="actor_basic_wanderer_92">
-			<pose>1.572819 -1.294181 1.000000 0.000000 -0.000000 -1.878458</pose>
+			<pose>-5.673503 -4.738973 1.000000 0.000000 -0.000000 -1.162673</pose>
 			<skin>
 				<filename>model://actor/meshes/SKIN_man_blue_shirt.dae</filename>
 			</skin>
@@ -399,7 +430,7 @@
 			</plugin>
 		</actor>
 		<actor name="actor_basic_wanderer_93">
-			<pose>-0.574101 -3.525051 1.000000 0.000000 -0.000000 -0.042826</pose>
+			<pose>-0.933460 -1.812824 1.000000 0.000000 -0.000000 -1.204966</pose>
 			<skin>
 				<filename>model://actor/meshes/SKIN_man_blue_shirt.dae</filename>
 			</skin>
@@ -425,7 +456,7 @@
 			</plugin>
 		</actor>
 		<actor name="actor_basic_wanderer_94">
-			<pose>1.407965 -5.746479 1.000000 0.000000 -0.000000 -2.608001</pose>
+			<pose>-4.676568 1.101307 1.000000 0.000000 -0.000000 1.345552</pose>
 			<skin>
 				<filename>model://actor/meshes/SKIN_man_blue_shirt.dae</filename>
 			</skin>
@@ -451,7 +482,7 @@
 			</plugin>
 		</actor>
 		<actor name="actor_basic_wanderer_95">
-			<pose>5.706685 -3.151230 1.000000 0.000000 -0.000000 -0.078581</pose>
+			<pose>3.284167 -2.157097 1.000000 0.000000 -0.000000 0.197841</pose>
 			<skin>
 				<filename>model://actor/meshes/SKIN_man_blue_shirt.dae</filename>
 			</skin>
@@ -477,7 +508,7 @@
 			</plugin>
 		</actor>
 		<actor name="actor_basic_wanderer_96">
-			<pose>2.521496 1.540797 1.000000 0.000000 -0.000000 -2.366196</pose>
+			<pose>-6.347240 -6.402254 1.000000 0.000000 -0.000000 -0.625748</pose>
 			<skin>
 				<filename>model://actor/meshes/SKIN_man_blue_shirt.dae</filename>
 			</skin>
@@ -503,7 +534,7 @@
 			</plugin>
 		</actor>
 		<actor name="actor_basic_wanderer_97">
-			<pose>2.055841 -0.253635 1.000000 0.000000 -0.000000 -2.181391</pose>
+			<pose>-0.090592 0.299795 1.000000 0.000000 -0.000000 1.515428</pose>
 			<skin>
 				<filename>model://actor/meshes/SKIN_man_blue_shirt.dae</filename>
 			</skin>
@@ -529,7 +560,7 @@
 			</plugin>
 		</actor>
 		<actor name="actor_basic_wanderer_98">
-			<pose>2.602507 -4.465116 1.000000 0.000000 -0.000000 2.771115</pose>
+			<pose>-7.210613 -2.315729 1.000000 0.000000 -0.000000 0.109376</pose>
 			<skin>
 				<filename>model://actor/meshes/SKIN_man_blue_shirt.dae</filename>
 			</skin>
@@ -555,7 +586,59 @@
 			</plugin>
 		</actor>
 		<actor name="actor_basic_wanderer_99">
-			<pose>-0.286548 -5.351537 1.000000 0.000000 -0.000000 -0.877618</pose>
+			<pose>4.589184 1.016842 1.000000 0.000000 -0.000000 -2.092212</pose>
+			<skin>
+				<filename>model://actor/meshes/SKIN_man_blue_shirt.dae</filename>
+			</skin>
+			<animation name="walking">
+				<filename>model://actor/meshes/ANIMATION_walking.dae</filename>
+				<interpolate_x>true</interpolate_x>
+			</animation>
+			<animation name="talking">
+				<filename>model://actor/meshes/ANIMATION_talking_a.dae</filename>
+				<interpolate_x>true</interpolate_x>
+			</animation>
+			<animation name="standing">
+				<filename>model://actor/meshes/ANIMATION_talking_a.dae</filename>
+				<interpolate_x>true</interpolate_x>
+			</animation>
+			<animation name="sitting">
+				<filename>model://actor/meshes/ANIMATION_sitting.dae</filename>
+				<interpolate_x>true</interpolate_x>
+			</animation>
+			<plugin name="max_speed" filename="1">
+			</plugin>
+			<plugin name="vehicle_type" filename="wanderer">
+			</plugin>
+		</actor>
+		<actor name="actor_basic_wanderer_100">
+			<pose>-0.846736 -6.047028 1.000000 0.000000 -0.000000 -1.923986</pose>
+			<skin>
+				<filename>model://actor/meshes/SKIN_man_blue_shirt.dae</filename>
+			</skin>
+			<animation name="walking">
+				<filename>model://actor/meshes/ANIMATION_walking.dae</filename>
+				<interpolate_x>true</interpolate_x>
+			</animation>
+			<animation name="talking">
+				<filename>model://actor/meshes/ANIMATION_talking_a.dae</filename>
+				<interpolate_x>true</interpolate_x>
+			</animation>
+			<animation name="standing">
+				<filename>model://actor/meshes/ANIMATION_talking_a.dae</filename>
+				<interpolate_x>true</interpolate_x>
+			</animation>
+			<animation name="sitting">
+				<filename>model://actor/meshes/ANIMATION_sitting.dae</filename>
+				<interpolate_x>true</interpolate_x>
+			</animation>
+			<plugin name="max_speed" filename="1">
+			</plugin>
+			<plugin name="vehicle_type" filename="wanderer">
+			</plugin>
+		</actor>
+		<actor name="actor_basic_wanderer_101">
+			<pose>-6.142127 -5.372659 1.000000 0.000000 -0.000000 0.714595</pose>
 			<skin>
 				<filename>model://actor/meshes/SKIN_man_blue_shirt.dae</filename>
 			</skin>
@@ -1102,22 +1185,22 @@
 		</model>
 		<include>
 			<name>door_0</name>
-			<pose>-10.987250 16.475000 1.000000 0.000000 -0.000000 0.000000</pose>
+			<pose>-10.987250 16.475000 1.000000 0.000000 -0.000000 1.571000</pose>
 			<uri>model://simple_door2</uri>
 		</include>
 		<include>
 			<name>door_1</name>
-			<pose>-14.624989 9.030960 1.000000 0.000000 -0.000000 -3.141185</pose>
+			<pose>-14.624989 9.030960 1.000000 0.000000 -0.000000 1.571000</pose>
 			<uri>model://simple_door2</uri>
 		</include>
 		<include>
 			<name>door_2</name>
-			<pose>-10.775058 12.475000 1.000000 0.000000 -0.000000 0.000000</pose>
+			<pose>-10.775058 12.475000 1.000000 0.000000 -0.000000 1.571000</pose>
 			<uri>model://simple_door2</uri>
 		</include>
 		<include>
 			<name>door_3</name>
-			<pose>-7.761390 8.625000 1.000000 0.000000 -0.000000 0.000000</pose>
+			<pose>-7.761390 8.625000 1.000000 0.000000 -0.000000 1.571000</pose>
 			<uri>model://simple_door2</uri>
 		</include>
 		<include>
@@ -1127,12 +1210,12 @@
 		</include>
 		<include>
 			<name>door_5</name>
-			<pose>12.624992 14.208450 1.000000 0.000000 -0.000000 -3.141185</pose>
+			<pose>12.624992 14.208450 1.000000 0.000000 -0.000000 1.571000</pose>
 			<uri>model://simple_door2</uri>
 		</include>
 		<include>
 			<name>door_6</name>
-			<pose>12.625004 16.932710 1.000000 0.000000 -0.000000 1.571000</pose>
+			<pose>12.625004 16.932710 1.000000 0.000000 -0.000000 -3.141185</pose>
 			<uri>model://simple_door2</uri>
 		</include>
 		<include>
@@ -1142,22 +1225,22 @@
 		</include>
 		<include>
 			<name>door_8</name>
-			<pose>15.475004 16.925590 1.000000 0.000000 -0.000000 1.571000</pose>
+			<pose>15.475004 16.925590 1.000000 0.000000 -0.000000 -3.141185</pose>
 			<uri>model://simple_door2</uri>
 		</include>
 		<include>
 			<name>door_9</name>
-			<pose>-14.625002 6.214056 1.000000 0.000000 -0.000000 1.571000</pose>
+			<pose>-14.625002 6.214056 1.000000 0.000000 -0.000000 -3.141185</pose>
 			<uri>model://simple_door2</uri>
 		</include>
 		<include>
 			<name>door_10</name>
-			<pose>-14.625002 3.346128 1.000000 0.000000 -0.000000 -3.141185</pose>
+			<pose>-14.625002 3.346128 1.000000 0.000000 -0.000000 1.571000</pose>
 			<uri>model://simple_door2</uri>
 		</include>
 		<include>
 			<name>door_11</name>
-			<pose>-14.625007 -2.443840 1.000000 0.000000 -0.000000 1.571000</pose>
+			<pose>-14.625007 -2.443840 1.000000 0.000000 -0.000000 -3.141185</pose>
 			<uri>model://simple_door2</uri>
 		</include>
 		<include>
@@ -1172,7 +1255,7 @@
 		</include>
 		<include>
 			<name>door_14</name>
-			<pose>-14.061730 -14.474920 1.000000 0.000000 -0.000000 0.000000</pose>
+			<pose>-14.061730 -14.474920 1.000000 0.000000 -0.000000 1.571000</pose>
 			<uri>model://simple_door2</uri>
 		</include>
 		<include>
@@ -1182,12 +1265,12 @@
 		</include>
 		<include>
 			<name>door_16</name>
-			<pose>-12.150050 5.775003 1.000000 0.000000 -0.000000 1.571000</pose>
+			<pose>-12.150050 5.775003 1.000000 0.000000 -0.000000 0.000000</pose>
 			<uri>model://simple_door2</uri>
 		</include>
 		<include>
 			<name>door_17</name>
-			<pose>-12.167990 -5.775000 1.000000 0.000000 -0.000000 1.571000</pose>
+			<pose>-12.167990 -5.775000 1.000000 0.000000 -0.000000 0.000000</pose>
 			<uri>model://simple_door2</uri>
 		</include>
 		<include>
@@ -1202,7 +1285,7 @@
 		</include>
 		<include>
 			<name>door_21</name>
-			<pose>10.625002 3.385427 1.000000 0.000000 -0.000000 1.571000</pose>
+			<pose>10.625002 3.385427 1.000000 0.000000 -0.000000 -3.141185</pose>
 			<uri>model://simple_door2</uri>
 		</include>
 		<include>
@@ -1217,27 +1300,27 @@
 		</include>
 		<include>
 			<name>door_24</name>
-			<pose>2.925000 -17.742519 1.000000 0.000000 -0.000000 -3.141185</pose>
+			<pose>2.925000 -17.742519 1.000000 0.000000 -0.000000 1.571000</pose>
 			<uri>model://simple_door2</uri>
 		</include>
 		<include>
 			<name>door_25</name>
-			<pose>4.583714 -8.625000 1.000000 0.000000 -0.000000 0.000000</pose>
+			<pose>4.583714 -8.625000 1.000000 0.000000 -0.000000 1.571000</pose>
 			<uri>model://simple_door2</uri>
 		</include>
 		<include>
 			<name>door_26</name>
-			<pose>6.431060 -8.625000 1.000000 0.000000 -0.000000 1.571000</pose>
+			<pose>6.431060 -8.625000 1.000000 0.000000 -0.000000 0.000000</pose>
 			<uri>model://simple_door2</uri>
 		</include>
 		<include>
 			<name>door_27</name>
-			<pose>9.399440 -8.625000 1.000000 0.000000 -0.000000 1.571000</pose>
+			<pose>9.399440 -8.625000 1.000000 0.000000 -0.000000 0.000000</pose>
 			<uri>model://simple_door2</uri>
 		</include>
 		<include>
 			<name>door_28</name>
-			<pose>13.352706 -14.475002 1.000000 0.000000 -0.000000 1.571000</pose>
+			<pose>13.352706 -14.475002 1.000000 0.000000 -0.000000 0.000000</pose>
 			<uri>model://simple_door2</uri>
 		</include>
 
