@@ -254,9 +254,9 @@ void WorldHandler::LoadParams(){
                 
             }
 
-            if (!intersected && near){
-                open = 0;
-            }
+            //if (!intersected && near){
+            //    open = 0;
+            //}
 
             auto yaw = door->pose.Rot().Yaw();
             

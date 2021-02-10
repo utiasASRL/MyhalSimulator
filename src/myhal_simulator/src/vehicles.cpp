@@ -2,12 +2,12 @@
 #include "Perlin.h"
 #include <thread>
 
-PathViz::PathViz(std::string name, int num_dots, ignition::math::Vector4d color, gazebo::physics::WorldPtr world):
-name(name), num_dots(num_dots), color(color), world(world){
+PathViz::PathViz(std::string name, int num_dots, ignition::math::Vector4d color, gazebo::physics::WorldPtr world) : name(name), num_dots(num_dots), color(color), world(world)
+{
 
     boost::shared_ptr<sdf::SDF> sdf = boost::make_shared<sdf::SDF>();
     sdf->SetFromString(
-       "<sdf version ='1.6'>\
+        "<sdf version ='1.6'>\
           <model name ='path'>\
           </model>\
         </sdf>");
@@ -16,8 +16,9 @@ name(name), num_dots(num_dots), color(color), world(world){
     model->GetElement("static")->Set(true);
     model->GetAttribute("name")->SetFromString(this->name);
 
-    for (int i = 0; i < this->num_dots; i++){
-        auto pos = ignition::math::Vector3d(50,50,0); //put them offscreen to start
+    for (int i = 0; i < this->num_dots; i++)
+    {
+        auto pos = ignition::math::Vector3d(50, 50, 0); //put them offscreen to start
         auto link = model->AddElement("link");
         link->GetElement("pose")->Set(pos);
         link->GetAttribute("name")->SetFromString(name + "_" + std::to_string(i));
@@ -34,50 +35,59 @@ name(name), num_dots(num_dots), color(color), world(world){
     this->world->InsertModelSDF(*sdf);
 }
 
-void PathViz::OnUpdate(const nav_msgs::Path::ConstPtr& plan){
-    if (this->model == nullptr){
-        this->model = this->world->ModelByName(this->name);    
+void PathViz::OnUpdate(const nav_msgs::Path::ConstPtr &plan)
+{
+    if (this->model == nullptr)
+    {
+        this->model = this->world->ModelByName(this->name);
         this->dots = this->model->GetLinks();
-    } 
+    }
 
     auto path = plan->poses;
-    if (path.size() < 0){
+    if (path.size() < 0)
+    {
         return;
     }
-    double frac = std::min(1.0, ((double) this->num_dots)/((double) path.size()));
-    int mod = (int) std::ceil(1/frac);
-    
+    double frac = std::min(1.0, ((double)this->num_dots) / ((double)path.size()));
+    int mod = (int)std::ceil(1 / frac);
 
     int link_count = 0;
-    for (int i = 0; i< path.size(); i++){
-        if ((i % mod) != 0){
+    for (int i = 0; i < path.size(); i++)
+    {
+        if ((i % mod) != 0)
+        {
             continue;
         }
         auto pose = path[i];
         auto p = pose.pose.position;
         auto world_pose = ignition::math::Pose3d(p.x, p.y, p.z, 0, 0, 0);
-        if (link_count < this->dots.size()){
+        if (link_count < this->dots.size())
+        {
             this->dots[link_count++]->SetWorldPose(world_pose);
         }
     }
-    // reset unused dots 
-    for (int i = link_count; i < this->dots.size(); i++){
+    // reset unused dots
+    for (int i = link_count; i < this->dots.size(); i++)
+    {
         auto world_pose = ignition::math::Pose3d(50, 50, 0, 0, 0, 0);
         this->dots[link_count++]->SetWorldPose(world_pose);
     }
 }
 
-SmartCam::SmartCam(gazebo::physics::ModelPtr self, ignition::math::Vector3d initial_pos): self(self), updated_pos(initial_pos){}
+SmartCam::SmartCam(gazebo::physics::ModelPtr self, ignition::math::Vector3d initial_pos) : self(self), updated_pos(initial_pos) {}
 
-void SmartCam::UpdateModel(){
+void SmartCam::UpdateModel()
+{
     this->heading.Normalize();
     double yaw = std::atan2(this->heading.Y(), this->heading.X());
-    double pitch = -std::atan2(heading.Z(), std::hypot(heading.X(),heading.Y()));
-    self->SetWorldPose(ignition::math::Pose3d(this->updated_pos, ignition::math::Quaterniond(0,pitch,yaw)));
+    double pitch = -std::atan2(heading.Z(), std::hypot(heading.X(), heading.Y()));
+    self->SetWorldPose(ignition::math::Pose3d(this->updated_pos, ignition::math::Quaterniond(0, pitch, yaw)));
 }
 
-void Sentry::OnUpdate(double dt, std::vector<ignition::math::Vector3d> &robot_traj){
-    if (robot_traj.size() == 0){
+void Sentry::OnUpdate(double dt, std::vector<ignition::math::Vector3d> &robot_traj)
+{
+    if (robot_traj.size() == 0)
+    {
         return;
     }
     auto target = robot_traj.back();
@@ -85,44 +95,52 @@ void Sentry::OnUpdate(double dt, std::vector<ignition::math::Vector3d> &robot_tr
     this->UpdateModel();
 }
 
-Hoverer::Hoverer(gazebo::physics::ModelPtr self, ignition::math::Vector3d initial_pos, double T): SmartCam(self, initial_pos), T(T), relative_pos(initial_pos) {}
+Hoverer::Hoverer(gazebo::physics::ModelPtr self, ignition::math::Vector3d initial_pos, double T) : SmartCam(self, initial_pos), T(T), relative_pos(initial_pos) {}
 
-void Hoverer::OnUpdate(double dt, std::vector<ignition::math::Vector3d> &robot_traj){
+void Hoverer::OnUpdate(double dt, std::vector<ignition::math::Vector3d> &robot_traj)
+{
 
-    
-    if (robot_traj.size() == 0){
+    if (robot_traj.size() == 0)
+    {
         return;
     }
     auto target = robot_traj.back();
-        
-    if (this->T > 0){
-        auto dyaw = (dt/this->T)*6.28;
-        auto rt = ignition::math::Quaterniond(0,0,dyaw);
+
+    if (this->T > 0)
+    {
+        auto dyaw = (dt / this->T) * 6.28;
+        auto rt = ignition::math::Quaterniond(0, 0, dyaw);
         this->relative_pos = rt.RotateVector(this->relative_pos);
     }
     this->updated_pos = target + this->relative_pos;
     this->heading = target - this->updated_pos;
     this->UpdateModel();
 }
-        
-Stalker::Stalker(gazebo::physics::ModelPtr self, ignition::math::Vector3d initial_pos, double dist): SmartCam(self, initial_pos), dist(dist){}
 
-void Stalker::OnUpdate(double dt, std::vector<ignition::math::Vector3d> &robot_traj){
+Stalker::Stalker(gazebo::physics::ModelPtr self, ignition::math::Vector3d initial_pos, double dist) : SmartCam(self, initial_pos), dist(dist) {}
+
+void Stalker::OnUpdate(double dt, std::vector<ignition::math::Vector3d> &robot_traj)
+{
     // maintain this->dist distance from the robot along it's path
-    
-    if (robot_traj.size() == 0){
+
+    if (robot_traj.size() == 0)
+    {
         return;
     }
 
     auto target = robot_traj.back();
-    if (robot_traj.size() > 1){
-        this->curr_dist += (target - robot_traj[robot_traj.size()-2]).Length();
-    } else{
+    if (robot_traj.size() > 1)
+    {
+        this->curr_dist += (target - robot_traj[robot_traj.size() - 2]).Length();
+    }
+    else
+    {
         this->curr_dist += target.Length();
     }
-        
-    while (this->curr_ind < (robot_traj.size() - 1) && this->curr_dist > dist){
-        this->curr_dist -= (robot_traj[this->curr_ind+1] - robot_traj[this->curr_ind]).Length();
+
+    while (this->curr_ind < (robot_traj.size() - 1) && this->curr_dist > dist)
+    {
+        this->curr_dist -= (robot_traj[this->curr_ind + 1] - robot_traj[this->curr_ind]).Length();
         this->curr_ind++;
     }
 
@@ -132,17 +150,17 @@ void Stalker::OnUpdate(double dt, std::vector<ignition::math::Vector3d> &robot_t
     this->UpdateModel();
 }
 
-
 //VEHICLE CLASS
 
-Vehicle::Vehicle(gazebo::physics::ActorPtr _actor, 
-double _mass, 
-double _max_force, 
-double _max_speed, 
-ignition::math::Pose3d initial_pose, 
-ignition::math::Vector3d initial_velocity,
-std::vector<gazebo::physics::EntityPtr> objects){
-    
+Vehicle::Vehicle(gazebo::physics::ActorPtr _actor,
+                 double _mass,
+                 double _max_force,
+                 double _max_speed,
+                 ignition::math::Pose3d initial_pose,
+                 ignition::math::Vector3d initial_velocity,
+                 std::vector<gazebo::physics::EntityPtr> objects)
+{
+
     this->actor = _actor;
     this->mass = _mass;
     this->max_force = _max_force;
@@ -157,7 +175,8 @@ std::vector<gazebo::physics::EntityPtr> objects){
     std::map<std::string, gazebo::common::SkeletonAnimation *>::iterator it;
     std::map<std::string, gazebo::common::SkeletonAnimation *> skel_anims = this->actor->SkeletonAnimations();
 
-    for ( it = skel_anims.begin(); it != skel_anims.end(); it++ ){   
+    for (it = skel_anims.begin(); it != skel_anims.end(); it++)
+    {
         this->trajectories[it->first] = std::make_shared<gazebo::physics::TrajectoryInfo>();
         this->trajectories[it->first]->type = it->first;
         this->trajectories[it->first]->duration = 1.0;
@@ -166,33 +185,39 @@ std::vector<gazebo::physics::EntityPtr> objects){
     this->actor->SetCustomTrajectory(this->trajectories["walking"]);
 }
 
-void Vehicle::OnUpdate(const gazebo::common::UpdateInfo &_info, double dt, std::vector<boost::shared_ptr<Vehicle>> vehicles, std::vector<gazebo::physics::EntityPtr> objects){
+void Vehicle::OnUpdate(const gazebo::common::UpdateInfo &_info, double dt, std::vector<boost::shared_ptr<Vehicle>> vehicles, std::vector<gazebo::physics::EntityPtr> objects)
+{
     this->Seek(this->curr_target);
     this->UpdateModel();
     this->UpdatePosition(dt);
 }
 
-gazebo::physics::ActorPtr Vehicle::GetActor(){
+gazebo::physics::ActorPtr Vehicle::GetActor()
+{
     return this->actor;
 }
 
-void Vehicle::UpdateModel(){
+void Vehicle::UpdateModel()
+{
 
     double distance_travelled = (this->pose.Pos() - this->actor->WorldPose().Pos()).Length();
-	this->actor->SetWorldPose(this->pose, true, true);
-	this->actor->SetScriptTime(this->actor->ScriptTime() + (distance_travelled * this->animation_factor));
+    this->actor->SetWorldPose(this->pose, true, true);
+    this->actor->SetScriptTime(this->actor->ScriptTime() + (distance_travelled * this->animation_factor));
 }
 
-void Vehicle::ApplyForce(ignition::math::Vector3d force){
-    this->acceleration+=(force/this->mass);
+void Vehicle::ApplyForce(ignition::math::Vector3d force)
+{
+    this->acceleration += (force / this->mass);
 }
 
-void Vehicle::UpdatePosition(double dt){
-    this->velocity+=this->acceleration*dt;
-    
-    if (this->velocity.Length() > this->max_speed){
+void Vehicle::UpdatePosition(double dt)
+{
+    this->velocity += this->acceleration * dt;
+
+    if (this->velocity.Length() > this->max_speed)
+    {
         this->velocity.Normalize();
-        this->velocity*=this->max_speed;
+        this->velocity *= this->max_speed;
     }
 
     ignition::math::Vector3d direction = this->velocity;
@@ -203,168 +228,184 @@ void Vehicle::UpdatePosition(double dt){
 
     double current_yaw = this->pose.Rot().Yaw();
 
-    ignition::math::Angle yaw_diff = dir_yaw-current_yaw+IGN_PI_2;
-   
+    ignition::math::Angle yaw_diff = dir_yaw - current_yaw + IGN_PI_2;
+
     yaw_diff.Normalize();
 
-    if (this->velocity.Length()<10e-2){
+    if (this->velocity.Length() < 10e-2)
+    {
         yaw_diff = 0;
     }
-   
-    this->pose.Pos() += this->velocity*dt;
 
-    this->pose.Rot() = ignition::math::Quaterniond(IGN_PI_2, 0, current_yaw + yaw_diff.Radian()*0.1);
+    this->pose.Pos() += this->velocity * dt;
+
+    this->pose.Rot() = ignition::math::Quaterniond(IGN_PI_2, 0, current_yaw + yaw_diff.Radian() * 0.1);
 
     this->acceleration = 0;
-
 }
 
-void Vehicle::Seek(ignition::math::Vector3d target, double weight){
+void Vehicle::Seek(ignition::math::Vector3d target, double weight)
+{
 
-    ignition::math::Vector3d desired_v = target-this->pose.Pos();
+    ignition::math::Vector3d desired_v = target - this->pose.Pos();
     desired_v.Normalize();
-    desired_v*=this->max_speed;
+    desired_v *= this->max_speed;
 
     ignition::math::Vector3d steer = desired_v - this->velocity;
 
     steer *= weight;
-    if (steer.Length() > this->max_force){
+    if (steer.Length() > this->max_force)
+    {
         steer.Normalize();
-        steer*=this->max_force;
+        steer *= this->max_force;
     }
 
     ApplyForce(steer);
     // if(steer.Length() != 0){
     //     std::cout << this->GetName() << " steer force: " << steer << std::endl;
     // }
-    
 }
 
-void Vehicle::Arrival(ignition::math::Vector3d target, double weight){ 
+void Vehicle::Arrival(ignition::math::Vector3d target, double weight)
+{
 
-    ignition::math::Vector3d desired_v = target-this->pose.Pos();
+    ignition::math::Vector3d desired_v = target - this->pose.Pos();
     double dist = desired_v.Length();
     desired_v.Normalize();
 
-    if (dist <this->slowing_distance){
-        desired_v*=(dist/this->slowing_distance)*(this->max_speed);
-    }else{
-        desired_v*=this->max_speed;
+    if (dist < this->slowing_distance)
+    {
+        desired_v *= (dist / this->slowing_distance) * (this->max_speed);
     }
-
+    else
+    {
+        desired_v *= this->max_speed;
+    }
 
     ignition::math::Vector3d steer = desired_v - this->velocity;
 
     steer *= weight;
 
-    if (steer.Length() > this->max_force){
+    if (steer.Length() > this->max_force)
+    {
         steer.Normalize();
-        steer*=this->max_force;
+        steer *= this->max_force;
     }
-    
+
     ApplyForce(steer);
 }
 
-void Vehicle::AvoidObstacles(std::vector<gazebo::physics::EntityPtr> objects){
-//     ignition::math::Vector3d boundary_force = ignition::math::Vector3d(0,0,0);
-//     double interaction_strength = 0.8 + ignition::math::Rand::DblUniform(-0.1,0.1);
-//     double interaction_range = 1 + ignition::math::Rand::DblUniform(-0.25,0.25);
+void Vehicle::AvoidObstacles(std::vector<gazebo::physics::EntityPtr> objects)
+{
+    //     ignition::math::Vector3d boundary_force = ignition::math::Vector3d(0,0,0);
+    //     double interaction_strength = 0.8 + ignition::math::Rand::DblUniform(-0.1,0.1);
+    //     double interaction_range = 1 + ignition::math::Rand::DblUniform(-0.25,0.25);
 
-//     for (gazebo::physics::EntityPtr object: objects){
-//         ignition::math::Box box = object->BoundingBox();
+    //     for (gazebo::physics::EntityPtr object: objects){
+    //         ignition::math::Box box = object->BoundingBox();
 
-//         ignition::math::Vector3d rad = this->pose.Pos() - box.Center();
-// 		double dist = rad.Length();
-//         dist = std::max(0.0, dist-0.2); //acounting for the radius of the person
+    //         ignition::math::Vector3d rad = this->pose.Pos() - box.Center();
+    // 		double dist = rad.Length();
+    //         dist = std::max(0.0, dist-0.2); //acounting for the radius of the person
 
-//         auto dir = this->curr_target;
-//         dir.Normalize();
-//         rad.Normalize();
-//         double angle_rad_dir = std::acos(dir.Dot(rad));
-//         double SF_form_factor = 0.2 + 0.4 * (1 + std::cos(angle_rad_dir));
-//         rad *= interaction_strength * std::exp(-dist/interaction_range) * SF_form_factor;
+    //         auto dir = this->curr_target;
+    //         dir.Normalize();
+    //         rad.Normalize();
+    //         double angle_rad_dir = std::acos(dir.Dot(rad));
+    //         double SF_form_factor = 0.2 + 0.4 * (1 + std::cos(angle_rad_dir));
+    //         rad *= interaction_strength * std::exp(-dist/interaction_range) * SF_form_factor;
 
-//         if (dist < this->obstacle_margin){
-// 			rad *= 100; //multiply force if we're too close
-//             std::cout<<"Too close to the obstacle : " << this->GetName() <<std::endl;
-// 		}
-//         boundary_force += rad;
-//         std::cout << this->GetName() << " boundary force: " << boundary_force << std::endl;
-//     }
-//     boundary_force.Z() = 0;
-//     this->ApplyForce(boundary_force);
-// }
-    ignition::math::Vector3d boundary_force = ignition::math::Vector3d(0,0,0);
-    for (gazebo::physics::EntityPtr object: objects){
+    //         if (dist < this->obstacle_margin){
+    // 			rad *= 100; //multiply force if we're too close
+    //             std::cout<<"Too close to the obstacle : " << this->GetName() <<std::endl;
+    // 		}
+    //         boundary_force += rad;
+    //         std::cout << this->GetName() << " boundary force: " << boundary_force << std::endl;
+    //     }
+    //     boundary_force.Z() = 0;
+    //     this->ApplyForce(boundary_force);
+    // }
+    ignition::math::Vector3d boundary_force = ignition::math::Vector3d(0, 0, 0);
+    for (gazebo::physics::EntityPtr object : objects)
+    {
         ignition::math::Box box = object->BoundingBox();
         // inflate the box slightly
 
         double inflate = 0.05;
-        if (object->GetName() == "jackal"){
+        if (object->GetName() == "jackal")
+        {
             inflate = 0.2;
         }
-        
+
         box.Min().X() -= inflate;
         box.Max().X() += inflate;
         box.Min().Y() -= inflate;
         box.Max().Y() += inflate;
 
         double min_z = std::min(box.Min().Z(), box.Max().Z());
-        if (min_z > 1.5){
+        if (min_z > 1.5)
+        {
             continue;
         }
         ignition::math::Vector3d min_normal = utilities::min_box_repulsive_vector(this->pose.Pos(), box);
         //if the person has somehow arrived inside an object, dont count collisions with that object so it can eventually leave
-        if (utilities::inside_box(box, this->pose.Pos())){
+        if (utilities::inside_box(box, this->pose.Pos()))
+        {
             //std::cout << "debug" << std::endl;
             continue;
         }
-	
-		double dist = min_normal.Length();
-		if (dist < this->obstacle_margin){
-			min_normal.Normalize();
-			boundary_force += min_normal/exp(dist*dist);
-		}
+
+        double dist = min_normal.Length();
+        if (dist < this->obstacle_margin)
+        {
+            min_normal.Normalize();
+            boundary_force += min_normal / exp(dist * dist);
+        }
     }
-    if (boundary_force.Length()>this->max_force){
+    if (boundary_force.Length() > this->max_force)
+    {
         boundary_force.Normalize();
-        boundary_force*=this->max_force;
+        boundary_force *= this->max_force;
     }
-    boundary_force.Z() =0;
+    boundary_force.Z() = 0;
     this->ApplyForce(boundary_force);
     // if(boundary_force.Length() !=0){
     //     std::cout << this->GetName() << " boundary force: " << boundary_force << std::endl;
     // }
-    
 }
 
-void Vehicle::AvoidActors(std::vector<boost::shared_ptr<Vehicle>> vehicles){
+void Vehicle::AvoidActors(std::vector<boost::shared_ptr<Vehicle>> vehicles)
+{
 
-    ignition::math::Vector3d steer = ignition::math::Vector3d(0,0,0);
-    for (int i =0; i<(int) vehicles.size(); i++){
+    ignition::math::Vector3d steer = ignition::math::Vector3d(0, 0, 0);
+    for (int i = 0; i < (int)vehicles.size(); i++)
+    {
         auto other = vehicles[i]->GetActor();
-        if (other == this->actor){
+        if (other == this->actor)
+        {
             continue;
         }
         ignition::math::Vector3d this_pos = this->pose.Pos();
-		this_pos.Z() = 0;
-		ignition::math::Vector3d other_pos = other->WorldPose().Pos();
-		other_pos.Z() = 0;
-		ignition::math::Vector3d rad = this_pos-other_pos;
-		double dist = rad.Length();
-        dist = std::max(0.0, dist-0.2); //acounting for the radius of the person
-		
-		if (dist<this->actor_margin && dist > 0){
-			rad.Normalize();	
-			rad/=dist;
-			steer += rad;
-		}
+        this_pos.Z() = 0;
+        ignition::math::Vector3d other_pos = other->WorldPose().Pos();
+        other_pos.Z() = 0;
+        ignition::math::Vector3d rad = this_pos - other_pos;
+        double dist = rad.Length();
+        dist = std::max(0.0, dist - 0.2); //acounting for the radius of the person
+
+        if (dist < this->actor_margin && dist > 0)
+        {
+            rad.Normalize();
+            rad /= dist;
+            steer += rad;
+        }
     }
 
-    if (steer.Length()>this->max_force){
-			steer.Normalize();
-			steer*=this->max_force;
-	}
+    if (steer.Length() > this->max_force)
+    {
+        steer.Normalize();
+        steer *= this->max_force;
+    }
     steer.Z() = 0;
     this->ApplyForce(steer);
     // if(steer.Length() != 0){
@@ -372,165 +413,175 @@ void Vehicle::AvoidActors(std::vector<boost::shared_ptr<Vehicle>> vehicles){
     // }
 }
 
-void Vehicle::SetAllObjects(std::vector<gazebo::physics::EntityPtr> objects){
+void Vehicle::SetAllObjects(std::vector<gazebo::physics::EntityPtr> objects)
+{
     this->all_objects = objects;
 }
 
-ignition::math::Pose3d Vehicle::GetPose(){
+ignition::math::Pose3d Vehicle::GetPose()
+{
     return this->pose;
 }
 
-ignition::math::Vector3d Vehicle::GetVelocity(){
+ignition::math::Vector3d Vehicle::GetVelocity()
+{
     return this->velocity;
 }
 
-std::string Vehicle::GetName(){
+std::string Vehicle::GetName()
+{
     return this->actor->GetName();
 }
 
-bool Vehicle::IsStill(){
+bool Vehicle::IsStill()
+{
     return this->still;
 }
 
 // WANDERER
 
-void Wanderer::OnUpdate(const gazebo::common::UpdateInfo &_info, double dt, std::vector<boost::shared_ptr<Vehicle>> vehicles, std::vector<gazebo::physics::EntityPtr> objects){
+void Wanderer::OnUpdate(const gazebo::common::UpdateInfo &_info, double dt, std::vector<boost::shared_ptr<Vehicle>> vehicles, std::vector<gazebo::physics::EntityPtr> objects)
+{
 
     this->SetNextTarget();
     this->Seek(this->curr_target);
     this->AvoidActors(vehicles);
     this->AvoidObstacles(objects);
-    
+
     this->UpdatePosition(dt);
     this->UpdateModel();
 }
 
-void Wanderer::SetNextTarget(){
-    this->curr_theta += ignition::math::Rand::DblUniform(-this->rand_amp,this->rand_amp); //TODO: perlin noise
+void Wanderer::SetNextTarget()
+{
+    this->curr_theta += ignition::math::Rand::DblUniform(-this->rand_amp, this->rand_amp); //TODO: perlin noise
 
     auto dir = this->velocity;
-    
+
     dir.Normalize();
-    
-    dir*=2;
-    
-    auto offset =  ignition::math::Vector3d(1,0,0);
-    
-    auto rotation = ignition::math::Quaterniond(0,0,this->curr_theta);
+
+    dir *= 2;
+
+    auto offset = ignition::math::Vector3d(1, 0, 0);
+
+    auto rotation = ignition::math::Quaterniond(0, 0, this->curr_theta);
 
     offset = rotation.RotateVector(offset);
 
     this->curr_target = this->pose.Pos() + dir + offset;
     this->curr_target.Z() = this->height;
-
 }
 
 // RANDOM WALKER
 
-void RandomWalker::OnUpdate(const gazebo::common::UpdateInfo &_info, double dt, std::vector<boost::shared_ptr<Vehicle>> vehicles, std::vector<gazebo::physics::EntityPtr> objects){
+void RandomWalker::OnUpdate(const gazebo::common::UpdateInfo &_info, double dt, std::vector<boost::shared_ptr<Vehicle>> vehicles, std::vector<gazebo::physics::EntityPtr> objects)
+{
 
-
-    if ((this->pose.Pos() - this->curr_target).Length()<this->arrival_distance){
+    if ((this->pose.Pos() - this->curr_target).Length() < this->arrival_distance)
+    {
         this->SetNextTarget(this->all_objects);
     }
 
-    
     this->Seek(this->curr_target);
     this->AvoidActors(vehicles);
-    this->AvoidObstacles(objects);//TODO: make sure this is safe here
-    
+    this->AvoidObstacles(objects); //TODO: make sure this is safe here
+
     this->UpdatePosition(dt);
     this->UpdateModel();
 }
 
-void RandomWalker::SetNextTarget(std::vector<gazebo::physics::EntityPtr> objects){
+void RandomWalker::SetNextTarget(std::vector<gazebo::physics::EntityPtr> objects)
+{
     bool target_found = false;
 
-    while (!target_found){
-        
-        auto dir = this->velocity;
-		if (dir.Length() < 1e-6){
-			dir = ignition::math::Vector3d(ignition::math::Rand::DblUniform(-1, 1),ignition::math::Rand::DblUniform(-1, 1),0);
-		}
-        dir.Normalize();
-        auto rotation =  ignition::math::Quaterniond::EulerToQuaternion(0,0,ignition::math::Rand::DblUniform(-3, 3)); 
-		dir = rotation.RotateVector(dir);
-        dir*=10000;
-		auto ray = ignition::math::Line3d(this->pose.Pos().X(), this->pose.Pos().Y(), this->pose.Pos().X() + dir.X(), this->pose.Pos().Y() + dir.Y());
-		ignition::math::Vector3d closest_intersection;
-        ignition::math::Line3d closest_edge;
-		double min_dist = 100000;
+    while (!target_found)
+    {
 
-        for (auto object: objects){
-           
+        auto dir = this->velocity;
+        if (dir.Length() < 1e-6)
+        {
+            dir = ignition::math::Vector3d(ignition::math::Rand::DblUniform(-1, 1), ignition::math::Rand::DblUniform(-1, 1), 0);
+        }
+        dir.Normalize();
+        auto rotation = ignition::math::Quaterniond::EulerToQuaternion(0, 0, ignition::math::Rand::DblUniform(-3, 3));
+        dir = rotation.RotateVector(dir);
+        dir *= 10000;
+        auto ray = ignition::math::Line3d(this->pose.Pos().X(), this->pose.Pos().Y(), this->pose.Pos().X() + dir.X(), this->pose.Pos().Y() + dir.Y());
+        ignition::math::Vector3d closest_intersection;
+        ignition::math::Line3d closest_edge;
+        double min_dist = 100000;
+
+        for (auto object : objects)
+        {
+
             auto box = object->BoundingBox();
 
             std::vector<ignition::math::Line3d> edges = utilities::get_box_edges(box);
 
-            for (ignition::math::Line3d edge: edges){
-    
-				ignition::math::Vector3d test_intersection;
+            for (ignition::math::Line3d edge : edges)
+            {
 
-				if (ray.Intersect(edge, test_intersection)){ //if the ray intersects the boundary
+                ignition::math::Vector3d test_intersection;
+
+                if (ray.Intersect(edge, test_intersection))
+                { //if the ray intersects the boundary
                     ignition::math::Vector3d zero_z = this->pose.Pos();
                     zero_z.Z() = 0;
-					double dist_to_int = (test_intersection-zero_z).Length();
-					if (dist_to_int < min_dist){
-						min_dist = dist_to_int;
-						closest_intersection = test_intersection;
+                    double dist_to_int = (test_intersection - zero_z).Length();
+                    if (dist_to_int < min_dist)
+                    {
+                        min_dist = dist_to_int;
+                        closest_intersection = test_intersection;
                         closest_edge = edge;
-					}
-
-				}
-						
-			}
+                    }
+                }
+            }
         }
 
         auto zero_z = this->pose.Pos();
         zero_z.Z() = 0;
         auto final_ray = closest_intersection - zero_z;
-		auto v_to_add = final_ray*ignition::math::Rand::DblUniform(0.1,0.9);
+        auto v_to_add = final_ray * ignition::math::Rand::DblUniform(0.1, 0.9);
 
         ignition::math::Vector3d normal;
-        if (utilities::get_normal_to_edge(this->pose.Pos(), closest_edge, normal) && (normal.Length() < this->obstacle_margin)){
+        if (utilities::get_normal_to_edge(this->pose.Pos(), closest_edge, normal) && (normal.Length() < this->obstacle_margin))
+        {
             continue;
-      
-        } 
+        }
 
-        if ((final_ray-v_to_add).Length() < (this->obstacle_margin)){ 
-			v_to_add.Normalize();
-			auto small_subtraction = (v_to_add*this->obstacle_margin)*2;
-			v_to_add = final_ray - small_subtraction;
-			if (small_subtraction.Length() > final_ray.Length()){
-				v_to_add*=0;
-			}
-		}
-		
-		this->curr_target = v_to_add + this->pose.Pos();
+        if ((final_ray - v_to_add).Length() < (this->obstacle_margin))
+        {
+            v_to_add.Normalize();
+            auto small_subtraction = (v_to_add * this->obstacle_margin) * 2;
+            v_to_add = final_ray - small_subtraction;
+            if (small_subtraction.Length() > final_ray.Length())
+            {
+                v_to_add *= 0;
+            }
+        }
+
+        this->curr_target = v_to_add + this->pose.Pos();
         this->curr_target.Z() = this->height;
-		target_found = true;
-        
-
+        target_found = true;
     }
-
-    
 }
 
-// BOID 
+// BOID
 
-Boid::Boid(gazebo::physics::ActorPtr _actor, 
-double _mass, 
-double _max_force, 
-double _max_speed, 
-ignition::math::Pose3d initial_pose, 
-ignition::math::Vector3d initial_velocity, 
-std::vector<gazebo::physics::EntityPtr> objects, 
-double _alignement, 
-double _cohesion, 
-double _separation,
-double angle,
-double radius)
-: Vehicle(_actor, _mass, _max_force, _max_speed, initial_pose, initial_velocity, objects){
+Boid::Boid(gazebo::physics::ActorPtr _actor,
+           double _mass,
+           double _max_force,
+           double _max_speed,
+           ignition::math::Pose3d initial_pose,
+           ignition::math::Vector3d initial_velocity,
+           std::vector<gazebo::physics::EntityPtr> objects,
+           double _alignement,
+           double _cohesion,
+           double _separation,
+           double angle,
+           double radius)
+    : Vehicle(_actor, _mass, _max_force, _max_speed, initial_pose, initial_velocity, objects)
+{
     this->weights[ALI] = _alignement;
     this->weights[COH] = _cohesion;
     this->weights[SEP] = _separation;
@@ -539,8 +590,8 @@ double radius)
     this->FOV_radius = radius;
 }
 
-void Boid::OnUpdate(const gazebo::common::UpdateInfo &_info , double dt, std::vector<boost::shared_ptr<Vehicle>> vehicles, std::vector<gazebo::physics::EntityPtr> objects){
-
+void Boid::OnUpdate(const gazebo::common::UpdateInfo &_info, double dt, std::vector<boost::shared_ptr<Vehicle>> vehicles, std::vector<gazebo::physics::EntityPtr> objects)
+{
 
     this->Alignement(dt, vehicles);
     this->Cohesion(vehicles);
@@ -551,114 +602,133 @@ void Boid::OnUpdate(const gazebo::common::UpdateInfo &_info , double dt, std::ve
     this->UpdateModel();
 }
 
-void Boid::Separation(std::vector<boost::shared_ptr<Vehicle>> vehicles){
-    ignition::math::Vector3d steer = ignition::math::Vector3d(0,0,0);
-    for (auto other: vehicles){
-        if (other->GetName() == this->GetName()){
+void Boid::Separation(std::vector<boost::shared_ptr<Vehicle>> vehicles)
+{
+    ignition::math::Vector3d steer = ignition::math::Vector3d(0, 0, 0);
+    for (auto other : vehicles)
+    {
+        if (other->GetName() == this->GetName())
+        {
             continue;
         }
         auto this_pos = this->pose.Pos();
-		this_pos.Z() = 0;
-		auto other_pos = other->GetPose().Pos();
-		other_pos.Z() = 0;
-		auto rad = this_pos-other_pos;
-		double dist = rad.Length();
+        this_pos.Z() = 0;
+        auto other_pos = other->GetPose().Pos();
+        other_pos.Z() = 0;
+        auto rad = this_pos - other_pos;
+        double dist = rad.Length();
 
         auto dir = this->velocity;
         dir.Normalize();
         rad.Normalize();
         double angle = std::acos(rad.Dot(dir));
-		
-		if (dist<this->obstacle_margin && dist > 0){
-			rad.Normalize();	
-			rad/=dist;
-			steer += rad;
-		}
+
+        if (dist < this->obstacle_margin && dist > 0)
+        {
+            rad.Normalize();
+            rad /= dist;
+            steer += rad;
+        }
     }
-    
-    if ((steer*this->weights[SEP]).Length() > this->max_force){
+
+    if ((steer * this->weights[SEP]).Length() > this->max_force)
+    {
         steer.Normalize();
-        steer*=this->max_force;
-    } else{
-        steer*= this->weights[SEP];
+        steer *= this->max_force;
+    }
+    else
+    {
+        steer *= this->weights[SEP];
     }
     steer.Z() = 0;
     this->ApplyForce(steer);
 }
 
-void Boid::Alignement(double dt, std::vector<boost::shared_ptr<Vehicle>> vehicles){
-    auto vel_sum = ignition::math::Vector3d(0,0,0);
+void Boid::Alignement(double dt, std::vector<boost::shared_ptr<Vehicle>> vehicles)
+{
+    auto vel_sum = ignition::math::Vector3d(0, 0, 0);
     int count = 0;
 
-    for (auto other : vehicles){
-        if (other->GetName() == this->GetName()){
+    for (auto other : vehicles)
+    {
+        if (other->GetName() == this->GetName())
+        {
             continue;
         }
         auto this_pos = this->pose.Pos();
-		this_pos.Z() = 0;
-		auto other_pos = other->GetPose().Pos();
-		other_pos.Z() = 0;
-		auto r = this_pos-other_pos;
+        this_pos.Z() = 0;
+        auto other_pos = other->GetPose().Pos();
+        other_pos.Z() = 0;
+        auto r = this_pos - other_pos;
 
-        if (r.Length() < this->FOV_radius){
+        if (r.Length() < this->FOV_radius)
+        {
 
             auto dir = this->velocity;
             dir.Normalize();
             r.Normalize();
             double angle = std::acos(r.Dot(dir));
 
-            if (angle<this->FOV_angle/2){
-                vel_sum+= other->GetVelocity();
+            if (angle < this->FOV_angle / 2)
+            {
+                vel_sum += other->GetVelocity();
                 count++;
-
             }
         }
-        
     }
 
-    if (count >0){
-		
-		// Implement Reynolds: Steering = Desired - Velocity
-		vel_sum.Normalize();
-		vel_sum*=this->max_speed;
-		vel_sum-=this->velocity;
+    if (count > 0)
+    {
 
-        if ((vel_sum*this->weights[SEP]).Length() > this->max_force){
+        // Implement Reynolds: Steering = Desired - Velocity
+        vel_sum.Normalize();
+        vel_sum *= this->max_speed;
+        vel_sum -= this->velocity;
+
+        if ((vel_sum * this->weights[SEP]).Length() > this->max_force)
+        {
             vel_sum.Normalize();
-            vel_sum*=this->max_force;
-        } else{
-            vel_sum*= this->weights[SEP];
+            vel_sum *= this->max_force;
+        }
+        else
+        {
+            vel_sum *= this->weights[SEP];
         }
         vel_sum.Z() = 0;
-	    this->ApplyForce(vel_sum);
-	}
+        this->ApplyForce(vel_sum);
+    }
 }
 
-void Boid::Cohesion(std::vector<boost::shared_ptr<Vehicle>> vehicles){
-    auto sum_pos = ignition::math::Vector3d(0,0,0);
+void Boid::Cohesion(std::vector<boost::shared_ptr<Vehicle>> vehicles)
+{
+    auto sum_pos = ignition::math::Vector3d(0, 0, 0);
     int count = 0;
     auto this_pos = this->pose.Pos();
-	this_pos.Z() = 0;
+    this_pos.Z() = 0;
 
-    for (auto other: vehicles){
-        if (other->GetName() == this->GetName()){
+    for (auto other : vehicles)
+    {
+        if (other->GetName() == this->GetName())
+        {
             continue;
         }
-		auto other_pos = other->GetPose().Pos();
-		other_pos.Z() = 0;
-		auto rad = this_pos-other_pos;
-		double dist = rad.Length();
+        auto other_pos = other->GetPose().Pos();
+        other_pos.Z() = 0;
+        auto rad = this_pos - other_pos;
+        double dist = rad.Length();
         auto dir = this->velocity;
         dir.Normalize();
         rad.Normalize();
         double angle = std::acos(rad.Dot(dir));
-		if (dist<this->FOV_radius && angle<this->FOV_angle/2){
-            sum_pos+=other_pos;
+        if (dist < this->FOV_radius && angle < this->FOV_angle / 2)
+        {
+            sum_pos += other_pos;
             count++;
         }
     }
 
-    if (count >0){
+    if (count > 0)
+    {
         sum_pos.Z() = this->height;
         this->Seek(sum_pos, this->weights[COH]);
     }
@@ -666,36 +736,45 @@ void Boid::Cohesion(std::vector<boost::shared_ptr<Vehicle>> vehicles){
 
 /// STANDER
 
-Stander::Stander(gazebo::physics::ActorPtr _actor, 
-double _mass, 
-double _max_force, 
-double _max_speed, 
-ignition::math::Pose3d initial_pose, 
-ignition::math::Vector3d initial_velocity,  
-std::vector<gazebo::physics::EntityPtr> objects, 
-double _standing_duration,
-double _walking_duration,
-int start_mode)
-: Wanderer(_actor, _mass, _max_force, _max_speed, initial_pose, initial_velocity, objects){
+Stander::Stander(gazebo::physics::ActorPtr _actor,
+                 double _mass,
+                 double _max_force,
+                 double _max_speed,
+                 ignition::math::Pose3d initial_pose,
+                 ignition::math::Vector3d initial_velocity,
+                 std::vector<gazebo::physics::EntityPtr> objects,
+                 double _standing_duration,
+                 double _walking_duration,
+                 int start_mode)
+    : Wanderer(_actor, _mass, _max_force, _max_speed, initial_pose, initial_velocity, objects)
+{
 
-    this->standing_duration = std::max(0.0 ,_standing_duration +  ignition::math::Rand::DblUniform(-0.5,0.5));
-    this->walking_duration = std::max(0.0 , _walking_duration +  ignition::math::Rand::DblUniform(-0.5,0.5));
+    this->standing_duration = std::max(0.0, _standing_duration + ignition::math::Rand::DblUniform(-0.5, 0.5));
+    this->walking_duration = std::max(0.0, _walking_duration + ignition::math::Rand::DblUniform(-0.5, 0.5));
 
-    if (start_mode == 2){
-        this->standing = (bool) ignition::math::Rand::IntUniform(0,1);
-    } else if (start_mode == 1){
+    if (start_mode == 2)
+    {
+        this->standing = (bool)ignition::math::Rand::IntUniform(0, 1);
+    }
+    else if (start_mode == 1)
+    {
         this->standing = false;
-    } else {
+    }
+    else
+    {
         this->standing = true;
     }
-    
 
-    if (walking_duration <= 0){
+    if (walking_duration <= 0)
+    {
         this->never_walk = true;
     }
-    if (standing){
+    if (standing)
+    {
         this->actor->SetCustomTrajectory(this->trajectories["standing"]);
-    } else{
+    }
+    else
+    {
         this->actor->SetCustomTrajectory(this->trajectories["walking"]);
     }
     this->UpdatePosition(0.1);
@@ -703,272 +782,306 @@ int start_mode)
     this->actor->SetScriptTime(this->actor->ScriptTime());
 }
 
-void Stander::UpdateModel(double dt){
+void Stander::UpdateModel(double dt)
+{
 
-    if (this->standing){
+    if (this->standing)
+    {
         this->actor->SetWorldPose(this->pose, true, true);
-	    this->actor->SetScriptTime(this->actor->ScriptTime() + dt*this->animation_factor);
-    } else{
-        double distance_travelled = (this->pose.Pos() - this->actor->WorldPose().Pos()).Length();
-	    this->actor->SetWorldPose(this->pose, true, true);
-	    this->actor->SetScriptTime(this->actor->ScriptTime() + (distance_travelled * this->animation_factor));
+        this->actor->SetScriptTime(this->actor->ScriptTime() + dt * this->animation_factor);
     }
-    
+    else
+    {
+        double distance_travelled = (this->pose.Pos() - this->actor->WorldPose().Pos()).Length();
+        this->actor->SetWorldPose(this->pose, true, true);
+        this->actor->SetScriptTime(this->actor->ScriptTime() + (distance_travelled * this->animation_factor));
+    }
 }
 
-void Stander::OnUpdate(const gazebo::common::UpdateInfo &_info , double dt, std::vector<boost::shared_ptr<Vehicle>> vehicles, std::vector<gazebo::physics::EntityPtr> objects){
+void Stander::OnUpdate(const gazebo::common::UpdateInfo &_info, double dt, std::vector<boost::shared_ptr<Vehicle>> vehicles, std::vector<gazebo::physics::EntityPtr> objects)
+{
 
-    if (this->standing){
+    if (this->standing)
+    {
         this->still = true;
-        if(!this->never_walk && (_info.simTime - this->standing_start).Double() >= this->standing_duration){
+        if (!this->never_walk && (_info.simTime - this->standing_start).Double() >= this->standing_duration)
+        {
             this->standing = false;
             this->walking_start = _info.simTime;
             this->actor->SetCustomTrajectory(this->trajectories["walking"]);
             this->velocity = 0;
-            this->standing_duration += ignition::math::Rand::DblUniform(-0.5,0.5);
-            if (this->standing_duration <= 0){
+            this->standing_duration += ignition::math::Rand::DblUniform(-0.5, 0.5);
+            if (this->standing_duration <= 0)
+            {
                 this->standing_duration = 0;
             }
         }
-    } else{
+    }
+    else
+    {
         this->still = false;
         this->SetNextTarget();
         this->Seek(this->curr_target);
         this->AvoidActors(vehicles);
         this->AvoidObstacles(objects);
-    
+
         this->UpdatePosition(dt);
 
-        if((_info.simTime - this->walking_start).Double() >= this->walking_duration){
+        if ((_info.simTime - this->walking_start).Double() >= this->walking_duration)
+        {
             this->standing = true;
             this->standing_start = _info.simTime;
             this->actor->SetCustomTrajectory(this->trajectories["standing"]);
-            this->walking_duration += ignition::math::Rand::DblUniform(-0.5,0.5);
-            if (this->walking_duration <= 0){
+            this->walking_duration += ignition::math::Rand::DblUniform(-0.5, 0.5);
+            if (this->walking_duration <= 0)
+            {
                 this->walking_duration = 0;
             }
         }
     }
- 
+
     this->UpdateModel(dt);
 }
 
-
 Sitter::Sitter(gazebo::physics::ActorPtr _actor, std::string _chair_name, std::vector<gazebo::physics::EntityPtr> objects, double height)
-: Vehicle(_actor, 1, 1, 1, ignition::math::Pose3d(100,100,0.5,0,0,0), ignition::math::Vector3d(0,0,0), objects){
+    : Vehicle(_actor, 1, 1, 1, ignition::math::Pose3d(100, 100, 0.5, 0, 0, 0), ignition::math::Vector3d(0, 0, 0), objects)
+{
     this->chair_name = _chair_name;
     bool found = false;
     this->still = true;
-    for (auto model: this->all_objects){
-        if (model->GetParent()->GetParent()->GetName() == this->chair_name){
+    for (auto model : this->all_objects)
+    {
+        if (model->GetParent()->GetParent()->GetName() == this->chair_name)
+        {
             this->chair = boost::static_pointer_cast<gazebo::physics::Entity>(model->GetParent()->GetParent());
             found = true;
             break;
         }
     }
 
-    if (found) {
-    
+    if (found)
+    {
+
         this->pose = this->chair->WorldPose();
-        this->pose.Pos().Z()= height;
+        this->pose.Pos().Z() = height;
         this->pose.Rot() = ignition::math::Quaterniond(1.15, 0, this->chair->WorldPose().Rot().Yaw());
         this->actor->SetCustomTrajectory(this->trajectories["sitting"]);
         this->actor->SetWorldPose(this->pose, true, true);
         this->actor->SetScriptTime(this->actor->ScriptTime());
-        
     }
 }
 
-void Sitter::OnUpdate(const gazebo::common::UpdateInfo &_info , double dt, std::vector<boost::shared_ptr<Vehicle>> vehicles, std::vector<gazebo::physics::EntityPtr> objects){
+void Sitter::OnUpdate(const gazebo::common::UpdateInfo &_info, double dt, std::vector<boost::shared_ptr<Vehicle>> vehicles, std::vector<gazebo::physics::EntityPtr> objects)
+{
     this->UpdateModel(dt);
 }
 
-void Sitter::UpdateModel(double dt){
+void Sitter::UpdateModel(double dt)
+{
 
     this->actor->SetWorldPose(this->pose, true, true);
-	this->actor->SetScriptTime(this->actor->ScriptTime() + dt*this->animation_factor);
-    
+    this->actor->SetScriptTime(this->actor->ScriptTime() + dt * this->animation_factor);
 }
 
-
 Follower::Follower(gazebo::physics::ActorPtr _actor,
-double _mass,
-double _max_force, 
-double _max_speed, 
-ignition::math::Pose3d initial_pose, 
-ignition::math::Vector3d initial_velocity, 
-std::vector<gazebo::physics::EntityPtr> objects,
-std::string _leader_name, bool blocking)
-: Vehicle(_actor, _mass, _max_force, _max_speed, initial_pose, initial_velocity, objects){
+                   double _mass,
+                   double _max_force,
+                   double _max_speed,
+                   ignition::math::Pose3d initial_pose,
+                   ignition::math::Vector3d initial_velocity,
+                   std::vector<gazebo::physics::EntityPtr> objects,
+                   std::string _leader_name, bool blocking)
+    : Vehicle(_actor, _mass, _max_force, _max_speed, initial_pose, initial_velocity, objects)
+{
 
     this->leader_name = _leader_name;
     this->blocking = blocking;
-    if (this->blocking){
-        this->rand_angle_offset = ignition::math::Rand::DblUniform(-1,1);
-    } else{
-        this->rand_angle_offset = ignition::math::Rand::DblUniform(-2.5,2.5);
+    if (this->blocking)
+    {
+        this->rand_angle_offset = ignition::math::Rand::DblUniform(-1, 1);
     }
-
+    else
+    {
+        this->rand_angle_offset = ignition::math::Rand::DblUniform(-2.5, 2.5);
+    }
 }
 
-
-void Follower::LoadLeader(gazebo::physics::EntityPtr leader){
+void Follower::LoadLeader(gazebo::physics::EntityPtr leader)
+{
     this->leader = leader;
     this->last_leader_pose = this->leader->WorldPose();
 }
 
+void Follower::SetNextTarget(double dt)
+{
 
-void Follower::SetNextTarget(double dt){
-
-    if (this->leader == nullptr){
+    if (this->leader == nullptr)
+    {
         this->curr_target = this->pose.Pos();
         return;
     }
     //auto leader_dir = this->leader->GetVelocity();
     auto leader_pose = this->leader->WorldPose();
     auto leader_dir = leader_pose.Pos() - this->last_leader_pose.Pos();
-    
-    auto rotation = ignition::math::Quaterniond(0,0,leader_pose.Rot().Yaw()+this->rand_angle_offset);
 
-    if (leader_dir.Length() < 10e-6){
-        
-        auto offset = rotation.RotateVector(ignition::math::Vector3d(this->rand_radius,0,0));
+    auto rotation = ignition::math::Quaterniond(0, 0, leader_pose.Rot().Yaw() + this->rand_angle_offset);
+
+    if (leader_dir.Length() < 10e-6)
+    {
+
+        auto offset = rotation.RotateVector(ignition::math::Vector3d(this->rand_radius, 0, 0));
         this->curr_target = leader_pose.Pos();
-    
-        if (this->blocking){
+
+        if (this->blocking)
+        {
             this->curr_target += offset;
-        } else{
+        }
+        else
+        {
             this->curr_target -= offset;
         }
 
         this->curr_target.Z() = this->pose.Pos().Z();
-        
-       
+
         return;
     }
 
     leader_dir.Normalize();
 
-    // if we find ourselves in front of the leader, steer laterally away from the leaders path 
+    // if we find ourselves in front of the leader, steer laterally away from the leaders path
 
-    if (!this->blocking){
+    if (!this->blocking)
+    {
         auto front_edge = ignition::math::Line3d(leader_pose.Pos(), leader_pose.Pos() + leader_dir);
 
         ignition::math::Vector3d normal;
 
-        if (utilities::get_normal_to_edge(this->pose.Pos(), front_edge, normal)){
-            if (normal.Length() < this->obstacle_margin){
+        if (utilities::get_normal_to_edge(this->pose.Pos(), front_edge, normal))
+        {
+            if (normal.Length() < this->obstacle_margin)
+            {
                 auto mag = normal.Length();
-                if (mag == 0){
+                if (mag == 0)
+                {
                     mag = 10e-9;
                 }
                 normal.Normalize();
 
-                normal *= 1/(mag*mag);
-                if (normal.Length() > this->max_force){
+                normal *= 1 / (mag * mag);
+                if (normal.Length() > this->max_force)
+                {
                     normal.Normalize();
-                    normal*=this->max_force;
+                    normal *= this->max_force;
                 }
                 this->ApplyForce(normal);
             }
         }
     }
 
-    leader_dir*=this->rand_radius;
-    rotation = ignition::math::Quaterniond(0,0,this->rand_angle_offset);
+    leader_dir *= this->rand_radius;
+    rotation = ignition::math::Quaterniond(0, 0, this->rand_angle_offset);
     leader_dir = rotation.RotateVector(leader_dir);
     this->curr_target = leader_pose.Pos();
 
-    if (this->blocking){
-        this->curr_target+=leader_dir/2;
-    }else{
-        this->curr_target-=leader_dir/2;
+    if (this->blocking)
+    {
+        this->curr_target += leader_dir / 2;
+    }
+    else
+    {
+        this->curr_target -= leader_dir / 2;
     }
 
     this->curr_target.Z() = this->pose.Pos().Z();
     this->last_leader_pose = leader_pose;
 }
 
-void Follower::OnUpdate(const gazebo::common::UpdateInfo &_info , double dt, std::vector<boost::shared_ptr<Vehicle>> vehicles, std::vector<gazebo::physics::EntityPtr> objects){
+void Follower::OnUpdate(const gazebo::common::UpdateInfo &_info, double dt, std::vector<boost::shared_ptr<Vehicle>> vehicles, std::vector<gazebo::physics::EntityPtr> objects)
+{
 
-    
     this->SetNextTarget(dt);
     this->Arrival(this->curr_target);
-    
+
     this->AvoidActors(vehicles);
     this->AvoidObstacles(objects);
-    
+
     this->UpdatePosition(dt);
     this->UpdateModel();
 }
 
+void PathFollower::Follow()
+{
 
-void PathFollower::Follow(){
+    if ((this->pose.Pos() - this->curr_target).Length() < this->arrival_distance)
+    {
 
-    if ((this->pose.Pos() - this->curr_target).Length() < this->arrival_distance){
-        
         this->path_ind++;
-        
-        if (this->path_ind >= this->curr_path.size()){
-            
+
+        if (this->path_ind >= this->curr_path.size())
+        {
+
             this->RePath();
-        } 
-            
+        }
+
         this->curr_target = this->curr_path[this->path_ind];
         this->curr_target.Z() = this->height;
         //std::cout << "TARGET: " << this->curr_target << std::endl;
     }
-    
-    this->Seek(this->curr_target, 7);
 
+    this->Seek(this->curr_target, 7);
 }
 
 PathFollower::PathFollower(gazebo::physics::ActorPtr _actor,
-double _mass,
-double _max_force, 
-double _max_speed, 
-ignition::math::Pose3d initial_pose, 
-ignition::math::Vector3d initial_velocity, 
-std::vector<gazebo::physics::EntityPtr> objects,
-boost::shared_ptr<Costmap> costmap,
-boost::shared_ptr<std::vector<ignition::math::Pose3d>> digits_coordinates)
-: Wanderer(_actor, _mass, _max_force, _max_speed, initial_pose, initial_velocity, objects){
+                           double _mass,
+                           double _max_force,
+                           double _max_speed,
+                           ignition::math::Pose3d initial_pose,
+                           ignition::math::Vector3d initial_velocity,
+                           std::vector<gazebo::physics::EntityPtr> objects,
+                           boost::shared_ptr<Costmap> costmap,
+                           boost::shared_ptr<std::vector<ignition::math::Pose3d>> digits_coordinates)
+    : Wanderer(_actor, _mass, _max_force, _max_speed, initial_pose, initial_velocity, objects)
+{
     this->costmap = costmap;
     this->digits_coordinates = digits_coordinates;
-    this->path_ind =0;
-    
+    this->path_ind = 0;
+
     this->RePath();
     //this->costmap->AStar(this->pose.Pos(), ignition::math::Vector3d(0,-10,this->height), this->curr_path);
     //this->curr_target = this->curr_path[this->path_ind];
     //std::cout << "size: " << this->curr_path.size() << std::endl;
 }
 
-void PathFollower::OnUpdate(const gazebo::common::UpdateInfo &_info, double dt, std::vector<boost::shared_ptr<Vehicle>> vehicles, std::vector<gazebo::physics::EntityPtr> objects){
-    
+void PathFollower::OnUpdate(const gazebo::common::UpdateInfo &_info, double dt, std::vector<boost::shared_ptr<Vehicle>> vehicles, std::vector<gazebo::physics::EntityPtr> objects)
+{
 
     this->Follow();
     this->AvoidActors(vehicles);
     this->AvoidObstacles(objects);
-    
+
     this->UpdatePosition(dt);
     this->UpdateModel();
 }
 
-void PathFollower::RePath(){
+void PathFollower::RePath()
+{
     this->path_ind = 1;
 
     ignition::math::Vector3d next_goal;
     this->curr_path.clear();
-    do{
-        if (this->digits_coordinates->size() == 0){
+    do
+    {
+        if (this->digits_coordinates->size() == 0)
+        {
             next_goal = this->costmap->RandPos();
         }
-        else {
-            auto& digits_ref = *this->digits_coordinates;
+        else
+        {
+            auto &digits_ref = *this->digits_coordinates;
             next_goal = digits_ref[rand() % this->digits_coordinates->size()].Pos();
-        } 
-       // std::cout << "GOAL: " << next_goal << std::endl;
-    }while (!this->costmap->AStar(this->pose.Pos(), next_goal, this->curr_path, false));
+        }
+        // std::cout << "GOAL: " << next_goal << std::endl;
+    } while (!this->costmap->AStar(this->pose.Pos(), next_goal, this->curr_path, false));
     //
     //while (!this->costmap->FindPath(this->pose.Pos(), next_goal, this->curr_path));
     // std::string costmap_string;
@@ -977,15 +1090,13 @@ void PathFollower::RePath(){
     // out << costmap_string;
 }
 
-
-
-
 ////////////////////////////////////
 // ExtendedSocialForce_Actor
-void ExtendedSocialForce_Actor::OnUpdate(const gazebo::common::UpdateInfo &_info, double dt, std::vector<boost::shared_ptr<Vehicle>> vehicles, std::vector<gazebo::physics::EntityPtr> objects){
+void ExtendedSocialForce_Actor::OnUpdate(const gazebo::common::UpdateInfo &_info, double dt, std::vector<boost::shared_ptr<Vehicle>> vehicles, std::vector<gazebo::physics::EntityPtr> objects)
+{
 
-
-    if ((this->pose.Pos() - this->curr_target).Length()<this->arrival_distance){
+    if ((this->pose.Pos() - this->curr_target).Length() < this->arrival_distance)
+    {
         this->SetNextTarget(this->all_objects); //TODO: Include the relaxation time
     }
 
@@ -993,80 +1104,85 @@ void ExtendedSocialForce_Actor::OnUpdate(const gazebo::common::UpdateInfo &_info
     this->ExtendedSFHuman(vehicles);
     this->ExtendedSFRobot(objects);
     this->ExtendedSFObstacle(objects);
-    
+
     this->UpdatePosition(dt);
     this->UpdateModel();
 }
 
-void ExtendedSocialForce_Actor::SetNextTarget(std::vector<gazebo::physics::EntityPtr> objects){
+void ExtendedSocialForce_Actor::SetNextTarget(std::vector<gazebo::physics::EntityPtr> objects)
+{
     bool target_found = false;
 
-    while (!target_found){
-        
-        auto dir = this->velocity;
-		if (dir.Length() < 1e-6){
-			dir = ignition::math::Vector3d(ignition::math::Rand::DblUniform(-1, 1),ignition::math::Rand::DblUniform(-1, 1),0);
-		}
-        dir.Normalize();
-        auto rotation =  ignition::math::Quaterniond::EulerToQuaternion(0,0,ignition::math::Rand::DblUniform(-3, 3)); 
-		dir = rotation.RotateVector(dir);
-        dir*=10000;
-		auto ray = ignition::math::Line3d(this->pose.Pos().X(), this->pose.Pos().Y(), this->pose.Pos().X() + dir.X(), this->pose.Pos().Y() + dir.Y());
-		ignition::math::Vector3d closest_intersection;
-        ignition::math::Line3d closest_edge;
-		double min_dist = 100000;
+    while (!target_found)
+    {
 
-        for (auto object: objects){
-           
+        auto dir = this->velocity;
+        if (dir.Length() < 1e-6)
+        {
+            dir = ignition::math::Vector3d(ignition::math::Rand::DblUniform(-1, 1), ignition::math::Rand::DblUniform(-1, 1), 0);
+        }
+        dir.Normalize();
+        auto rotation = ignition::math::Quaterniond::EulerToQuaternion(0, 0, ignition::math::Rand::DblUniform(-3, 3));
+        dir = rotation.RotateVector(dir);
+        dir *= 10000;
+        auto ray = ignition::math::Line3d(this->pose.Pos().X(), this->pose.Pos().Y(), this->pose.Pos().X() + dir.X(), this->pose.Pos().Y() + dir.Y());
+        ignition::math::Vector3d closest_intersection;
+        ignition::math::Line3d closest_edge;
+        double min_dist = 100000;
+
+        for (auto object : objects)
+        {
+
             auto box = object->BoundingBox();
 
             std::vector<ignition::math::Line3d> edges = utilities::get_box_edges(box);
 
-            for (ignition::math::Line3d edge: edges){
-    
-				ignition::math::Vector3d test_intersection;
+            for (ignition::math::Line3d edge : edges)
+            {
 
-				if (ray.Intersect(edge, test_intersection)){ //if the ray intersects the boundary
+                ignition::math::Vector3d test_intersection;
+
+                if (ray.Intersect(edge, test_intersection))
+                { //if the ray intersects the boundary
                     ignition::math::Vector3d zero_z = this->pose.Pos();
                     zero_z.Z() = 0;
-					double dist_to_int = (test_intersection-zero_z).Length();
-					if (dist_to_int < min_dist){
-						min_dist = dist_to_int;
-						closest_intersection = test_intersection;
+                    double dist_to_int = (test_intersection - zero_z).Length();
+                    if (dist_to_int < min_dist)
+                    {
+                        min_dist = dist_to_int;
+                        closest_intersection = test_intersection;
                         closest_edge = edge;
-					}
-
-				}
-						
-			}
+                    }
+                }
+            }
         }
 
         auto zero_z = this->pose.Pos();
         zero_z.Z() = 0;
         auto final_ray = closest_intersection - zero_z;
-		auto v_to_add = final_ray*ignition::math::Rand::DblUniform(0.1,0.9);
+        auto v_to_add = final_ray * ignition::math::Rand::DblUniform(0.1, 0.9);
 
         ignition::math::Vector3d normal;
-        if (utilities::get_normal_to_edge(this->pose.Pos(), closest_edge, normal) && (normal.Length() < this->obstacle_margin)){
+        if (utilities::get_normal_to_edge(this->pose.Pos(), closest_edge, normal) && (normal.Length() < this->obstacle_margin))
+        {
             continue;
-      
-        } 
+        }
 
-        if ((final_ray-v_to_add).Length() < (this->obstacle_margin)){ 
-			v_to_add.Normalize();
-			auto small_subtraction = (v_to_add*this->obstacle_margin)*2;
-			v_to_add = final_ray - small_subtraction;
-			if (small_subtraction.Length() > final_ray.Length()){
-				v_to_add*=0;
-			}
-		}
-		
-		this->curr_target = v_to_add + this->pose.Pos();
+        if ((final_ray - v_to_add).Length() < (this->obstacle_margin))
+        {
+            v_to_add.Normalize();
+            auto small_subtraction = (v_to_add * this->obstacle_margin) * 2;
+            v_to_add = final_ray - small_subtraction;
+            if (small_subtraction.Length() > final_ray.Length())
+            {
+                v_to_add *= 0;
+            }
+        }
+
+        this->curr_target = v_to_add + this->pose.Pos();
         this->curr_target.Z() = this->height;
-		target_found = true;
+        target_found = true;
     }
-
-    
 }
 
 /**
@@ -1078,45 +1194,50 @@ void ExtendedSocialForce_Actor::SetNextTarget(std::vector<gazebo::physics::Entit
  * @param vehicles pointer to all actors in the scene 
  * 
  */
-void ExtendedSocialForce_Actor::ExtendedSFHuman(std::vector<boost::shared_ptr<Vehicle>> vehicles){
+void ExtendedSocialForce_Actor::ExtendedSFHuman(std::vector<boost::shared_ptr<Vehicle>> vehicles)
+{
     //ignition::math::Rand::Seed(42);
-    ignition::math::Vector3d steer = ignition::math::Vector3d(0,0,0);
-    double interaction_strength = 0.8 + ignition::math::Rand::DblUniform(-0.1,0.1);
-    double interaction_range = 1 + ignition::math::Rand::DblUniform(-0.25,0.25);
+    ignition::math::Vector3d steer = ignition::math::Vector3d(0, 0, 0);
+    double interaction_strength = 0.8 + ignition::math::Rand::DblUniform(-0.1, 0.1);
+    double interaction_range = 1 + ignition::math::Rand::DblUniform(-0.25, 0.25);
 
-    for (int i =0; i<(int) vehicles.size(); i++){
+    for (int i = 0; i < (int)vehicles.size(); i++)
+    {
         auto other = vehicles[i]->GetActor();
-        if (other == this->actor){
+        if (other == this->actor)
+        {
             continue;
         }
         ignition::math::Vector3d this_pos = this->pose.Pos();
-		this_pos.Z() = 0;
-		ignition::math::Vector3d other_pos = other->WorldPose().Pos();
-		other_pos.Z() = 0;
-		ignition::math::Vector3d rad = this_pos-other_pos;
-		double dist = rad.Length();
-        dist = std::max(0.0, dist-0.2); //acounting for the radius of the person
+        this_pos.Z() = 0;
+        ignition::math::Vector3d other_pos = other->WorldPose().Pos();
+        other_pos.Z() = 0;
+        ignition::math::Vector3d rad = this_pos - other_pos;
+        double dist = rad.Length();
+        dist = std::max(0.0, dist - 0.2); //acounting for the radius of the person
 
         auto dir = this->curr_target;
         dir.Normalize();
         rad.Normalize();
         double angle_rad_dir = std::acos(dir.Dot(rad));
         double SF_form_factor = 0.2 + 0.4 * (1 + std::cos(angle_rad_dir));
-        rad *= 5 * interaction_strength * std::exp(-dist/interaction_range) * SF_form_factor;
+        rad *= 5 * interaction_strength * std::exp(-dist / interaction_range) * SF_form_factor;
         steer += rad;
 
-		if (dist<this->actor_margin && dist > 0){ //Add physical force for when there is a collision	
-			rad/=dist;
-			steer += rad;
-		}
+        if (dist < this->actor_margin && dist > 0)
+        { //Add physical force for when there is a collision
+            rad /= dist;
+            steer += rad;
+        }
 
-    if (steer.Length()>this->max_force){
-			steer.Normalize();
-			steer*=this->max_force;
-	}
-    steer.Z() = 0;
+        if (steer.Length() > this->max_force)
+        {
+            steer.Normalize();
+            steer *= this->max_force;
+        }
+        steer.Z() = 0;
 
-    this->ApplyForce(steer);
+        this->ApplyForce(steer);
     }
 }
 
@@ -1126,33 +1247,37 @@ FOR FORCES DESCRIPTION
 
 WORK ON CONTACT FORCE
 */
-void ExtendedSocialForce_Actor::ExtendedSFRobot(std::vector<gazebo::physics::EntityPtr> objects){
+void ExtendedSocialForce_Actor::ExtendedSFRobot(std::vector<gazebo::physics::EntityPtr> objects)
+{
     //ignition::math::Rand::Seed(42);
-    ignition::math::Vector3d boundary_force = ignition::math::Vector3d(0,0,0);
+    ignition::math::Vector3d boundary_force = ignition::math::Vector3d(0, 0, 0);
     double interaction_strength = 1.2;
     double interaction_range = 2.6;
 
-    for (gazebo::physics::EntityPtr object: objects){
-        if (object->GetName() == "jackal"){
+    for (gazebo::physics::EntityPtr object : objects)
+    {
+        if (object->GetName() == "jackal")
+        {
 
             //std::cout<<"applying robot force"<< std::endl;
             ignition::math::Box box = object->BoundingBox();
 
             ignition::math::Vector3d rad = this->pose.Pos() - box.Center();
             double dist = rad.Length();
-            dist = std::max(0.0, dist-0.2); //acounting for the radius of the person
+            dist = std::max(0.0, dist - 0.2); //acounting for the radius of the person
 
             auto dir = this->curr_target;
             dir.Normalize();
             rad.Normalize();
             double angle_rad_dir = std::acos(dir.Dot(rad));
             double SF_form_factor = 0.2 + 0.4 * (1 + std::cos(angle_rad_dir));
-            rad *= interaction_strength * std::exp(-dist/interaction_range) * SF_form_factor;
+            rad *= interaction_strength * std::exp(-dist / interaction_range) * SF_form_factor;
 
-            if (dist < this->obstacle_margin){
+            if (dist < this->obstacle_margin)
+            {
                 rad *= 100; //multiply force if we're too close
-               // std::cout<<"Too close to the robot: " << this->GetName() <<std::endl;
-		    }
+                            // std::cout<<"Too close to the robot: " << this->GetName() <<std::endl;
+            }
             boundary_force += rad;
         }
     }
@@ -1169,36 +1294,37 @@ void ExtendedSocialForce_Actor::ExtendedSFRobot(std::vector<gazebo::physics::Ent
 * @param objects pointer to all objects in the scene. 
 **/
 
-void ExtendedSocialForce_Actor::ExtendedSFObstacle(std::vector<gazebo::physics::EntityPtr> objects){
-    ignition::math::Vector3d boundary_force = ignition::math::Vector3d(0,0,0);
-    double interaction_strength = 0.8 + ignition::math::Rand::DblUniform(-0.1,0.1);
-    double interaction_range = 1 + ignition::math::Rand::DblUniform(-0.25,0.25);
+void ExtendedSocialForce_Actor::ExtendedSFObstacle(std::vector<gazebo::physics::EntityPtr> objects)
+{
+    ignition::math::Vector3d boundary_force = ignition::math::Vector3d(0, 0, 0);
+    double interaction_strength = 0.8 + ignition::math::Rand::DblUniform(-0.1, 0.1);
+    double interaction_range = 1 + ignition::math::Rand::DblUniform(-0.25, 0.25);
 
-    for (gazebo::physics::EntityPtr object: objects){
+    for (gazebo::physics::EntityPtr object : objects)
+    {
         ignition::math::Box box = object->BoundingBox();
 
         ignition::math::Vector3d rad = this->pose.Pos() - box.Center();
-		double dist = rad.Length();
-        dist = std::max(0.0, dist-0.2); //acounting for the radius of the person
+        double dist = rad.Length();
+        dist = std::max(0.0, dist - 0.2); //acounting for the radius of the person
 
         auto dir = this->curr_target;
         dir.Normalize();
         rad.Normalize();
         double angle_rad_dir = std::acos(dir.Dot(rad));
         double SF_form_factor = 0.2 + 0.4 * (1 + std::cos(angle_rad_dir));
-        rad *= interaction_strength * std::exp(-dist/interaction_range) * SF_form_factor;
+        rad *= interaction_strength * std::exp(-dist / interaction_range) * SF_form_factor;
 
-        if (dist < this->obstacle_margin){
-			rad *= 100; //multiply force if we're too close
-            std::cout<<"Too close to the obstacle : " << this->GetName() <<std::endl;
-		}
+        if (dist < this->obstacle_margin)
+        {
+            rad *= 100; //multiply force if we're too close
+            std::cout << "Too close to the obstacle : " << this->GetName() << std::endl;
+        }
         boundary_force += rad;
     }
     boundary_force.Z() = 0;
     this->ApplyForce(boundary_force);
 }
-
- 
 
 // CUSTOM_WANDERER
 /*
@@ -1208,26 +1334,28 @@ void ExtendedSocialForce_Actor::ExtendedSFObstacle(std::vector<gazebo::physics::
 */
 
 Custom_Wanderer::Custom_Wanderer(gazebo::physics::ActorPtr _actor,
-double _mass,
-double _max_force, 
-double _max_speed, 
-ignition::math::Pose3d initial_pose, 
-ignition::math::Vector3d initial_velocity, 
-std::vector<gazebo::physics::EntityPtr> objects, 
-std::map<std::string, double> _custom_actor_goal,
-std::vector<std::string> _vehicle_names)
-: Vehicle(_actor, _mass, _max_force, _max_speed, initial_pose, initial_velocity, objects){
+                                 double _mass,
+                                 double _max_force,
+                                 double _max_speed,
+                                 ignition::math::Pose3d initial_pose,
+                                 ignition::math::Vector3d initial_velocity,
+                                 std::vector<gazebo::physics::EntityPtr> objects,
+                                 std::map<std::string, double> _custom_actor_goal,
+                                 std::vector<std::string> _vehicle_names)
+    : Vehicle(_actor, _mass, _max_force, _max_speed, initial_pose, initial_velocity, objects)
+{
     this->custom_actor_goal = _custom_actor_goal;
     this->vehicle_names = _vehicle_names;
 }
 
-void Custom_Wanderer::OnUpdate(const gazebo::common::UpdateInfo &_info, double dt, std::vector<boost::shared_ptr<Vehicle>> vehicles, std::vector<gazebo::physics::EntityPtr> objects){
+void Custom_Wanderer::OnUpdate(const gazebo::common::UpdateInfo &_info, double dt, std::vector<boost::shared_ptr<Vehicle>> vehicles, std::vector<gazebo::physics::EntityPtr> objects)
+{
 
     this->SetNextTarget(vehicles);
     this->Seek(this->curr_target);
     this->AvoidActors(vehicles);
     this->AvoidObstacles(objects);
-    
+
     this->UpdatePosition(dt);
     this->UpdateModel();
 }
@@ -1240,25 +1368,116 @@ void Custom_Wanderer::OnUpdate(const gazebo::common::UpdateInfo &_info, double d
 * Using the custom_wanderer type implies that a custom_simulation_params file exists with the right structure.
 * If there are more custom_wanderers than goal specified, the first goal (x_0,y_0) is passed to all the undefined actors. 
 */
-void Custom_Wanderer::SetNextTarget(std::vector<boost::shared_ptr<Vehicle>> vehicles){
+void Custom_Wanderer::SetNextTarget(std::vector<boost::shared_ptr<Vehicle>> vehicles)
+{
     int count(0);
-    for (auto name: this->vehicle_names){
-        if(this->GetName() == name){
+    for (auto name : this->vehicle_names)
+    {
+        if (this->GetName() == name)
+        {
             break;
         }
-        if(name.find("actor_custom_") != std::string::npos){
-            count+=1;
+        if (name.find("actor_custom_") != std::string::npos)
+        {
+            count += 1;
         }
     }
 
     ignition::math::v4::Vector3d goal;
-    if ( this->custom_actor_goal.find("goal_x_"+std::to_string(count)) == custom_actor_goal.end() ) {
+    if (this->custom_actor_goal.find("goal_x_" + std::to_string(count)) == custom_actor_goal.end())
+    {
         goal.Set(this->custom_actor_goal["goal_x_0"], this->custom_actor_goal["goal_y_0"], 0);
-    } else {
-        goal.Set(this->custom_actor_goal["goal_x_"+std::to_string(count)], this->custom_actor_goal["goal_y_"+std::to_string(count)], 0);
+    }
+    else
+    {
+        goal.Set(this->custom_actor_goal["goal_x_" + std::to_string(count)], this->custom_actor_goal["goal_y_" + std::to_string(count)], 0);
     }
 
     this->curr_target = this->pose.Pos() + goal;
-    this->curr_target.Z() = this->height; 
-    
+    this->curr_target.Z() = this->height;
+}
+
+//----------------------------------------------------------------------------------------------------------------------------------------------
+
+FlowFollower::FlowFollower(gazebo::physics::ActorPtr _actor,
+                                double _mass,
+                                double _max_force,
+                                double _max_speed,
+                                ignition::math::Pose3d initial_pose,
+                                ignition::math::Vector3d initial_velocity,
+                                std::vector<gazebo::physics::EntityPtr> objects,
+                                std::vector<boost::shared_ptr<FlowField>>& flow_fields0)
+    : Vehicle(_actor, _mass, _max_force, _max_speed, initial_pose, initial_velocity, objects)
+{
+    flow_fields = flow_fields0;
+    current_flow = 0;
+    distance_to_goal = 0;
+}
+
+void FlowFollower::OnUpdate(const gazebo::common::UpdateInfo &_info, double dt, std::vector<boost::shared_ptr<Vehicle>> vehicles, std::vector<gazebo::physics::EntityPtr> objects)
+{
+    // 1. Check if we reached the objective and change it in that case
+    CheckGoal();
+
+    // 2. Apply a force on the actor according to the flow field
+    FlowForce();
+
+    // 3. Apply force form other actors
+    AvoidActors(vehicles);
+
+    // 4. Apply contact force if very close to walls/objects
+    AvoidObstacles(objects);
+
+    // Update
+    UpdatePosition(dt);
+    UpdateModel();
+}
+
+void FlowFollower::CheckGoal()
+{
+    // Update distance
+    UpdateDistance();
+
+    // Set new goal
+    if (distance_to_goal < 1.0)
+    {
+        int new_flow = current_flow;
+        while (new_flow == current_flow)
+            new_flow = ignition::math::Rand::IntUniform(0, flow_fields.size() - 1);
+        current_flow = new_flow;
+    }
+
+    // Update distance
+    UpdateDistance();
+}
+
+void FlowFollower::UpdateDistance()
+{
+    int r, c;
+    if (!flow_fields[current_flow]->PosToIndicies(this->pose.Pos(), r, c))
+        throw std::out_of_range("FlowFollower position outside the flow map");
+    distance_to_goal = flow_fields[current_flow]->value_function[r][c];
+}
+
+void FlowFollower::FlowForce()
+{
+    // Get flow at current position
+    ignition::math::Vector2d flow;
+    if (!flow_fields[current_flow]->Lookup(this->pose.Pos(), flow))
+        throw std::out_of_range("FlowFollower position outside the flow map");
+
+    // Flow is the direction of the desired speed
+    ignition::math::Vector3d desired_v(flow.X(), flow.Y(), 0);
+    desired_v.Normalize();
+    desired_v *= this->max_speed;
+
+    ignition::math::Vector3d steer = desired_v - this->velocity;
+
+    steer *= 1.0;
+    if (steer.Length() > this->max_force)
+    {
+        steer.Normalize();
+        steer *= this->max_force;
+    }
+    ApplyForce(steer);
 }

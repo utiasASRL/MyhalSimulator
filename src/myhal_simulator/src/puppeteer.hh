@@ -14,6 +14,7 @@
 #include <map>
 #include <utility>
 #include "quadtree.hh"
+#include "flowfield.hh"
 #include <string>
 #include <pcl_ros/point_cloud.h>
 #include <pcl/point_types.h>
@@ -106,6 +107,8 @@ class Puppeteer: public gazebo::WorldPlugin{
 
         ros::Publisher flow_pub;
         ros::Publisher flow_v_pub;
+        
+        std::vector<boost::shared_ptr<FlowField>> flow_fields;
 
         boost::shared_ptr<std::vector<ignition::math::Pose3d>> digits_coordinates;
 

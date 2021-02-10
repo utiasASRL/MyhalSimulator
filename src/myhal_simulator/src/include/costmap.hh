@@ -62,25 +62,9 @@ public:
 	
 	std::vector<std::vector<int>> costmap;
 
-	std::vector<std::vector<double>> flow_field_offsets;
-
-	std::vector<std::vector<double>> flow_field_angles;
-
-	std::vector<std::vector<double>> integration_field;
-
 	bool PosToIndicies(ignition::math::Vector3d pos, int &r, int &c);
 
 	bool IndiciesToPos(ignition::math::Vector3d &pos, int r, int c);
-
-	bool Integrate(ignition::math::Vector3d goal);
-
-	void ComputeFlowField(ignition::math::Vector3d end);
-
-	void ComputeFlowFieldFine(ignition::math::Vector3d end);
-
-	void SaveFlowField(ignition::math::Vector3d end);
-
-	bool ReadFlowField(ignition::math::Vector3d end);
 
 	double GetNeighbourAngle(std::vector<int> curr_ind, std::vector<int> neighbour_ind);
 
@@ -93,8 +77,6 @@ public:
 	std::string ToString();
 
 	std::string PathString(std::vector<TrajPoint> path);
-
-	bool FindPath(ignition::math::Vector3d start, ignition::math::Vector3d end, std::vector<ignition::math::Vector3d> &path);
 
 	bool ThetaStar(ignition::math::Vector3d start, ignition::math::Vector3d end, std::vector<ignition::math::Vector3d> &path);
 

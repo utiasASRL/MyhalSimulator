@@ -135,18 +135,49 @@ void Puppeteer::Load(gazebo::physics::WorldPtr _world, sdf::ElementPtr _sdf){
         this->nav_goal_sub = this->nh.subscribe("/move_base/goal", 1, &Puppeteer::NavGoalCallback, this);
         this->tf_sub = this->nh.subscribe("/tf", 1, &Puppeteer::TFCallback, this);
     }
-    
 
-    // Compute FlowField
-    std::cout <<" Test costmap" << std::endl;
-    ignition::math::Vector3d next_goal(8, 6, 0);
-    //this->costmap->ComputeFlowField(next_goal);
-    this->costmap->ComputeFlowFieldFine(next_goal);
-    int vcdssdfa = 0;
+
+    // Compute a flow field for each 
+    // *****************************
+    
+    // Timing variables
+
+    std::cout <<"\n\n--------------------> Computing flow fields" << std::endl;
+	std::vector<clock_t> t_debug;
+	t_debug.push_back(std::clock());
+
+    // Compute flow fields
+    for (unsigned int i = 0; i < digits_coordinates->size(); ++i)
+    {
+
+        // Compute the flow field
+        auto goal0 = digits_coordinates->at(i).Pos();
+        auto flow_field_ptr = boost::make_shared<FlowField>(costmap, goal0);
+        
+
+        // Add to the list if reachability is good
+        if (flow_field_ptr->Reachability() > 0.5)
+        {
+            flow_fields.push_back(flow_field_ptr);
+        }
+        
+        std::cout << "Goal: (" << goal0.X() << ", " << goal0.Y() << ")" << std::endl;
+        std::cout << "Size: " << flow_fields[i]->rows << " * " << flow_fields[i]->cols << std::endl;
+        std::cout << "Reachability: " << flow_field_ptr->Reachability() * 100 << "% " << std::endl;
+        std::cout << "***********************" << std::endl;
+    }
+
+    // Debug timing
+    t_debug.push_back(std::clock());
+    double duration = 1000 * (t_debug[1] - t_debug[0]) / (double)CLOCKS_PER_SEC;
+    std::cout << "--------------------> Done in " << duration << " ms\n\n" << std::endl;
+
+
 
     // Create a publisher for the flow field
     flow_pub = nh.advertise<geometry_msgs::PoseArray>( "flow_field", 5);
     flow_v_pub = nh.advertise<nav_msgs::OccupancyGrid>( "value_field", 5);
+
 }
 
 
@@ -394,6 +425,10 @@ boost::shared_ptr<Vehicle> Puppeteer::CreateVehicle(gazebo::physics::ActorPtr ac
         } else if (actor_info["vehicle_type"] == "path_follower"){
 
             res = boost::make_shared<PathFollower>(actor, this->vehicle_params["mass"], this->vehicle_params["max_force"], max_speed, actor->WorldPose(), ignition::math::Vector3d(0,0,0), this->collision_entities, this->costmap, this->digits_coordinates);
+            
+        } else if (actor_info["vehicle_type"] == "flow_follower"){
+
+            res = boost::make_shared<FlowFollower>(actor, this->vehicle_params["mass"], this->vehicle_params["max_force"], max_speed, actor->WorldPose(), ignition::math::Vector3d(0,0,0), collision_entities, flow_fields);
             
         } else {
             std::cout << "INVALID VEHICLE TYPE\n";
@@ -694,16 +729,17 @@ void Puppeteer::ManagePoseEstimate(geometry_msgs::Pose est_pose){
 // Function that publishes the flow field as a PoseArray
 void Puppeteer::PublishFlowMarkers()
 {
-    geometry_msgs::PoseArray flow_field;
+
+    geometry_msgs::PoseArray flow_msg;
 
 	//make sure to set the header information
-	flow_field.header.stamp = ros::Time::now();
-    flow_field.header.frame_id = "map";
+	flow_msg.header.stamp = ros::Time::now();
+    flow_msg.header.frame_id = "map";
 
     // Initiate poses
-    int rows = this->costmap->rows;
-    int cols = this->costmap->cols;
-    flow_field.poses = std::vector<geometry_msgs::Pose>();
+    int rows = flow_fields[0]->rows;
+    int cols = flow_fields[0]->cols;
+    flow_msg.poses = std::vector<geometry_msgs::Pose>();
 
     for (int i=0; i<rows * cols; i++)
     {
@@ -713,14 +749,16 @@ void Puppeteer::PublishFlowMarkers()
 
         // Get position of this grid cell
         ignition::math::Vector3d pos;
-        costmap->IndiciesToPos(pos, r, c);
+        flow_fields[0]->IndiciesToPos(pos, r, c);
+
+        // Get flow field at this grid cell
+        ignition::math::Vector2d flow = flow_fields[0]->field[r][c];
 
         // Only add pose if valid flow
-        if (costmap->flow_field_offsets[r][c] > 0)
+        if (flow.SquaredLength() > 0)
         {
             // Get flow orientation
-            double angle(costmap->flow_field_angles[r][c]);
-            angle *= M_PI / 180;
+            double angle = std::atan2(flow.Y(), flow.X());
             //angle += M_PI;
             
             // Convert to quaternion
@@ -729,20 +767,20 @@ void Puppeteer::PublishFlowMarkers()
 
             // Create pose object
             geometry_msgs::Pose pose;
-            pose.position.x = pos.X() + 0.5 * costmap->resolution;
-            pose.position.y = pos.Y() - 0.5 * costmap->resolution;
+            pose.position.x = pos.X() + 0.5 * flow_fields[0]->resolution;
+            pose.position.y = pos.Y() - 0.5 * flow_fields[0]->resolution;
             pose.position.z = pos.Z();
             pose.orientation.x = quat.X();
             pose.orientation.y = quat.Y();
             pose.orientation.z = quat.Z();
             pose.orientation.w = quat.W();
-            flow_field.poses.push_back(pose);
+            flow_msg.poses.push_back(pose);
         }
 
     }
 
     // Publish message
-    flow_pub.publish(flow_field);
+    flow_pub.publish(flow_msg);
 }
 
 // Function that publishes the value function for flow field as a a Map
@@ -757,24 +795,24 @@ void Puppeteer::PublishIntegrationValue()
     map.header.frame_id = "map";
 
     // Set the map information
-    int rows = this->costmap->rows;
-    int cols = this->costmap->cols;
+    int rows = flow_fields[0]->rows;
+    int cols = flow_fields[0]->cols;
 
 	map.info.width = cols;
 	map.info.height = rows;
-	map.info.origin.position.x = costmap->boundary.Min().X();
-	map.info.origin.position.y = costmap->boundary.Min().Y();
+	map.info.origin.position.x = flow_fields[0]->boundary.Min().X();
+	map.info.origin.position.y = flow_fields[0]->boundary.Min().Y();
 	map.info.origin.position.z = 0;
 	map.info.origin.orientation.x = 0.0;
 	map.info.origin.orientation.y = 0.0;
 	map.info.origin.orientation.z = 0.0;
 	map.info.origin.orientation.w = 1.0;
-	map.info.resolution = costmap->resolution;
+	map.info.resolution = flow_fields[0]->resolution;
 
     // Get max integration field elem
-    double min_v = costmap->integration_field[0][0];
+    double min_v = flow_fields[0]->value_function[0][0];
     double max_v = -1;
-    for (auto& integration_row: costmap->integration_field)
+    for (auto& integration_row: flow_fields[0]->value_function)
     {
         for (auto& value: integration_row)
         {
@@ -797,7 +835,7 @@ void Puppeteer::PublishIntegrationValue()
         int r = (rows - 1) - i / cols;
 
         // Fill pixel
-        double value = costmap->integration_field[r][c];
+        double value = flow_fields[0]->value_function[r][c];
         if (value < 10e8)
         {
             double int8_value = value * factor;

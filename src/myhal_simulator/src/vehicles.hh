@@ -13,6 +13,7 @@
 #include <string>
 #include "utilities.hh"
 #include "costmap.hh"
+#include "flowfield.hh"
 
 #define ALI 0 
 #define COH 1
@@ -418,3 +419,27 @@ class Custom_Wanderer: public Vehicle{
 
 };
 
+class FlowFollower : public Vehicle
+{
+
+public:
+    // Variables
+    std::vector<boost::shared_ptr<FlowField>> flow_fields;
+    int current_flow;
+    double distance_to_goal;
+
+    // Methods
+    FlowFollower(gazebo::physics::ActorPtr _actor,
+                 double _mass,
+                 double _max_force,
+                 double _max_speed,
+                 ignition::math::Pose3d initial_pose,
+                 ignition::math::Vector3d initial_velocity,
+                 std::vector<gazebo::physics::EntityPtr> objects,
+                 std::vector<boost::shared_ptr<FlowField>>& flow_fields0);
+
+    void CheckGoal();
+    void UpdateDistance();
+    void FlowForce();
+    void OnUpdate(const gazebo::common::UpdateInfo &_info, double dt, std::vector<boost::shared_ptr<Vehicle>> vehicles, std::vector<gazebo::physics::EntityPtr> objects);
+};

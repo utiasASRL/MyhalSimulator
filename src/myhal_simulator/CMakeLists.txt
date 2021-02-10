@@ -46,14 +46,14 @@ target_link_libraries(utilities ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES})
 add_library(costmap src/include/costmap.cpp)
 target_link_libraries(costmap utilities ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES})
 
-add_library(flowfield src/include/flowfield.cpp)
-target_link_libraries(flowfield utilities Perlin ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES})
-
 add_library(sdfstring src/include/sdfstring.cpp)
 target_link_libraries(sdfstring ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES})
 
+add_library(flowfield src/include/flowfield.cpp)
+target_link_libraries(flowfield utilities costmap ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES})
+
 add_library(vehicles src/vehicles.cpp)
-target_link_libraries(vehicles utilities Perlin costmap ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES})
+target_link_libraries(vehicles utilities Perlin costmap flowfield ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES})
 
 add_library(world_entities src/world_entities.cpp)
 target_link_libraries(world_entities sdfstring utilities ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES})
@@ -65,7 +65,7 @@ add_library(parse_tour src/include/parse_tour.cpp)
 target_link_libraries(parse_tour costmap ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES})
 
 add_library(puppeteer src/puppeteer.cpp)
-target_link_libraries(puppeteer parse_tour utilities quadtree vehicles costmap ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES})
+target_link_libraries(puppeteer parse_tour utilities quadtree vehicles costmap flowfield ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES})
 
 add_executable(world_factory src/world_factory.cpp) 
 target_link_libraries(world_factory world_entities utilities parse_tour costmap ${catkin_LIBRARIES})
