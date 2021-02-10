@@ -1,7 +1,9 @@
 #ifndef PUPPETEER_HH
 #define PUPPETEER_HH
 
+
 #include <cmath>
+#include <string>
 #include <ignition/math/Pose3.hh>
 #include <ignition/math/Quaternion.hh>
 #include <ignition/math/Vector3.hh>
@@ -33,6 +35,8 @@
 #include "tf2_msgs/TFMessage.h"
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <geometry_msgs/TransformStamped.h>
+#include <chrono>
+#include <thread>
 
 typedef pcl::PointCloud<pcl::PointXYZ> PointCloud;
 typedef boost::shared_ptr<SmartCam> SmartCamPtr;

@@ -325,29 +325,36 @@ void Vehicle::AvoidObstacles(std::vector<gazebo::physics::EntityPtr> objects)
     //     boundary_force.Z() = 0;
     //     this->ApplyForce(boundary_force);
     // }
+
+    std::cout << this->GetName() << std::endl;
+
     ignition::math::Vector3d boundary_force = ignition::math::Vector3d(0, 0, 0);
+
     for (gazebo::physics::EntityPtr object : objects)
     {
-        ignition::math::Box box = object->BoundingBox();
-        // inflate the box slightly
 
-        double inflate = 0.05;
+        // Get object bounding box
+        ignition::math::Box box = object->BoundingBox();
+
+        // inflate the box slightly
+        double inflate = 0;
         if (object->GetName() == "jackal")
         {
-            inflate = 0.2;
+            inflate = 0.1;
         }
-
         box.Min().X() -= inflate;
         box.Max().X() += inflate;
         box.Min().Y() -= inflate;
         box.Max().Y() += inflate;
 
+        // Check height for doors
         double min_z = std::min(box.Min().Z(), box.Max().Z());
         if (min_z > 1.5)
-        {
             continue;
-        }
+
+        // Get the vector from closest box point to the current pos
         ignition::math::Vector3d min_normal = utilities::min_box_repulsive_vector(this->pose.Pos(), box);
+
         //if the person has somehow arrived inside an object, dont count collisions with that object so it can eventually leave
         if (utilities::inside_box(box, this->pose.Pos()))
         {
@@ -355,23 +362,39 @@ void Vehicle::AvoidObstacles(std::vector<gazebo::physics::EntityPtr> objects)
             continue;
         }
 
+        // Compute boundary force 
         double dist = min_normal.Length();
         if (dist < this->obstacle_margin)
         {
             min_normal.Normalize();
-            boundary_force += min_normal / exp(dist * dist);
+            double exp_term = dist / (obstacle_margin / 2);
+            exp_term *= exp_term;
+            boundary_force += min_normal * (max_force *  exp(-exp_term));
         }
     }
+
+    if(boundary_force.Length() !=0){
+        std::cout << " ----> boundary force: " << boundary_force << std::endl;
+    }
+
+    // Clip max force
     if (boundary_force.Length() > this->max_force)
     {
         boundary_force.Normalize();
         boundary_force *= this->max_force;
     }
+
+    if(boundary_force.Length() !=0){
+        std::cout << " ----> clipped force: " << boundary_force << std::endl;
+    }
+
+    // Apply force
     boundary_force.Z() = 0;
     this->ApplyForce(boundary_force);
-    // if(boundary_force.Length() !=0){
-    //     std::cout << this->GetName() << " boundary force: " << boundary_force << std::endl;
-    // }
+
+    if(boundary_force.Length() !=0){
+        std::cout << " ----> Force applied " << std::endl;
+    }
 }
 
 void Vehicle::AvoidActors(std::vector<boost::shared_ptr<Vehicle>> vehicles)
@@ -1412,6 +1435,7 @@ FlowFollower::FlowFollower(gazebo::physics::ActorPtr _actor,
     flow_fields = flow_fields0;
     current_flow = 0;
     distance_to_goal = 0;
+    obstacle_margin = 0.2;
 }
 
 void FlowFollower::OnUpdate(const gazebo::common::UpdateInfo &_info, double dt, std::vector<boost::shared_ptr<Vehicle>> vehicles, std::vector<gazebo::physics::EntityPtr> objects)
@@ -1441,14 +1465,29 @@ void FlowFollower::CheckGoal()
     // Set new goal
     if (distance_to_goal < 1.0)
     {
-        int new_flow = current_flow;
-        while (new_flow == current_flow)
-            new_flow = ignition::math::Rand::IntUniform(0, flow_fields.size() - 1);
-        current_flow = new_flow;
+
+        // Get a random permutation of the flow indices (except current one)
+        std::vector<int> rand_order;
+        for (int i = 0; i < flow_fields.size(); ++i)
+        {
+            if (i != current_flow)
+                rand_order.push_back(i);
+        }
+        std::random_shuffle(rand_order.begin(), rand_order.end());
+
+        // Search for the first new flow that is reachable
+        for (auto rand_i : rand_order)
+        {
+            current_flow = rand_i;
+            UpdateDistance();
+            if (distance_to_goal < 10e8)
+                break;
+        }
     }
 
-    // Update distance
-    UpdateDistance();
+    if (distance_to_goal > 10e8)
+        ROS_WARN_STREAM(this->GetName() << " at an unreachable point of the flow map");
+
 }
 
 void FlowFollower::UpdateDistance()

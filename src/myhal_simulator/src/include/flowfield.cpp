@@ -14,9 +14,6 @@ FlowField::FlowField(boost::shared_ptr<Costmap> costmap0, ignition::math::Vector
     boundary = costmap0->boundary;
     field = std::vector<std::vector<ignition::math::Vector2d>>(rows, std::vector<ignition::math::Vector2d>(cols));
     value_function = std::vector<std::vector<double>>(rows, std::vector<double>(cols));
-
-    // Compute flow 
-    Compute(costmap0->costmap);
 }
 
 

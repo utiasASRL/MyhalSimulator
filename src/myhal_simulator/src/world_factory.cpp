@@ -33,7 +33,9 @@ void WorldHandler::Load(){
 
     std::cout << "Filling Rooms\n";
     
-    for (auto r_info: this->rooms){
+    for (auto r_info: this->rooms)
+    {
+
         this->FillRoom(r_info);
         
         r_info->room->AddToWorld(this->world_string);

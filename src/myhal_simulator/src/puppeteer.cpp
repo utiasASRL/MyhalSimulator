@@ -50,13 +50,22 @@ void Puppeteer::Load(gazebo::physics::WorldPtr _world, sdf::ElementPtr _sdf){
             this->digits_coordinates->push_back(v);
         }
     }
- 
+    
+    // Init flow fields
+    for (unsigned int i = 0; i < digits_coordinates->size(); ++i)
+    {
+        auto goal0 = digits_coordinates->at(i).Pos();
+        auto flow_field_ptr = boost::make_shared<FlowField>(costmap, goal0);
+        flow_fields.push_back(flow_field_ptr);
+    }
+        
+    // Create objects and costmap
     for (unsigned int i = 0; i < world->ModelCount(); ++i) {
         auto model = world->ModelByIndex(i);
         auto act = boost::dynamic_pointer_cast<gazebo::physics::Actor>(model);
 
-        if (act){
-            
+        if (act)
+        {
             auto new_vehicle = this->CreateVehicle(act);
             this->vehicles_names.push_back(new_vehicle->GetName());
             this->vehicles.push_back(new_vehicle);
@@ -65,7 +74,6 @@ void Puppeteer::Load(gazebo::physics::WorldPtr _world, sdf::ElementPtr _sdf){
             auto box = ignition::math::Box(min,max);
             auto new_node = QTData(box, new_vehicle, vehicle_type);
             this->vehicle_quadtree->Insert(new_node);
-            continue;
         } 
 
         if (model->GetName().substr(0,3) == "CAM"){
@@ -73,7 +81,6 @@ void Puppeteer::Load(gazebo::physics::WorldPtr _world, sdf::ElementPtr _sdf){
             continue;
         }
 
-       
         if (model->GetName() != "ground_plane"){
             
             auto links = model->GetLinks();
@@ -101,6 +108,30 @@ void Puppeteer::Load(gazebo::physics::WorldPtr _world, sdf::ElementPtr _sdf){
             }
         }
     }
+
+    // Compute a flow fields
+    // *********************
+    
+    // Timing variables
+    std::cout <<"\n\n--------------------> Computing flow fields" << std::endl;
+	std::vector<clock_t> t_debug;
+	t_debug.push_back(std::clock());
+
+    // Compute flow fields
+    for (unsigned int i = 0; i < digits_coordinates->size(); ++i)
+    {
+        flow_fields[i]->Compute(costmap->costmap);
+        auto goal0 = digits_coordinates->at(i).Pos();
+        std::cout << "Goal: (" << goal0.X() << ", " << goal0.Y() << ")" << std::endl;
+        std::cout << "Size: " << flow_fields[i]->rows << " * " << flow_fields[i]->cols << std::endl;
+        std::cout << "Reachability: " << flow_fields[i]->Reachability() * 100 << "% " << std::endl;
+        std::cout << "***********************" << std::endl;
+    }
+
+    // Debug timing
+    t_debug.push_back(std::clock());
+    double duration = 1000 * (t_debug[1] - t_debug[0]) / (double)CLOCKS_PER_SEC;
+    std::cout << "--------------------> Done in " << duration << " ms\n\n" << std::endl;
 
     // Parse robot tour from ./worlds/map.txt
     if (this->tour_name != ""){
@@ -136,44 +167,6 @@ void Puppeteer::Load(gazebo::physics::WorldPtr _world, sdf::ElementPtr _sdf){
         this->tf_sub = this->nh.subscribe("/tf", 1, &Puppeteer::TFCallback, this);
     }
 
-
-    // Compute a flow field for each 
-    // *****************************
-    
-    // Timing variables
-
-    std::cout <<"\n\n--------------------> Computing flow fields" << std::endl;
-	std::vector<clock_t> t_debug;
-	t_debug.push_back(std::clock());
-
-    // Compute flow fields
-    for (unsigned int i = 0; i < digits_coordinates->size(); ++i)
-    {
-
-        // Compute the flow field
-        auto goal0 = digits_coordinates->at(i).Pos();
-        auto flow_field_ptr = boost::make_shared<FlowField>(costmap, goal0);
-        
-
-        // Add to the list if reachability is good
-        if (flow_field_ptr->Reachability() > 0.5)
-        {
-            flow_fields.push_back(flow_field_ptr);
-        }
-        
-        std::cout << "Goal: (" << goal0.X() << ", " << goal0.Y() << ")" << std::endl;
-        std::cout << "Size: " << flow_fields[i]->rows << " * " << flow_fields[i]->cols << std::endl;
-        std::cout << "Reachability: " << flow_field_ptr->Reachability() * 100 << "% " << std::endl;
-        std::cout << "***********************" << std::endl;
-    }
-
-    // Debug timing
-    t_debug.push_back(std::clock());
-    double duration = 1000 * (t_debug[1] - t_debug[0]) / (double)CLOCKS_PER_SEC;
-    std::cout << "--------------------> Done in " << duration << " ms\n\n" << std::endl;
-
-
-
     // Create a publisher for the flow field
     flow_pub = nh.advertise<geometry_msgs::PoseArray>( "flow_field", 5);
     flow_v_pub = nh.advertise<nav_msgs::OccupancyGrid>( "value_field", 5);
@@ -181,20 +174,57 @@ void Puppeteer::Load(gazebo::physics::WorldPtr _world, sdf::ElementPtr _sdf){
 }
 
 
-void Puppeteer::OnUpdate(const gazebo::common::UpdateInfo &_info){
 
+void Puppeteer::OnUpdate(const gazebo::common::UpdateInfo &_info)
+{
+    /////////////////////
+    // Function frequency 
+    /////////////////////
+
+    // Get the time elapsed since the last call to this function
     double dt = (_info.simTime - this->last_update).Double();
 
+    // Only update stuff with a certain frequency
     if (dt < 1/this->update_freq){
         return;
     }
     this->last_update = _info.simTime;
 
-    // std::cout << "A" << std::endl;
 
-    if ((this->tour_name != "") && (this->robot_name != "") && this->robot == nullptr){
+    ///////////////////
+    // Timing variables
+    ///////////////////
 
-        for (unsigned int i = 0; i < world->ModelCount(); ++i) {
+    bool publish_flow = false;
+
+    // Timing variables
+    bool verbose = false;
+	std::vector<clock_t> t_debug;
+	std::vector<std::string> clock_str;
+	if (verbose)
+	{
+		clock_str.push_back("Robot Init ......... ");
+		clock_str.push_back("Cam handle ......... ");
+		clock_str.push_back("Vehicles quadtree .. ");
+		clock_str.push_back("Vehicles update .... ");
+		clock_str.push_back("Path update ........ ");
+		clock_str.push_back("Flow Markers ....... ");
+		clock_str.push_back("Goal Marker ........ ");
+		clock_str.push_back("Pose Marker ........ ");
+	}
+	t_debug.push_back(std::clock());
+
+
+    ///////////////////////
+    // Robot initialization
+    ///////////////////////
+
+    // This part is called only once at the beginning
+    if ((this->tour_name != "") && (this->robot_name != "") && this->robot == nullptr)
+    {
+        // Init the Robot model
+        for (unsigned int i = 0; i < world->ModelCount(); ++i) 
+        {
             auto model = world->ModelByIndex(i);
             if (model->GetName() == this->robot_name){
 
@@ -213,6 +243,7 @@ void Puppeteer::OnUpdate(const gazebo::common::UpdateInfo &_info){
             }
         }
         
+        // Publish the robot path
         double i = 0;
         for (auto path: this->paths){
             for (auto pose: path){
@@ -229,51 +260,67 @@ void Puppeteer::OnUpdate(const gazebo::common::UpdateInfo &_info){
         return;
     }
 
-    // std::cout << "B" << std::endl;
+    /////////////////
+    // Handle Cameras
+    /////////////////
 
-    if (this->robot != nullptr){
+	t_debug.push_back(std::clock());
+
+    if (this->robot != nullptr)
+    {
         this->robot_traj.push_back(this->robot->WorldPose().Pos());
         this->robot_traj.back().Z() = 0;
-        for (auto cam: this->cams){
+        for (auto cam: this->cams)
+        {
             cam->OnUpdate(dt, this->robot_traj);
         }
     }
 
-    // std::cout << "C" << std::endl;
+    //////////////////
+    // Handle vehicles
+    //////////////////
 
+	t_debug.push_back(std::clock());
+
+    // Place vehicles in a quadtree
     this->vehicle_quadtree = boost::make_shared<QuadTree>(this->building_box);
-
-    for (auto vehicle: this->vehicles){
+    for (auto vehicle: this->vehicles)
+    {
         auto min = ignition::math::Vector3d(vehicle->GetPose().Pos().X() - 0.4, vehicle->GetPose().Pos().Y() - 0.4, 0);
         auto max = ignition::math::Vector3d(vehicle->GetPose().Pos().X() + 0.4, vehicle->GetPose().Pos().Y() + 0.4, 0);
         auto box = ignition::math::Box(min,max);
         auto new_node = QTData(box, vehicle, vehicle_type);
-        this->vehicle_quadtree->Insert(new_node);
-        
+        this->vehicle_quadtree->Insert(new_node);   
     }
-
-    for (auto vehicle: this->vehicles){
     
+	t_debug.push_back(std::clock());
+
+    // Calling update for each vehicle
+    for (auto vehicle: this->vehicles)
+    {
+    
+        // Init containers for  close by vehicles
         std::vector<boost::shared_ptr<Vehicle>> near_vehicles;
         std::vector<gazebo::physics::EntityPtr> near_objects;
         
+        // Init query range
         auto vehicle_pos = vehicle->GetPose();
         auto min = ignition::math::Vector3d(vehicle_pos.Pos().X() - 2, vehicle_pos.Pos().Y() - 2, 0);
         auto max = ignition::math::Vector3d(vehicle_pos.Pos().X() + 2, vehicle_pos.Pos().Y() + 2, 0);
         auto query_range = ignition::math::Box(min,max);
 
+        // Query objects in quadtree
         std::vector<QTData> query_objects = this->static_quadtree->QueryRange(query_range);
         for (auto n: query_objects){
             if (n.type == entity_type){
                 near_objects.push_back(boost::static_pointer_cast<gazebo::physics::Entity>(n.data));
             }
-            
         }
-
         if (this->robot != nullptr && (vehicle_pos.Pos() - this->robot->WorldPose().Pos()).Length()<2){
             near_objects.push_back(this->robot);
         }
 
+        // Query vehicles in quadtree
         std::vector<QTData> query_vehicles = this->vehicle_quadtree->QueryRange(query_range);
         for (auto n: query_vehicles){
             if (n.type == vehicle_type){
@@ -281,9 +328,16 @@ void Puppeteer::OnUpdate(const gazebo::common::UpdateInfo &_info){
             }
         }
 
+        // Update vehicle
         vehicle->OnUpdate(_info, dt, near_vehicles, near_objects);
+
     }
 
+    ////////////////////
+    // Handle Robot path
+    ////////////////////
+
+	t_debug.push_back(std::clock());
 
     if (this->old_global_ind != this->new_global_ind){
         this->global_path_viz->OnUpdate(this->global_plan);
@@ -292,10 +346,21 @@ void Puppeteer::OnUpdate(const gazebo::common::UpdateInfo &_info){
     if (this->old_local_ind != this->new_local_ind){
         this->local_path_viz->OnUpdate(this->local_plan);
     }
+    
+    ///////////////////
+    // Add visu markers
+    ///////////////////
+    
+	t_debug.push_back(std::clock());
 
     // Publish the flow
-    PublishFlowMarkers();
-    PublishIntegrationValue();
+    if (publish_flow)
+    {
+        PublishFlowMarkers();
+        PublishIntegrationValue();
+    }
+    
+	t_debug.push_back(std::clock());
 
     if (this->old_nav_ind != this->new_nav_ind){
         std::string name = "nav_goal";
@@ -309,6 +374,8 @@ void Puppeteer::OnUpdate(const gazebo::common::UpdateInfo &_info){
         }
         this->old_nav_ind = this->new_nav_ind;
     }
+    
+	t_debug.push_back(std::clock());
 
     if (this->viz_gaz){
         geometry_msgs::Pose est_pose;
@@ -317,7 +384,18 @@ void Puppeteer::OnUpdate(const gazebo::common::UpdateInfo &_info){
 
         ros::spinOnce();
     }
-
+    
+	t_debug.push_back(std::clock());
+    
+	if (verbose)
+	{
+		for (size_t i = 0; i < std::min(t_debug.size() - 1, clock_str.size()); i++)
+		{
+			double duration = 1000 * (t_debug[i + 1] - t_debug[i]) / (double)CLOCKS_PER_SEC;
+			std::cout << clock_str[i] << duration << " ms" << std::endl;
+        }
+        std::cout << std::endl << "***********************" << std::endl << std::endl;
+    }
 }
 
 
@@ -453,7 +531,7 @@ void Puppeteer::ReadParams(){
         vehicle_params["max_force"] = 10;
         vehicle_params["slowing_distance"] =  2;
         vehicle_params["arrival_distance"] = 0.5;
-        vehicle_params["obstacle_margin"] = 0.5;
+        vehicle_params["obstacle_margin"] = 0.4;
         vehicle_params["blocking"] = 0;
         vehicle_params["start_mode"] = 2;
         vehicle_params["parse_digits"] = 0;

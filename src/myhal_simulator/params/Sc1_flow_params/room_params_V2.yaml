@@ -44,13 +44,13 @@ study_space_546:
   geometry: g546
   positions: p546
   enclosed: "1"
-  scenario: flow_follower_low_density
+  scenario: empty
 
 irm_lab_580:
   geometry: g580
   positions: p580
   enclosed: "1"
-  scenario: empty
+  scenario: flow_follower_low_density
 
 admin_off_514:
   geometry: g514

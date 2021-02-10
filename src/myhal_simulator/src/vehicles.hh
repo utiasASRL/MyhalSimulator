@@ -14,6 +14,7 @@
 #include "utilities.hh"
 #include "costmap.hh"
 #include "flowfield.hh"
+#include <ros/console.h>
 
 #define ALI 0 
 #define COH 1
