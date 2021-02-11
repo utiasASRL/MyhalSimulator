@@ -326,8 +326,6 @@ void Vehicle::AvoidObstacles(std::vector<gazebo::physics::EntityPtr> objects)
     //     this->ApplyForce(boundary_force);
     // }
 
-    std::cout << this->GetName() << std::endl;
-
     ignition::math::Vector3d boundary_force = ignition::math::Vector3d(0, 0, 0);
 
     for (gazebo::physics::EntityPtr object : objects)
@@ -337,10 +335,10 @@ void Vehicle::AvoidObstacles(std::vector<gazebo::physics::EntityPtr> objects)
         ignition::math::Box box = object->BoundingBox();
 
         // inflate the box slightly
-        double inflate = 0;
+        double inflate = 0.1;
         if (object->GetName() == "jackal")
         {
-            inflate = 0.1;
+            inflate = 0.2;
         }
         box.Min().X() -= inflate;
         box.Max().X() += inflate;
@@ -358,7 +356,7 @@ void Vehicle::AvoidObstacles(std::vector<gazebo::physics::EntityPtr> objects)
         //if the person has somehow arrived inside an object, dont count collisions with that object so it can eventually leave
         if (utilities::inside_box(box, this->pose.Pos()))
         {
-            //std::cout << "debug" << std::endl;
+            std::cout << this->GetName()  << " ----> is in obstacle" << std::endl;
             continue;
         }
 
@@ -373,10 +371,6 @@ void Vehicle::AvoidObstacles(std::vector<gazebo::physics::EntityPtr> objects)
         }
     }
 
-    if(boundary_force.Length() !=0){
-        std::cout << " ----> boundary force: " << boundary_force << std::endl;
-    }
-
     // Clip max force
     if (boundary_force.Length() > this->max_force)
     {
@@ -384,17 +378,15 @@ void Vehicle::AvoidObstacles(std::vector<gazebo::physics::EntityPtr> objects)
         boundary_force *= this->max_force;
     }
 
-    if(boundary_force.Length() !=0){
-        std::cout << " ----> clipped force: " << boundary_force << std::endl;
+    if(boundary_force.Length() !=0)
+    {
+        std::cout << this->GetName() << " ----> boundary force: " << boundary_force << std::endl;
     }
+
 
     // Apply force
     boundary_force.Z() = 0;
     this->ApplyForce(boundary_force);
-
-    if(boundary_force.Length() !=0){
-        std::cout << " ----> Force applied " << std::endl;
-    }
 }
 
 void Vehicle::AvoidActors(std::vector<boost::shared_ptr<Vehicle>> vehicles)
@@ -1435,7 +1427,7 @@ FlowFollower::FlowFollower(gazebo::physics::ActorPtr _actor,
     flow_fields = flow_fields0;
     current_flow = 0;
     distance_to_goal = 0;
-    obstacle_margin = 0.2;
+    obstacle_margin = 0.3;
 }
 
 void FlowFollower::OnUpdate(const gazebo::common::UpdateInfo &_info, double dt, std::vector<boost::shared_ptr<Vehicle>> vehicles, std::vector<gazebo::physics::EntityPtr> objects)
@@ -1451,6 +1443,9 @@ void FlowFollower::OnUpdate(const gazebo::common::UpdateInfo &_info, double dt, 
 
     // 4. Apply contact force if very close to walls/objects
     AvoidObstacles(objects);
+
+    // Get total applied force from the sumed acceleration
+    showed_force = acceleration * mass;
 
     // Update
     UpdatePosition(dt);
@@ -1505,18 +1500,23 @@ void FlowFollower::FlowForce()
     if (!flow_fields[current_flow]->Lookup(this->pose.Pos(), flow))
         throw std::out_of_range("FlowFollower position outside the flow map");
 
+    // Apply flow directly as a force
+    ignition::math::Vector3d steer(flow.X(), flow.Y(), 0);
+    steer *= 3.0;
+
     // Flow is the direction of the desired speed
-    ignition::math::Vector3d desired_v(flow.X(), flow.Y(), 0);
-    desired_v.Normalize();
-    desired_v *= this->max_speed;
+    //ignition::math::Vector3d desired_v(flow.X(), flow.Y(), 0);
+    //.Normalize();
+    //desired_v *= this->max_speed;
 
-    ignition::math::Vector3d steer = desired_v - this->velocity;
-
-    steer *= 1.0;
+    // Clamp force
     if (steer.Length() > this->max_force)
     {
         steer.Normalize();
         steer *= this->max_force;
     }
+
+    //showed_force = steer;
+
     ApplyForce(steer);
 }

@@ -159,7 +159,7 @@ test_custom_wanderer:
   
 
 flow_follower_low_density:
-  pop_density: "0.05"
+  pop_density: "0.1"
   table_percentage: "0.4"
   actor: actor_flow_follower
   table_group_list: all_group

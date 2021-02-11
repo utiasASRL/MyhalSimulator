@@ -195,7 +195,9 @@ void Puppeteer::OnUpdate(const gazebo::common::UpdateInfo &_info)
     // Timing variables
     ///////////////////
 
+    // Visualization boolean
     bool publish_flow = false;
+    bool show_flow_forces = true;
 
     // Timing variables
     bool verbose = false;
@@ -358,6 +360,12 @@ void Puppeteer::OnUpdate(const gazebo::common::UpdateInfo &_info)
     {
         PublishFlowMarkers();
         PublishIntegrationValue();
+    }
+    
+
+    if (show_flow_forces)
+    {
+        ShowFlowForces();
     }
     
 	t_debug.push_back(std::clock());
@@ -933,3 +941,124 @@ void Puppeteer::PublishIntegrationValue()
 	// Publish map and map metadata
 	flow_v_pub.publish(map);
 }
+
+
+
+// Function that publishes the value function for flow field as a a Map
+void Puppeteer::ShowFlowForces()
+{
+
+    if (!added_forces)
+    {
+
+        int vehicle_i = 0;
+        for (auto vehicle: this->vehicles)
+        {
+            // Create SDF object
+            boost::shared_ptr<sdf::SDF> sdf = boost::make_shared<sdf::SDF>();
+            sdf->SetFromString(
+            "<sdf version ='1.6'>\
+                <model name ='actor_force'>\
+                </model>\
+                </sdf>");
+
+            // Get force pose (origin at the vehicle and orientation like the force itself)
+            auto origin_pos = vehicle->GetPose().Pos();
+            double angle = std::atan2(vehicle->showed_force.Y(), vehicle->showed_force.X());
+            ignition::math::Vector3d axis(0.0, 0.0, 1.0);
+            ignition::math::Quaternion<double> quat(axis, angle);
+            ignition::math::Pose3d force_pose(origin_pos, quat);
+
+
+            // Add origin element (only position, ignore pose)
+            auto model = sdf->Root()->GetElement("model");
+            model->GetElement("static")->Set(true);
+            model->GetAttribute("name")->SetFromString("force_origin_" + std::to_string(vehicle_i));
+            model->GetElement("pose")->Set(force_pose);
+            
+            // Add link (visual force object)
+            auto link1 = model->AddElement("link");
+            link1->GetAttribute("name")->SetFromString("force_link");
+
+            // Set its pose according to the force
+            link1->GetElement("pose")->Set(ignition::math::Vector3d(0.5, 0, 0));
+
+            // Set its size according to the force
+            auto box1 = link1->GetElement("visual")->GetElement("geometry")->GetElement("box");
+            box1->GetElement("size")->Set(ignition::math::Vector3d(1.0, 0.02, 0.02));
+
+            // Set link color
+            auto color = ignition::math::Vector4d(1,0,0,1);
+            auto mat1 = link1->GetElement("visual")->GetElement("material");
+            mat1->GetElement("ambient")->Set(color);
+            mat1->GetElement("diffuse")->Set(color);
+            mat1->GetElement("specular")->Set(color);
+            mat1->GetElement("emissive")->Set(color);
+
+            this->world->InsertModelSDF(*sdf);
+            vehicle_i++;
+
+        }
+
+        added_forces = true;
+    } 
+    else 
+    {
+        if (showed_forces.size() == 0)
+        {
+            for (auto vehicle: this->vehicles)
+                showed_forces.push_back(nullptr);
+        }
+        else
+        { 
+            int vehicle_i = 0;
+            for (auto vehicle: this->vehicles)
+            {
+                    
+                if (!showed_forces[vehicle_i])
+                {
+                    showed_forces[vehicle_i] = this->world->ModelByName("force_origin_" + std::to_string(vehicle_i));
+                } 
+                else
+                {
+                    // Get force pose (origin at the vehicle and orientation like the force itself)
+                    auto origin_pos = vehicle->GetPose().Pos();
+                    origin_pos.Z() += 0.5;
+                    double angle = std::atan2(vehicle->showed_force.Y(), vehicle->showed_force.X());
+                    ignition::math::Vector3d axis(0.0, 0.0, 1.0);
+
+                    // Init quaternion with euler angles (pitch for force strength)
+                    double clipped_f = vehicle->showed_force.Length() * 2 / vehicle->max_force;
+                    clipped_f = std::min(clipped_f, 1.0);
+                    double pitch = std::acos(clipped_f);
+                    ignition::math::Quaternion<double> quat(0.0, -pitch, angle);
+                    ignition::math::Pose3d force_pose(origin_pos, quat);
+
+                    // Set this new pose
+                    showed_forces[vehicle_i]->SetWorldPose(force_pose);
+
+
+                }
+                vehicle_i++;
+            }
+
+        }
+    }
+
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

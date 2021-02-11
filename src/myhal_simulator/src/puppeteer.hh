@@ -157,8 +157,12 @@ class Puppeteer: public gazebo::WorldPlugin{
         geometry_msgs::TransformStamped map_to_odom;
         
         bool added_est = false;
+        
+        bool added_forces = false;
 
         gazebo::physics::ModelPtr pose_est = nullptr;
+        
+        std::vector<gazebo::physics::ModelPtr> showed_forces;
 
     public: 
         
@@ -193,6 +197,8 @@ class Puppeteer: public gazebo::WorldPlugin{
         void PublishFlowMarkers();
 
         void PublishIntegrationValue();
+
+        void ShowFlowForces();
 };
 
 

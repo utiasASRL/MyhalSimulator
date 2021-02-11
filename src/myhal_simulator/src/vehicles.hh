@@ -115,8 +115,6 @@ class Vehicle{
 
         double mass;
 
-        double max_force;
-
         double max_speed;
 
         ignition::math::Pose3d pose;
@@ -162,6 +160,10 @@ class Vehicle{
         double height = 1;
 
     public:
+
+        double max_force;
+
+        ignition::math::Vector3d showed_force;
 
         Vehicle(gazebo::physics::ActorPtr _actor, 
         double _mass, 
