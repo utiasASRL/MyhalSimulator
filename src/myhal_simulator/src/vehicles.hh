@@ -439,10 +439,12 @@ public:
                  ignition::math::Pose3d initial_pose,
                  ignition::math::Vector3d initial_velocity,
                  std::vector<gazebo::physics::EntityPtr> objects,
-                 std::vector<boost::shared_ptr<FlowField>>& flow_fields0);
+                 std::vector<boost::shared_ptr<FlowField>>& flow_fields0,
+                 double _obstacle_margin);
 
     void CheckGoal();
     void UpdateDistance();
     void FlowForce();
+    void UpdatePositionContactObstacles(std::vector<gazebo::physics::EntityPtr>& objects, double dt);
     void OnUpdate(const gazebo::common::UpdateInfo &_info, double dt, std::vector<boost::shared_ptr<Vehicle>> vehicles, std::vector<gazebo::physics::EntityPtr> objects);
 };

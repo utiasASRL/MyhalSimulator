@@ -3,9 +3,11 @@
 
 
 
-FlowField::FlowField(boost::shared_ptr<Costmap> costmap0, ignition::math::Vector3d goal0)
+FlowField::FlowField(boost::shared_ptr<Costmap> costmap0, ignition::math::Vector3d goal0, double obstacle_range0, double obstacle_strength0)
 {
     // Init variables
+    obstacle_range = obstacle_range0;
+    obstacle_strength = obstacle_strength0;
     resolution = costmap0->resolution;
     cols = costmap0->cols;
     rows = costmap0->rows;
@@ -14,12 +16,15 @@ FlowField::FlowField(boost::shared_ptr<Costmap> costmap0, ignition::math::Vector
     boundary = costmap0->boundary;
     field = std::vector<std::vector<ignition::math::Vector2d>>(rows, std::vector<ignition::math::Vector2d>(cols));
     value_function = std::vector<std::vector<double>>(rows, std::vector<double>(cols));
+    obstacle_map = std::vector<std::vector<double>>(rows, std::vector<double>(cols));
 }
 
 
 FlowField::FlowField()
 {
     // Init variables
+    obstacle_range = 0;
+    obstacle_strength = 0;
     resolution = 0;
     cols = 0;
     rows = 0;
@@ -87,6 +92,71 @@ std::vector<std::vector<int>> FlowField::GetNeighbours(std::vector<int> curr_ind
 }
 
 
+
+/*
+* Create an internal costmap with smooth increase in the direction of wals and obstacles. To avoid the "hug wall" effect
+*/
+void FlowField::ObstacleMap(std::vector<std::vector<int>>& costmap)
+{
+    
+    // Init: the cost of a cell is equal to the size of the cell in the real world
+    for (int r = 0; r < rows; ++r)
+    {
+        for (int c = 0; c < cols; ++c)
+        {
+            obstacle_map[r][c] = resolution;
+        }
+    }
+
+    // Get the range of obstacle repulsive flow in pixels
+    int pixel_range = (int)floor(obstacle_range / resolution ) + 1;
+
+    // tmp variable
+    double exp_factor = resolution * resolution / (0.5 * 0.5 * obstacle_range * obstacle_range);
+
+    // Loop over all costmap position
+    for (int c = 0; c < cols; ++c)
+    {
+        // Kernel column range (according to costmap boundaries)
+        int c1 = -pixel_range;
+        if (c + c1 < 0)
+            c1 = -c;
+        int c2 = pixel_range;
+        if (c + c2 > cols-1)
+            c2 = cols - 1 - c;
+
+        for (int r = 0; r < rows; r++)
+        {
+            if (costmap[r][c] >=255)
+            {
+                // Kernel row range (according to costmap boundaries)
+                int r1 = -pixel_range;
+                if (r + r1 < 0)
+                    r1 = -r;
+                int r2 = pixel_range;
+                if (r + r2 > rows-1)
+                    r2 = rows - 1 - r;
+
+                // Inside obstacles, the cost is infinite
+                obstacle_map[r][c] = 10e9;
+
+                // The closer to an obstacle the higher the cost
+                for (int cc = c1; cc <= c2; cc++)
+                {
+                    for (int rr = r1; rr <= r2; rr++)
+                    {
+                        double dist2 = rr * rr + cc * cc;
+                        double new_value = resolution * (1.0 + obstacle_strength * exp(-(rr * rr + cc * cc) * exp_factor));
+                        if (new_value > obstacle_map[r + rr][c + cc])
+                            obstacle_map[r + rr][c + cc] = new_value;
+                    }
+                }
+            }
+        }
+    }
+}
+
+
 /*
 * Integrate initialized the integration field at 10e9. It sets the goal position to 0 in the field, then iteratively calculate the value of the integration field from the goal following the algorithm here
 * https://leifnode.com/2013/12/flow-field-pathfinding/
@@ -94,6 +164,8 @@ std::vector<std::vector<int>> FlowField::GetNeighbours(std::vector<int> curr_ind
 */
 bool FlowField::Integrate(std::vector<std::vector<int>>& costmap)
 {
+    // First get the obstacle map
+    ObstacleMap(costmap);
 
     // Init variables
     double sqrt2 = sqrt(2);
@@ -143,15 +215,15 @@ bool FlowField::Integrate(std::vector<std::vector<int>>& costmap)
             // Add cost of getting to a costmap pixel.
             if ((n[0] - curr_ind[0]) * (n[1] -curr_ind[1]) == 0)
             {
-                n_cost += (double)costmap[n[0]][n[1]];
+                n_cost += obstacle_map[n[0]][n[1]];
             }
             else
             {
-                n_cost += sqrt2 * (double)costmap[n[0]][n[1]];
+                n_cost += sqrt2 * obstacle_map[n[0]][n[1]];
             }
 
             // If we are not in an obstacle and the computed cost is lower than current cost, update it
-            if (n_cost < value_function[n[0]][n[1]] && costmap[n[0]][n[1]] < 255)
+            if (n_cost < value_function[n[0]][n[1]] && obstacle_map[n[0]][n[1]] < 10e8)
             {
                 value_function[n[0]][n[1]] = n_cost;
                 if (std::find(open_list.begin(), open_list.end(), n) == open_list.end())

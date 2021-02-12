@@ -19,6 +19,8 @@ class FlowField{
 
         std::vector<std::vector<ignition::math::Vector2d>> field;
 
+        std::vector<std::vector<double>> obstacle_map;
+
         std::vector<std::vector<double>> value_function;
 
         ignition::math::Vector2d goal;
@@ -29,16 +31,22 @@ class FlowField{
 
         double resolution;
 
+        double obstacle_range;
+
+        double obstacle_strength;
+
         ignition::math::Box boundary;
 
         FlowField();
-        FlowField(boost::shared_ptr<Costmap> costmap0, ignition::math::Vector3d goal0);
+        FlowField(boost::shared_ptr<Costmap> costmap0, ignition::math::Vector3d goal0, double obstacle_range0, double obstacle_strength0);
 
         bool PosToIndicies(ignition::math::Vector3d pos, int &r, int &c);
 
         bool IndiciesToPos(ignition::math::Vector3d &pos, int r, int c);
 
         std::vector<std::vector<int>> GetNeighbours(std::vector<int> curr_ind, bool diag = true);
+
+        void ObstacleMap(std::vector<std::vector<int>>& costmap);
 
         bool Integrate(std::vector<std::vector<int>>& costmap);
 
