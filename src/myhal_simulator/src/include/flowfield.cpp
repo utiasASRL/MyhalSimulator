@@ -146,7 +146,7 @@ void FlowField::ObstacleMap(std::vector<std::vector<int>>& costmap)
                     for (int rr = r1; rr <= r2; rr++)
                     {
                         double dist2 = rr * rr + cc * cc;
-                        double new_value = resolution * (1.0 + obstacle_strength * exp(-(rr * rr + cc * cc) * exp_factor));
+                        double new_value = resolution * (1.0 + obstacle_strength * exp(-dist2 * exp_factor));
                         if (new_value > obstacle_map[r + rr][c + cc])
                             obstacle_map[r + rr][c + cc] = new_value;
                     }

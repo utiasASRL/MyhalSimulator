@@ -399,28 +399,50 @@ void Vehicle::AvoidActors(std::vector<boost::shared_ptr<Vehicle>> vehicles)
         this_pos.Z() = 0;
         ignition::math::Vector3d other_pos = other->WorldPose().Pos();
         other_pos.Z() = 0;
-        ignition::math::Vector3d rad = this_pos - other_pos;
-        double dist = rad.Length();
+        ignition::math::Vector3d other_vel = other->WorldLinearVel();
+        other_vel.Z() = 0;
+        ignition::math::Vector3d diff_pos = this_pos - other_pos;
+        double dist = diff_pos.Length();
         dist = std::max(0.0, dist - 0.2); //acounting for the radius of the person
 
+        ignition::math::Vector3d rep_force(0, 0, 0);
         if (dist < this->actor_margin)
         {
             // Normalize force vector
+            ignition::math::Vector3d rad = diff_pos;
             rad.Normalize();
             
             // Force value defined by gaussian
-            double exp_term = dist / (actor_margin / 2);
+            double exp_term = dist / (actor_margin / 3);
             exp_term *= exp_term;
-            steer += rad * exp(-exp_term);
+            rep_force = rad * exp(-exp_term);
 
-            // Old force in 1/r
-            //rad /= dist;
-            //steer += rad;
+            // Add a force tangential to the other actor's speed (for face to face avoidance)
+            if (velocity.Dot(other_vel) < 0)
+            {  
+                auto other_direction = other_vel;
+                other_direction.Normalize();
+                double longitu_dist = diff_pos.Dot(other_direction);
+                if (longitu_dist > 0)
+                {
+                    auto tangential_vec = diff_pos - longitu_dist * other_direction;
+                    double tangential_dist = tangential_vec.Length();
+                    tangential_vec.Normalize();
+                    double tang_term = tangential_dist / (actor_margin / 2);
+                    tang_term *= tang_term;
+                    double long_term = (longitu_dist - actor_margin / 2) / (actor_margin);
+                    long_term *= long_term;
+                    rep_force += tangential_vec * 0.8 * exp(-long_term) * exp(-tang_term);
+                }
+            }
         }
+
+        steer += rep_force;
     }
 
-    // Set the norm of the force to 60% of the max force
-    steer *= max_force * 0.6;
+    // Set the norm of the force to 50% of the max force
+    steer *= max_force * 0.5;
+
 
     // Clamp the value
     if (steer.Length() > this->max_force)
@@ -429,6 +451,9 @@ void Vehicle::AvoidActors(std::vector<boost::shared_ptr<Vehicle>> vehicles)
         steer *= this->max_force;
     }
     steer.Z() = 0;
+
+    
+    showed_force = steer;
     this->ApplyForce(steer);
     // if(steer.Length() != 0){
     //     std::cout << this->GetName() << " avoid actor force: " << steer << std::endl;
@@ -1429,7 +1454,8 @@ FlowFollower::FlowFollower(gazebo::physics::ActorPtr _actor,
                                 ignition::math::Vector3d initial_velocity,
                                 std::vector<gazebo::physics::EntityPtr> objects,
                                 std::vector<boost::shared_ptr<FlowField>>& flow_fields0,
-                                double _obstacle_margin)
+                                double _obstacle_margin,
+                                double _actor_margin)
     : Vehicle(_actor, _mass, _max_force, _max_speed, initial_pose, initial_velocity, objects)
 {
 
@@ -1440,7 +1466,7 @@ FlowFollower::FlowFollower(gazebo::physics::ActorPtr _actor,
     current_flow = 0;
     distance_to_goal = 0;
     obstacle_margin = _obstacle_margin;
-    actor_margin = 1.0;
+    actor_margin = _actor_margin;
 
     // Choose a valid initial flow to follow
     // *************************************
@@ -1478,7 +1504,7 @@ void FlowFollower::OnUpdate(const gazebo::common::UpdateInfo &_info, double dt, 
     AvoidActors(vehicles);
 
     // Get total applied force from the summed acceleration
-    showed_force = acceleration * mass;
+    //showed_force = acceleration * mass;
 
     // Update
     UpdatePositionContactObstacles(objects, dt);
@@ -1582,7 +1608,8 @@ void FlowFollower::UpdatePositionContactObstacles(std::vector<gazebo::physics::E
 
     // Find the closest obstacle
     bool inside_obstacle = false;
-    ignition::math::Vector3d min_normal;
+    ignition::math::Vector3d min_normal(0, 0, 0);
+    double min_dist = 10e9;
     for (gazebo::physics::EntityPtr object : objects)
     {
 
@@ -1605,8 +1632,11 @@ void FlowFollower::UpdatePositionContactObstacles(std::vector<gazebo::physics::E
         }
 
         // Otherwise consider the closest object the person would arrive to
-        if (next_normal.Length() < min_normal.Length())
+        if (next_normal.Length() < min_dist)
+        {
             min_normal = next_normal;
+            min_dist = next_normal.Length();
+        }
     }
 
     // Get the actor at a distance of obstacle_margin from the nearest obstacle

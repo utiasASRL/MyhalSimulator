@@ -324,8 +324,9 @@ void Puppeteer::OnUpdate(const gazebo::common::UpdateInfo &_info)
 
         // Init query range
         auto vehicle_pos = vehicle->GetPose();
-        auto min = ignition::math::Vector3d(vehicle_pos.Pos().X() - 2, vehicle_pos.Pos().Y() - 2, 0);
-        auto max = ignition::math::Vector3d(vehicle_pos.Pos().X() + 2, vehicle_pos.Pos().Y() + 2, 0);
+        double quad_range = vehicle_params["actor_margin"] + 0.5;
+        auto min = ignition::math::Vector3d(vehicle_pos.Pos().X() - quad_range, vehicle_pos.Pos().Y() - quad_range, 0);
+        auto max = ignition::math::Vector3d(vehicle_pos.Pos().X() + quad_range, vehicle_pos.Pos().Y() + quad_range, 0);
         auto query_range = ignition::math::Box(min, max);
 
         // Query objects in quadtree
@@ -337,7 +338,7 @@ void Puppeteer::OnUpdate(const gazebo::common::UpdateInfo &_info)
                 near_objects.push_back(boost::static_pointer_cast<gazebo::physics::Entity>(n.data));
             }
         }
-        if (this->robot != nullptr && (vehicle_pos.Pos() - this->robot->WorldPose().Pos()).Length() < 2)
+        if (this->robot != nullptr && (vehicle_pos.Pos() - this->robot->WorldPose().Pos()).Length() < quad_range)
         {
             near_objects.push_back(this->robot);
         }
@@ -352,7 +353,7 @@ void Puppeteer::OnUpdate(const gazebo::common::UpdateInfo &_info)
             }
         }
 
-        // Update vehicle
+        // Update the forces on vehicle
         vehicle->OnUpdate(_info, dt, near_vehicles, near_objects);
     }
 
@@ -581,7 +582,8 @@ boost::shared_ptr<Vehicle> Puppeteer::CreateVehicle(gazebo::physics::ActorPtr ac
             ignition::math::Vector3d(0, 0, 0), 
             collision_entities, 
             flow_fields,
-            vehicle_params["obstacle_margin"]);
+            vehicle_params["obstacle_margin"],
+            vehicle_params["actor_margin"]);
         }
         else
         {
@@ -609,6 +611,7 @@ void Puppeteer::ReadParams()
         vehicle_params["slowing_distance"] = 2;
         vehicle_params["arrival_distance"] = 0.5;
         vehicle_params["obstacle_margin"] = 0.4;
+        vehicle_params["actor_margin"] = 1.0;
         vehicle_params["blocking"] = 0;
         vehicle_params["start_mode"] = 2;
         vehicle_params["parse_digits"] = 0;
