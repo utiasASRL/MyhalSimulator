@@ -383,6 +383,42 @@ bool FlowField::Lookup(ignition::math::Vector3d pos, ignition::math::Vector2d &r
     return true;
 }
 
+bool FlowField::SmoothLookup(ignition::math::Vector3d pos, ignition::math::Vector2d &res)
+{
+    int r2, c2;
+    if(!PosToIndicies(pos + ignition::math::Vector3d(0.5 * resolution, -0.5 * resolution, 0), r2, c2))
+        return false;
+
+    double avg_tot = 0;
+    ignition::math::Vector2d avg_flow(0, 0);
+
+    for (int r = r2 - 1; r < r2 + 1; r++)
+    {
+        for (int c = c2 - 1; c < c2 + 1; c++)
+        {
+            
+            if (value_function[r][c] < 10e8)
+            {
+                double pix_x = (double)c * resolution + boundary.Min().X() + resolution / 2;
+                double pix_y = boundary.Max().Y() - (double)r * resolution - resolution / 2;
+                double weight = resolution - (pos - ignition::math::Vector3d(pix_x, pix_y, pos.Z())).Length();
+                if (weight > 0)
+                {
+                    avg_flow += weight * field[r][c];
+                    avg_tot += weight;
+                }
+            }
+        }
+    }
+    
+    if (avg_tot > 0)
+        res = avg_flow / avg_tot;
+    else
+        res = avg_flow;
+        return true;
+
+}
+
 
 
 double FlowField::Reachability()

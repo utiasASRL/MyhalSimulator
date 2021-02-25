@@ -164,6 +164,7 @@ class Vehicle{
         double max_force;
 
         ignition::math::Vector3d showed_force;
+        ignition::math::Vector3d flow_force;
 
         Vehicle(gazebo::physics::ActorPtr _actor, 
         double _mass, 

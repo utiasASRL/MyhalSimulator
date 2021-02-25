@@ -70,20 +70,24 @@ void TourParser::ReadTourParams(){
     this->bounds = ignition::math::Box(ignition::math::Vector3d(b[0], b[1],0), ignition::math::Vector3d(b[2], b[3],0));
 }
 
-void TourParser::ParseTour(){
+void TourParser::ParseTour()
+{
+    /////////////////
+    // Tour points //
+    /////////////////
+
+    // Load tour file
     std::ifstream tour_file(this->tour_path + "map.txt");
- 
     std::string line;
-
-    
-    Costmap map = Costmap(this->bounds, this->resolution);
-
     int row = 0;
-    
-    std::vector<TrajPoint> traj;
-    std::vector<TrajPoint> traj_digits;
 
-   
+    // Create a costmap for the lookup function
+    Costmap map = Costmap(this->bounds, this->resolution);
+    
+    // Result container
+    std::vector<TrajPoint> traj;
+
+    // Get Tour trajectory points
     while (std::getline(tour_file, line)){
         //std::cout << line.size() << std::endl;
         for (int col =0; col < line.size(); col++){
@@ -95,22 +99,13 @@ void TourParser::ParseTour(){
                 ignition::math::Pose3d pose = ignition::math::Pose3d(loc, ignition::math::Quaterniond(0,0,0,1));
                 traj.push_back(TrajPoint(pose, (double) order));
             }
-
-            if(this->parse_digits){
-                if (std::isdigit(line[col])){
-                    int order = (int)line[col];
-                    ignition::math::Vector3d loc;
-                    map.IndiciesToPos(loc, row, col);
-                    ignition::math::Pose3d pose = ignition::math::Pose3d(loc, ignition::math::Quaterniond(0,0,0,1));
-                    traj_digits.push_back(TrajPoint(pose, (double) order));
-                }
-            }
             
         }
 
         row++;
     }
-   
+
+    // Close files
     tour_file.close();
 
     std::sort(traj.begin(), traj.end());
@@ -120,8 +115,39 @@ void TourParser::ParseTour(){
         this->route.push_back(point.pose);
     }
 
-    if(this->parse_digits){
-        std::sort(traj_digits.begin(), traj_digits.end());
+    /////////////////
+    // Flow points //
+    /////////////////
+    
+    if(this->parse_digits)
+    {
+
+        // Load tour file
+        std::ifstream tour_flow_file(this->tour_path + "map_flow.txt");
+        row = 0;
+
+        // Result container
+        std::vector<TrajPoint> traj_digits;
+
+        // Get Tour trajectory points
+        while (std::getline(tour_flow_file, line)){
+            //std::cout << line.size() << std::endl;
+            for (int col=0; col < line.size(); col++)
+            {
+                if (std::isdigit(line[col])){
+                    int order = (int)line[col];
+                    ignition::math::Vector3d loc;
+                    map.IndiciesToPos(loc, row, col);
+                    ignition::math::Pose3d pose = ignition::math::Pose3d(loc, ignition::math::Quaterniond(0,0,0,1));
+                    traj_digits.push_back(TrajPoint(pose, (double) order));
+                }
+                
+            }
+            row++;
+        }
+
+        // Close files
+        tour_flow_file.close();
         for (auto point: traj_digits){
             this->route_digits.push_back(point.pose);
         }

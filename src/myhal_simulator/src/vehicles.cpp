@@ -395,54 +395,70 @@ void Vehicle::AvoidActors(std::vector<boost::shared_ptr<Vehicle>> vehicles)
         {
             continue;
         }
+
         ignition::math::Vector3d this_pos = this->pose.Pos();
         this_pos.Z() = 0;
         ignition::math::Vector3d other_pos = other->WorldPose().Pos();
         other_pos.Z() = 0;
-        ignition::math::Vector3d other_vel = other->WorldLinearVel();
-        other_vel.Z() = 0;
+
         ignition::math::Vector3d diff_pos = this_pos - other_pos;
         double dist = diff_pos.Length();
-        dist = std::max(0.0, dist - 0.2); //acounting for the radius of the person
+        double dist_cropped = std::max(0.0, dist - 0.25); //acounting for the radius of the person
 
         ignition::math::Vector3d rep_force(0, 0, 0);
-        if (dist < this->actor_margin)
+        if ( 1e-6 < dist && dist < this->actor_margin)
         {
             // Normalize force vector
-            ignition::math::Vector3d rad = diff_pos;
+            ignition::math::Vector3d rad(diff_pos);
             rad.Normalize();
-            
+
             // Force value defined by gaussian
-            double exp_term = dist / (actor_margin / 3);
+            double exp_term = dist_cropped / (actor_margin / 6);
             exp_term *= exp_term;
-            rep_force = rad * exp(-exp_term);
+            rep_force = rad * exp(-exp_term) * 0.5 * max_force;
 
-            // Add a force tangential to the other actor's speed (for face to face avoidance)
-            if (velocity.Dot(other_vel) < 0)
-            {  
-                auto other_direction = other_vel;
+            ignition::math::Vector3d other_flow_force = vehicles[i]->flow_force;
+            if (flow_force.Length() > 0 && other_flow_force.Length() > 0)
+            {
+
+
+                auto self_direction(flow_force);
+                self_direction.Normalize();
+                double self_dist = self_direction.Dot(-diff_pos);
+                double self_term = (self_dist - actor_margin / 4) / (actor_margin / 3);
+                self_term *= self_term;
+
+                auto other_direction(other_flow_force);
                 other_direction.Normalize();
-                double longitu_dist = diff_pos.Dot(other_direction);
-                if (longitu_dist > 0)
-                {
-                    auto tangential_vec = diff_pos - longitu_dist * other_direction;
-                    double tangential_dist = tangential_vec.Length();
-                    tangential_vec.Normalize();
-                    double tang_term = tangential_dist / (actor_margin / 2);
-                    tang_term *= tang_term;
-                    double long_term = (longitu_dist - actor_margin / 2) / (actor_margin);
-                    long_term *= long_term;
-                    rep_force += tangential_vec * 0.8 * exp(-long_term) * exp(-tang_term);
-                }
-            }
-        }
+                double other_dist = other_direction.Dot(diff_pos);
+                double other_term = (other_dist - actor_margin / 4) / (actor_margin / 3);
+                other_term *= other_term;
 
+                // Ensure right/left orientation of the tangential force
+                auto self_angle = acos(ignition::math::clamp(self_dist / diff_pos.Length(), -1.0, 1.0));
+                auto other_angle = acos(ignition::math::clamp(other_dist / diff_pos.Length(), -1.0, 1.0));
+                ignition::math::Vector3d self_tan(diff_pos[1], -diff_pos[0], 0);
+                self_tan.Normalize();
+                if (self_tan.Dot(self_direction) < 0)
+                    self_tan *= -1;
+                ignition::math::Vector3d other_tan(self_tan);
+                if (other_tan.Dot(other_direction) < 0)
+                    other_tan *= -1;
+                if (self_tan.Dot(other_tan) > 0)
+                {
+                        if (self_angle < other_angle)
+                            self_tan *= -1;
+                }
+
+                // Tangential force value
+                double tangential_v = 0.5 * flow_force.Length() * exp(-other_term) * exp(-self_term);
+                rep_force += self_tan * tangential_v;
+            }
+
+        }
+        
         steer += rep_force;
     }
-
-    // Set the norm of the force to 50% of the max force
-    steer *= max_force * 0.5;
-
 
     // Clamp the value
     if (steer.Length() > this->max_force)
@@ -1556,7 +1572,7 @@ void FlowFollower::FlowForce()
 {
     // Get flow at current position
     ignition::math::Vector2d flow;
-    if (!flow_fields[current_flow]->Lookup(this->pose.Pos(), flow))
+    if (!flow_fields[current_flow]->SmoothLookup(this->pose.Pos(), flow))
         throw std::out_of_range("FlowFollower position outside the flow map");
 
     // Apply flow directly as a force. the flow length on a standard pixel = resolution
@@ -1577,7 +1593,8 @@ void FlowFollower::FlowForce()
         steer *= this->max_force;
     }
 
-    //showed_force = steer;
+    // Save flow force
+    flow_force = steer;
 
     ApplyForce(steer);
 }
