@@ -34,7 +34,7 @@ class Assessor(object):
             print "Could not find/open log file"
             exit()
         self.avg_speed = 0
-        timeout = 15
+        timeout = 60
         self.max_samples = int(timeout/0.1)
         self.num_samples = 0
         self.last_msg = np.array((0, 0, 0, 0), dtype=[("x", np.float), ("y", np.float),

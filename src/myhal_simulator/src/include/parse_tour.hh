@@ -27,12 +27,16 @@ class TourParser{
     private:
 
         std::string tour_path;
+        
+        bool parse_digits; 
 
         std::string username;
 
         std::string tour_name;
 
         std::vector<ignition::math::Pose3d> route;
+
+        std::vector<ignition::math::Pose3d> route_digits;
 
         ignition::math::Box bounds = ignition::math::Box(ignition::math::Vector3d(-21.55, -21.4,0), ignition::math::Vector3d(21.55, 21.4,0));
 
@@ -44,8 +48,10 @@ class TourParser{
 
     public:
 
-        TourParser(std::string name);
+        TourParser(std::string name, bool parse_digits=false);
 
         std::vector<ignition::math::Pose3d> GetRoute();
+
+        std::vector<ignition::math::Pose3d> GetDigitsCoordinates();
 };
 

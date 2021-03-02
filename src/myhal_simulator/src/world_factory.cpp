@@ -33,7 +33,9 @@ void WorldHandler::Load(){
 
     std::cout << "Filling Rooms\n";
     
-    for (auto r_info: this->rooms){
+    for (auto r_info: this->rooms)
+    {
+
         this->FillRoom(r_info);
         
         r_info->room->AddToWorld(this->world_string);
@@ -196,13 +198,15 @@ void WorldHandler::LoadParams(){
         paths.insert(paths.end(),path.begin(),path.end());
     }
 
-    for (auto obj: static_objects){
-        if (obj.MinZ()  >= (2 - 10e-3)){
-            // we are dealing with a doorway
+    // Create doors
 
+    for (auto obj: static_objects)
+    {
+        if (obj.MinZ()  >= (2 - 10e-3))
+        {
+
+            // Object box and position (object is the wall above the door)
             auto box = obj.Box();
-            //std::cout << box << std::endl;
-
             auto pos = (box.Min() + box.Max())/2;
             pos.Z() = 0;
 
@@ -226,7 +230,8 @@ void WorldHandler::LoadParams(){
             bool intersected = false;
             bool near = false;
 
-            for (int i =0; i<paths.size()-1; i++){
+            for (int i =0; i<paths.size()-1; i++)
+            {
                 auto first = paths[i];
                 first.Z() = 0;
 
@@ -254,9 +259,11 @@ void WorldHandler::LoadParams(){
                 
             }
 
-            if (!intersected && near){
-                open = 0;
-            }
+            //if (!intersected && near){
+            //    open = 0;
+            //}
+
+            open = 1;
 
             auto yaw = door->pose.Rot().Yaw();
             

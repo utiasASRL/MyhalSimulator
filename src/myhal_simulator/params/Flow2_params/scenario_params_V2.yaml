@@ -152,15 +152,15 @@ test_SF:
   table_group_list: big_table_group
 
 test_custom_wanderer:
-  pop_density: "0.09"
+  pop_density: "0.05"
   table_percentage: "0"
   actor: actor_custom_wanderer
   table_group_list: big_table_group
   
 
 flow_follower_low_density:
-  pop_density: "0.15"
-  table_percentage: "0.4"
+  pop_density: "0.08"
+  table_percentage: "0.5"
   actor: actor_flow_follower
   table_group_list: all_group
 

@@ -1,8 +1,11 @@
 #ifndef PUPPETEER_HH
 #define PUPPETEER_HH
 
+
 #include <cmath>
+#include <string>
 #include <ignition/math/Pose3.hh>
+#include <ignition/math/Quaternion.hh>
 #include <ignition/math/Vector3.hh>
 #include <ignition/math/Vector4.hh>
 #include "gazebo/physics/physics.hh"
@@ -13,6 +16,7 @@
 #include <map>
 #include <utility>
 #include "quadtree.hh"
+#include "flowfield.hh"
 #include <string>
 #include <pcl_ros/point_cloud.h>
 #include <pcl/point_types.h>
@@ -23,12 +27,16 @@
 #include "frame.hh"
 #include "gazebo/msgs/msgs.hh"
 #include <geometry_msgs/PoseStamped.h>
+#include <geometry_msgs/PoseArray.h>
+#include <nav_msgs/OccupancyGrid.h>
 #include <nav_msgs/Path.h>
 #include <move_base_msgs/MoveBaseActionGoal.h>
 #include "sensor_msgs/PointCloud2.h"
 #include "tf2_msgs/TFMessage.h"
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <geometry_msgs/TransformStamped.h>
+#include <chrono>
+#include <thread>
 
 typedef pcl::PointCloud<pcl::PointXYZ> PointCloud;
 typedef boost::shared_ptr<SmartCam> SmartCamPtr;
@@ -101,6 +109,13 @@ class Puppeteer: public gazebo::WorldPlugin{
 
         ros::Subscriber tf_sub;
 
+        ros::Publisher flow_pub;
+        ros::Publisher flow_v_pub;
+        
+        std::vector<boost::shared_ptr<FlowField>> flow_fields;
+
+        boost::shared_ptr<std::vector<ignition::math::Pose3d>> digits_coordinates;
+
         std::vector<std::vector<ignition::math::Vector3d>> paths;
 
         std::vector<ignition::math::Vector3d> robot_traj;
@@ -142,8 +157,12 @@ class Puppeteer: public gazebo::WorldPlugin{
         geometry_msgs::TransformStamped map_to_odom;
         
         bool added_est = false;
+        
+        bool added_forces = false;
 
         gazebo::physics::ModelPtr pose_est = nullptr;
+        
+        std::vector<gazebo::physics::ModelPtr> showed_forces;
 
     public: 
         
@@ -171,8 +190,15 @@ class Puppeteer: public gazebo::WorldPlugin{
 
         void AddPathMarkers(std::string name, const nav_msgs::Path::ConstPtr& plan, ignition::math::Vector4d color);
 
-        void AddGoalMarker(std::string name, const move_base_msgs::MoveBaseActionGoal::ConstPtr& goal, ignition::math::Vector4d color);
+        //void AddFlowFieldMarker(std::string name, boost::shared_ptr<Costmap> costmap, ignition::math::Vector4d color);
 
+        void AddGoalMarker(std::string name, const move_base_msgs::MoveBaseActionGoal::ConstPtr& goal, ignition::math::Vector4d color);
+        
+        void PublishFlowMarkers();
+
+        void PublishIntegrationValue();
+
+        void ShowFlowForces();
 };
 
 

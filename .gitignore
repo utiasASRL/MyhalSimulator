@@ -15,5 +15,3 @@ melodic-TourGuide.code-workspace
 notebook_plots.ipynb
 **/desktop.ini
 git_login.sh
-src/myhal_simulator/worlds/myhal_sim.world
-docker_scripts/melodic_docker.sh

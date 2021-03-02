@@ -33,12 +33,13 @@ fi
 
 for MAPPING in "2"
 do
-  for ARGS in "-e" "-fge" "-fe"
+  for ARGS in "-fg"
   do
-    for PARAMS in "Sc1_params" "Sc2_params" "Sc3_params" "Sc4_params"
+    #for PARAMS in "Flow1_params" "Flow2_params" "Flow3_params"
+    for PARAMS in "Flow3_params"
     do
-        #for TOUR in "A_tour" "B_tour" "C_tour"
-        for TOUR in  "A_short"
+        for TOUR in "A_tour" "B_tour" "C_tour"
+        #for TOUR in  "A_short"
         do
             echo ""
             echo "|--------------------------------------------------------------------------"

@@ -13,6 +13,8 @@
 #include <string>
 #include "utilities.hh"
 #include "costmap.hh"
+#include "flowfield.hh"
+#include <ros/console.h>
 
 #define ALI 0 
 #define COH 1
@@ -113,8 +115,6 @@ class Vehicle{
 
         double mass;
 
-        double max_force;
-
         double max_speed;
 
         ignition::math::Pose3d pose;
@@ -137,7 +137,7 @@ class Vehicle{
 
         double slowing_distance = 1;
 
-        double arrival_distance  = 0.5;
+        double arrival_distance  = 1; //0.5
 
         std::vector<gazebo::physics::EntityPtr> all_objects;
 
@@ -160,6 +160,11 @@ class Vehicle{
         double height = 1;
 
     public:
+
+        double max_force;
+
+        ignition::math::Vector3d showed_force;
+        ignition::math::Vector3d flow_force;
 
         Vehicle(gazebo::physics::ActorPtr _actor, 
         double _mass, 
@@ -352,6 +357,8 @@ class PathFollower: public Wanderer{
 
         boost::shared_ptr<Costmap> costmap;
 
+        boost::shared_ptr<std::vector<ignition::math::Pose3d>> digits_coordinates;
+
         std::vector<ignition::math::Vector3d> curr_path;
 
         int path_ind;
@@ -367,7 +374,8 @@ class PathFollower: public Wanderer{
          ignition::math::Pose3d initial_pose, 
          ignition::math::Vector3d initial_velocity, 
          std::vector<gazebo::physics::EntityPtr> objects,
-         boost::shared_ptr<Costmap> costmap);
+         boost::shared_ptr<Costmap> costmap,
+         boost::shared_ptr<std::vector<ignition::math::Pose3d>> digits_coordinates);
 
         void OnUpdate(const gazebo::common::UpdateInfo &_info, double dt, std::vector<boost::shared_ptr<Vehicle>> vehicles, std::vector<gazebo::physics::EntityPtr> objects);
 };
@@ -415,3 +423,30 @@ class Custom_Wanderer: public Vehicle{
 
 };
 
+class FlowFollower : public Vehicle
+{
+
+public:
+    // Variables
+    std::vector<boost::shared_ptr<FlowField>> flow_fields;
+    int current_flow;
+    double distance_to_goal;
+
+    // Methods
+    FlowFollower(gazebo::physics::ActorPtr _actor,
+                 double _mass,
+                 double _max_force,
+                 double _max_speed,
+                 ignition::math::Pose3d initial_pose,
+                 ignition::math::Vector3d initial_velocity,
+                 std::vector<gazebo::physics::EntityPtr> objects,
+                 std::vector<boost::shared_ptr<FlowField>> &flow_fields0,
+                 double _obstacle_margin,
+                 double _actor_margin);
+
+    void CheckGoal();
+    void UpdateDistance();
+    void FlowForce();
+    void UpdatePositionContactObstacles(std::vector<gazebo::physics::EntityPtr>& objects, double dt);
+    void OnUpdate(const gazebo::common::UpdateInfo &_info, double dt, std::vector<boost::shared_ptr<Vehicle>> vehicles, std::vector<gazebo::physics::EntityPtr> objects);
+};

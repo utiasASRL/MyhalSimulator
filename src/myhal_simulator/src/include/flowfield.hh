@@ -3,24 +3,27 @@
 
 #include <ignition/math/Pose3.hh>
 #include <ignition/math/Vector3.hh>
+#include <ignition/math/Vector2.hh>
 #include <ignition/math/Box.hh>
 #include "gazebo/physics/physics.hh"
 #include "gazebo/common/common.hh"
 #include "gazebo/gazebo.hh"
 #include <vector>
 #include "utilities.hh"
-#include "Perlin.h"
+#include "costmap.hh"
 #include <algorithm>
 
 class FlowField{
 
-    private:
+    public:
 
-        std::vector<std::vector<ignition::math::Vector3d>> field;
+        std::vector<std::vector<ignition::math::Vector2d>> field;
 
-        std::vector<std::vector<double>> costmap;
+        std::vector<std::vector<double>> obstacle_map;
 
-        std::vector<std::vector<double>> integration_field;
+        std::vector<std::vector<double>> value_function;
+
+        ignition::math::Vector2d goal;
 
         int rows;
 
@@ -28,31 +31,31 @@ class FlowField{
 
         double resolution;
 
-        ignition::math::Box rect;
+        double obstacle_range;
 
-        std::vector<std::vector<int>> GetNeighbours(std::vector<int> curr_ind, bool diag = false);
+        double obstacle_strength;
 
-        void PerlinInit();
+        ignition::math::Box boundary;
 
-        void Init();
-
-        void IntegrationField(double x, double y);
-
-        void CostMap(std::vector<gazebo::physics::EntityPtr> collision_entities);
-
-    public:
-
-        FlowField(ignition::math::Vector3d top_left, double width, double height, double resolution);
-
-        void TargetInit(std::vector<gazebo::physics::EntityPtr> collision_entities, ignition::math::Vector3d target);
-
-        void SetTarget(ignition::math::Vector3d target);
-
-        ignition::math::Vector3d IndiciesToPos(int r, int c);
+        FlowField();
+        FlowField(boost::shared_ptr<Costmap> costmap0, ignition::math::Vector3d goal0, double obstacle_range0, double obstacle_strength0);
 
         bool PosToIndicies(ignition::math::Vector3d pos, int &r, int &c);
 
-        bool Lookup(ignition::math::Vector3d pos, ignition::math::Vector3d &res);
+        bool IndiciesToPos(ignition::math::Vector3d &pos, int r, int c);
+
+        std::vector<std::vector<int>> GetNeighbours(std::vector<int> curr_ind, bool diag = true);
+
+        void ObstacleMap(std::vector<std::vector<int>>& costmap);
+
+        bool Integrate(std::vector<std::vector<int>>& costmap);
+
+        void Compute(std::vector<std::vector<int>>& costmap);
+
+        bool Lookup(ignition::math::Vector3d pos, ignition::math::Vector2d &res);
+        bool SmoothLookup(ignition::math::Vector3d pos, ignition::math::Vector2d &res);
+
+        double Reachability();
 
 };
 

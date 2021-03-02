@@ -151,7 +151,7 @@ actor_path_follower:
 actor_flow_follower: 
   filename: model://actor/meshes/SKIN_man_blue_shirt.dae
   plugin: flow_follower
-  obstacle_margin: "0.3"
+  obstacle_margin: "0.15"
 
 # table group parameters 
 

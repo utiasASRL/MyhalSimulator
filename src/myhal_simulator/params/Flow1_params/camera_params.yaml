@@ -1,4 +1,4 @@
-camera_names: [hoverer2]
+camera_names: []
 
 sentry1:
     - 0  # Mode: (0 - sentry), (1 - hoverer), (2 - stalker)
@@ -26,9 +26,9 @@ hoverer1:
 
 hoverer2:
     - 1
-    - -2
-    - -5
-    - 30
+    - 5
+    - -10
+    - 40
     - -1
     - -1
 
