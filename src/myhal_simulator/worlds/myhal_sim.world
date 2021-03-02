@@ -110,34 +110,6 @@
 
  
 
-<<<<<<< HEAD
-		<model name="CAM_0_-1.000000_-1.000000_-2.000000_-5.000000_30.000000">
-			<pose>-2.000000 -5.000000 30.000000 0.000000 -0.000000 0.000000</pose>
-			<static>true</static>
-			<link name="CAM_0_-1.000000_-1.000000_-2.000000_-5.000000_30.000000_link">
-				<sensor name="CAM_0_-1.000000_-1.000000_-2.000000_-5.000000_30.000000" type="camera">
-					<camera>
-						<horizontal_fov>1.047</horizontal_fov>
-						<image>
-							<width>1920</width>
-							<height>1080</height>
-						</image>
-						<clip>
-							<near>0.1</near>
-							<far>100</far>
-						</clip>
-					</camera>
-					<plugin name="camera_controller" filename="libcamera_controller.so">
-						<filepath>/home/hth/Myhal_Simulation/simulated_runs/2021-01-29-17-24-22/logs-2021-01-29-17-24-22/videos/CAM_0_-1.000000_-1.000000_-2.000000_-5.000000_30.000000/</filepath>
-					</plugin>
-					<always_on>1</always_on>
-					<update_rate>24</update_rate>
-				</sensor>
-			</link>
-		</model>
-		<actor name="actor_custom_wanderer_35">
-			<pose>19.500000 7.500000 2.000000 0.000000 -0.000000 -2.810063</pose>
-=======
 		<include>
 			<name>table_coffee_set_2_30</name>
 			<pose>-4.000000 0.000000 0.000000 0.000000 -0.000000 0.000000</pose>
@@ -2326,7 +2298,6 @@
 		</actor>
 		<actor name="actor_flow_follower_177">
 			<pose>17.283369 -0.492379 1.000000 0.000000 -0.000000 2.820214</pose>
->>>>>>> mgsa-dev
 			<skin>
 				<filename>model://actor/meshes/SKIN_man_blue_shirt.dae</filename>
 			</skin>
@@ -2348,19 +2319,11 @@
 			</animation>
 			<plugin name="max_speed" filename="1">
 			</plugin>
-<<<<<<< HEAD
-			<plugin name="vehicle_type" filename="custom_wanderer">
-			</plugin>
-		</actor>
-		<actor name="actor_custom_wanderer_36">
-			<pose>18.500000 7.500000 2.000000 0.000000 -0.000000 2.567015</pose>
-=======
 			<plugin name="vehicle_type" filename="flow_follower">
 			</plugin>
 		</actor>
 		<actor name="actor_flow_follower_178">
 			<pose>19.097511 -1.597084 1.000000 0.000000 -0.000000 -2.311883</pose>
->>>>>>> mgsa-dev
 			<skin>
 				<filename>model://actor/meshes/SKIN_man_blue_shirt.dae</filename>
 			</skin>
@@ -2382,19 +2345,11 @@
 			</animation>
 			<plugin name="max_speed" filename="1">
 			</plugin>
-<<<<<<< HEAD
-			<plugin name="vehicle_type" filename="custom_wanderer">
-			</plugin>
-		</actor>
-		<actor name="actor_custom_wanderer_37">
-			<pose>17.500000 7.500000 2.000000 0.000000 -0.000000 1.896001</pose>
-=======
 			<plugin name="vehicle_type" filename="flow_follower">
 			</plugin>
 		</actor>
 		<actor name="actor_flow_follower_179">
 			<pose>16.796924 -1.144284 1.000000 0.000000 -0.000000 -2.147803</pose>
->>>>>>> mgsa-dev
 			<skin>
 				<filename>model://actor/meshes/SKIN_man_blue_shirt.dae</filename>
 			</skin>
@@ -2416,19 +2371,11 @@
 			</animation>
 			<plugin name="max_speed" filename="1">
 			</plugin>
-<<<<<<< HEAD
-			<plugin name="vehicle_type" filename="custom_wanderer">
-			</plugin>
-		</actor>
-		<actor name="actor_custom_wanderer_38">
-			<pose>19.000000 6.500000 2.000000 0.000000 -0.000000 -0.440242</pose>
-=======
 			<plugin name="vehicle_type" filename="flow_follower">
 			</plugin>
 		</actor>
 		<actor name="actor_flow_follower_180">
 			<pose>16.654081 -4.071648 1.000000 0.000000 -0.000000 -2.758940</pose>
->>>>>>> mgsa-dev
 			<skin>
 				<filename>model://actor/meshes/SKIN_man_blue_shirt.dae</filename>
 			</skin>
@@ -2450,13 +2397,6 @@
 			</animation>
 			<plugin name="max_speed" filename="1">
 			</plugin>
-<<<<<<< HEAD
-			<plugin name="vehicle_type" filename="custom_wanderer">
-			</plugin>
-		</actor>
-		<actor name="actor_custom_wanderer_39">
-			<pose>18.000000 6.500000 2.000000 0.000000 -0.000000 -2.105516</pose>
-=======
 			<plugin name="vehicle_type" filename="flow_follower">
 			</plugin>
 		</actor>
@@ -2540,7 +2480,6 @@
 		</actor>
 		<actor name="actor_flow_follower_185">
 			<pose>17.564600 4.440930 1.000000 0.000000 -0.000000 1.185500</pose>
->>>>>>> mgsa-dev
 			<skin>
 				<filename>model://actor/meshes/SKIN_man_blue_shirt.dae</filename>
 			</skin>
@@ -2562,19 +2501,11 @@
 			</animation>
 			<plugin name="max_speed" filename="1">
 			</plugin>
-<<<<<<< HEAD
-			<plugin name="vehicle_type" filename="custom_wanderer">
-			</plugin>
-		</actor>
-		<actor name="actor_custom_wanderer_40">
-			<pose>17.000000 6.500000 2.000000 0.000000 -0.000000 -0.643636</pose>
-=======
 			<plugin name="vehicle_type" filename="flow_follower">
 			</plugin>
 		</actor>
 		<actor name="actor_flow_follower_186">
 			<pose>15.752759 -11.136510 1.000000 0.000000 -0.000000 -1.458931</pose>
->>>>>>> mgsa-dev
 			<skin>
 				<filename>model://actor/meshes/SKIN_man_blue_shirt.dae</filename>
 			</skin>
@@ -2596,73 +2527,6 @@
 			</animation>
 			<plugin name="max_speed" filename="1">
 			</plugin>
-<<<<<<< HEAD
-			<plugin name="vehicle_type" filename="custom_wanderer">
-			</plugin>
-		</actor>
-		<model name="box_30">
-			<pose>0.000000 9.375000 -0.500000 0.000000 -0.000000 0.000000</pose>
-			<static>true</static>
-			<link name="box_30_link">
-				<collision name="box_30_collision">
-					<geometry>
-						<box>
-							<size>16.000000 0.250000 1</size>
-						</box>
-					</geometry>
-				</collision>
-			</link>
-		</model>
-		<model name="box_31">
-			<pose>0.000000 19.625000 -0.500000 0.000000 -0.000000 0.000000</pose>
-			<static>true</static>
-			<link name="box_31_link">
-				<collision name="box_31_collision">
-					<geometry>
-						<box>
-							<size>16.000000 0.250000 1</size>
-						</box>
-					</geometry>
-				</collision>
-			</link>
-		</model>
-		<model name="box_32">
-			<pose>-8.125000 14.500000 -0.500000 0.000000 -0.000000 0.000000</pose>
-			<static>true</static>
-			<link name="box_32_link">
-				<collision name="box_32_collision">
-					<geometry>
-						<box>
-							<size>0.250000 10.500000 1</size>
-						</box>
-					</geometry>
-				</collision>
-			</link>
-		</model>
-		<model name="box_33">
-			<pose>8.125000 14.500000 -0.500000 0.000000 -0.000000 0.000000</pose>
-			<static>true</static>
-			<link name="box_33_link">
-				<collision name="box_33_collision">
-					<geometry>
-						<box>
-							<size>0.250000 10.500000 1</size>
-						</box>
-					</geometry>
-				</collision>
-			</link>
-		</model>
-		<include>
-			<name>door_0</name>
-			<pose>-10.987250 16.475000 1.000000 0.000000 -0.000000 0.000000</pose>
-			<uri>model://simple_door2</uri>
-		</include>
-		<include>
-			<name>door_1</name>
-			<pose>-14.624989 9.030960 1.000000 0.000000 -0.000000 -3.141185</pose>
-			<uri>model://simple_door2</uri>
-		</include>
-=======
 			<plugin name="vehicle_type" filename="flow_follower">
 			</plugin>
 		</actor>
@@ -2900,7 +2764,6 @@
 			<plugin name="vehicle_type" filename="flow_follower">
 			</plugin>
 		</actor>
->>>>>>> mgsa-dev
 		<include>
 			<name>door_2</name>
 			<pose>-10.775058 12.475000 1.000000 0.000000 -0.000000 1.571000</pose>

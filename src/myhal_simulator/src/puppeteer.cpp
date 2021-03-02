@@ -191,16 +191,11 @@ void Puppeteer::Load(gazebo::physics::WorldPtr _world, sdf::ElementPtr _sdf)
     flow_v_pub = nh.advertise<nav_msgs::OccupancyGrid>("value_field", 5);
 }
 
-<<<<<<< HEAD
-
-void Puppeteer::OnUpdate(const gazebo::common::UpdateInfo &_info){
-=======
 void Puppeteer::OnUpdate(const gazebo::common::UpdateInfo &_info)
 {
     /////////////////////
     // Function frequency
     /////////////////////
->>>>>>> mgsa-dev
 
     // Get the time elapsed since the last call to this function
     double dt = (_info.simTime - this->last_update).Double();
@@ -441,13 +436,8 @@ void Puppeteer::OnUpdate(const gazebo::common::UpdateInfo &_info)
     }
 }
 
-<<<<<<< HEAD
-
-void Puppeteer::ReadSDF(){
-=======
 void Puppeteer::ReadSDF()
 {
->>>>>>> mgsa-dev
 
     if (this->sdf->HasElement("building_name"))
     {
@@ -464,13 +454,8 @@ void Puppeteer::ReadSDF()
     }
 }
 
-<<<<<<< HEAD
-
-boost::shared_ptr<Vehicle> Puppeteer::CreateVehicle(gazebo::physics::ActorPtr actor){
-=======
 boost::shared_ptr<Vehicle> Puppeteer::CreateVehicle(gazebo::physics::ActorPtr actor)
 {
->>>>>>> mgsa-dev
 
     boost::shared_ptr<Vehicle> res;
     auto sdf = actor->GetSDF();
@@ -609,13 +594,8 @@ boost::shared_ptr<Vehicle> Puppeteer::CreateVehicle(gazebo::physics::ActorPtr ac
     return res;
 }
 
-<<<<<<< HEAD
-
-void Puppeteer::ReadParams(){
-=======
 void Puppeteer::ReadParams()
 {
->>>>>>> mgsa-dev
 
     if (!nh.getParam("start_time", this->start_time))
     {
@@ -709,13 +689,8 @@ void Puppeteer::ReadParams()
     }
 }
 
-<<<<<<< HEAD
-
-SmartCamPtr Puppeteer::CreateCamera(gazebo::physics::ModelPtr model){
-=======
 SmartCamPtr Puppeteer::CreateCamera(gazebo::physics::ModelPtr model)
 {
->>>>>>> mgsa-dev
     auto tokens = utilities::split(model->GetName(), '_');
     SmartCamPtr new_cam;
     if (tokens[1] == "0")
@@ -738,13 +713,8 @@ SmartCamPtr Puppeteer::CreateCamera(gazebo::physics::ModelPtr model)
     return new_cam;
 }
 
-<<<<<<< HEAD
-
-void Puppeteer::TFCallback(const tf2_msgs::TFMessage::ConstPtr& msg){
-=======
 void Puppeteer::TFCallback(const tf2_msgs::TFMessage::ConstPtr &msg)
 {
->>>>>>> mgsa-dev
 
     for (auto transform : msg->transforms)
     {
@@ -770,57 +740,34 @@ void Puppeteer::TFCallback(const tf2_msgs::TFMessage::ConstPtr &msg)
     }
 }
 
-<<<<<<< HEAD
-
-void Puppeteer::GlobalPlanCallback(const nav_msgs::Path::ConstPtr& path){
-    if (path->poses.size() > 0){
-=======
 void Puppeteer::GlobalPlanCallback(const nav_msgs::Path::ConstPtr &path)
 {
     if (path->poses.size() > 0)
     {
->>>>>>> mgsa-dev
         std::cout << utilities::color_text("Global plan recieved by simulator", BLUE) << std::endl;
         this->global_plan = path;
         this->new_global_ind++;
     }
 }
 
-<<<<<<< HEAD
-
-void Puppeteer::LocalPlanCallback(const nav_msgs::Path::ConstPtr& path){
-    if (path->poses.size() > 0){
-=======
 void Puppeteer::LocalPlanCallback(const nav_msgs::Path::ConstPtr &path)
 {
     if (path->poses.size() > 0)
     {
->>>>>>> mgsa-dev
         std::cout << utilities::color_text("Local plan recieved by simulator", YELLOW) << std::endl;
         this->local_plan = path;
         this->new_local_ind++;
     }
 }
-<<<<<<< HEAD
-        
-
-void Puppeteer::NavGoalCallback(const move_base_msgs::MoveBaseActionGoal::ConstPtr& goal){
-=======
 
 void Puppeteer::NavGoalCallback(const move_base_msgs::MoveBaseActionGoal::ConstPtr &goal)
 {
->>>>>>> mgsa-dev
     this->nav_goal = goal;
     this->new_nav_ind++;
 }
 
-<<<<<<< HEAD
-
-void Puppeteer::AddPathMarkers(std::string name, const nav_msgs::Path::ConstPtr& plan, ignition::math::Vector4d color){
-=======
 void Puppeteer::AddPathMarkers(std::string name, const nav_msgs::Path::ConstPtr &plan, ignition::math::Vector4d color)
 {
->>>>>>> mgsa-dev
 
     boost::shared_ptr<sdf::SDF> sdf = boost::make_shared<sdf::SDF>();
     sdf->SetFromString(
@@ -896,13 +843,8 @@ void Puppeteer::AddGoalMarker(std::string name, const move_base_msgs::MoveBaseAc
     this->world->InsertModelSDF(*sdf);
 }
 
-<<<<<<< HEAD
-
-void Puppeteer::ManagePoseEstimate(geometry_msgs::Pose est_pose){
-=======
 void Puppeteer::ManagePoseEstimate(geometry_msgs::Pose est_pose)
 {
->>>>>>> mgsa-dev
     auto pos = est_pose.position;
     auto ori = est_pose.orientation;
     if (std::isnan(pos.x) || std::isnan(ori.x))
