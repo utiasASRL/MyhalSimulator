@@ -5,7 +5,7 @@
 ########
 
 echo ""
-echo "Running ros-melodic docker. Remember you can set ROSPORT to a custom value"
+echo "Running ros-noetic2 docker. Remember you can set ROSPORT to a custom value"
 echo ""
 
 rosport=$ROSPORT
@@ -87,8 +87,8 @@ other_args="-v $XSOCK:$XSOCK \
 docker run $docker_args \
 $volumes \
 $other_args \
---name "$USER-melodic-$ROSPORT" \
-docker_ros_melodic_$USER \
+--name "$USER-noetic2-$ROSPORT" \
+docker_ros_noetic2_$USER \
 $command 
 
 # Finish

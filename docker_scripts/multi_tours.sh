@@ -33,10 +33,10 @@ fi
 
 for MAPPING in "2"
 do
-  for ARGS in "-fg"
+  for ARGS in "-fge"
   do
-    #for PARAMS in "Flow1_params" "Flow2_params" "Flow3_params"
-    for PARAMS in "Flow3_params"
+    for PARAMS in "Flow1_params" "Flow2_params" "Flow3_params"
+    #for PARAMS in "Flow3_params"
     do
         for TOUR in "A_tour" "B_tour" "C_tour"
         #for TOUR in  "A_short"
