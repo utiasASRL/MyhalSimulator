@@ -5,21 +5,27 @@
 ########
 
 echo ""
-echo "Running ros-collider docker"
+echo "Running ros-melodic docker. Remember you can set ROSPORT to a custom value"
 echo ""
 
 rosport=$ROSPORT
 detach=false
+nohup=false
 command=""
 
-while getopts dc: option
+while getopts dnc: option
 do
 case "${option}"
 in
-d) detach=true;; 
+d) detach=true;;
+n) nohup=true;;
 c) command=${OPTARG};;
 esac
 done
+
+if [ -n "$command" ]; then
+  echo -e "Running command $command\n"
+fi
 
 if [[ -z "$ROSPORT" ]]; then
     echo "WARNING: didn't provide ROSPORT, setting it to 1100"
@@ -37,33 +43,31 @@ gazport=$(($rosport+1))
 export ROSPORT=$(($ROSPORT+2))
 echo "export ROSPORT=$ROSPORT" >> ~/.bashrc
 
+
 ##########################
 # Start docker container #
 ##########################
 
-# Docker run arguments
-docker_args="-it --rm --shm-size=64g "
+# Docker run arguments (depending if we run detached or not)
+if [ "$detach" = true ] ; then
+    docker_args="-d -it --rm --shm-size=64g "
+else
+    if [ "$nohup" = true ] ; then
+        docker_args="-i --rm --shm-size=64g " 
+    else
+        docker_args="-it --rm --shm-size=64g "
+    fi 
+fi
 
 # Running on gpu (Uncomment to enable gpu)
 docker_args="${docker_args} --gpus all "
-
-# Docker run arguments (depending if we run detached or not)
-if [ "$detach" = true ] ; then
-    # args for detached docker
-    docker_args="-d ${docker_args}"
-    now=`date +%Y-%m-%d_%H-%M-%S`
-    mkdir -p $PWD/../../KPConv_results/Log_"$now"
-fi
 
 # Create folder for simulation if not already there
 mkdir -p "$PWD/../../Simulation_Data/simulated_runs"
 
 # Volumes (modify with your own path here)
-volumes="-v $PWD/../../MyhalSimulator-DeepCollider:/home/$USER/catkin_ws \
--v $PWD/../../Simulation_Data:/home/$USER/Myhal_Simulation \
--v $PWD/../../MyhalSimulator:/home/$USER/MyhalSimulator \
--v $PWD/../../KPConv_Data:/home/$USER/Data/MyhalSim \
--v $PWD/../../KPConv_results:/home/$USER/catkin_ws/src/collision_trainer/results"
+volumes="-v $PWD/..:/home/$USER/catkin_ws \
+-v $PWD/../../Simulation_Data:/home/$USER/Myhal_Simulation "
 
 # Additional arguments to be able to open GUI
 XSOCK=/tmp/.X11-unix
@@ -78,31 +82,17 @@ other_args="-v $XSOCK:$XSOCK \
     -e GAZEBO_MASTER_URI=http://$HOSTNAME:$gazport \
     -e ROSPORT=$rosport "
 
-# python command started in the docker
-if [ ! "$command" ] ; then
-    if [ "$detach" = true ] ; then
-        py_command="./collision_trainer.sh results/Log_$now"
-    else
-        py_command="./collision_trainer.sh"
-    fi
-else
-    py_command="./start_script.sh $command"
-fi
-
-echo -e "Running command $py_command\n"
 
 # Execute the command in docker (Example of command: ./master.sh -ve -m 2 -p Sc1_params -t A_tour)
 docker run $docker_args \
 $volumes \
 $other_args \
---name "$USER-training-$ROSPORT" \
-docker_ros_noetic2_$USER \
-$py_command
+--name "$USER-melodic-dev" \
+docker_ros_melodic_$USER \
+$command 
 
-# Attach a log parameters and log the detached docker
-if [ "$detach" = true ] ; then
-    docker logs -f "$USER-training-$ROSPORT" &> $PWD/../../KPConv_results/Log_"$now"/log.txt &
-fi
-
+# Finish
+echo "Final Sourcing ..."
 source ~/.bashrc
+
 

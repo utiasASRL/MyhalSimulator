@@ -95,7 +95,7 @@ echo -e "Running command $py_command\n"
 docker run $docker_args \
 $volumes \
 $other_args \
---name "$USER-training-$ROSPORT" \
+--name "$USER-training-dev" \
 docker_ros_noetic2_$USER \
 $py_command
 
