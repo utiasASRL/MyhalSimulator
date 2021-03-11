@@ -421,7 +421,6 @@ void Vehicle::AvoidActors(std::vector<boost::shared_ptr<Vehicle>> vehicles)
             if (flow_force.Length() > 0 && other_flow_force.Length() > 0)
             {
 
-
                 auto self_direction(flow_force);
                 self_direction.Normalize();
                 double self_dist = self_direction.Dot(-diff_pos);
@@ -1572,7 +1571,7 @@ void FlowFollower::FlowForce()
 {
     // Get flow at current position
     ignition::math::Vector2d flow;
-    if (!flow_fields[current_flow]->SmoothLookup(this->pose.Pos(), flow))
+    if (!flow_fields[current_flow]->SmoothFlowLookup(this->pose.Pos(), flow))
         throw std::out_of_range("FlowFollower position outside the flow map");
 
     // Apply flow directly as a force. the flow length on a standard pixel = resolution
@@ -1610,7 +1609,7 @@ void FlowFollower::UpdatePositionContactObstacles(std::vector<gazebo::physics::E
     // ***********************************************
 
     // Predict the velocity and next position of the actor
-    auto predicted_velocity = acceleration * dt;
+    auto predicted_velocity = this->velocity +  acceleration * dt;
     if (predicted_velocity.Length() > max_speed)
     {
         predicted_velocity.Normalize();
@@ -1654,6 +1653,7 @@ void FlowFollower::UpdatePositionContactObstacles(std::vector<gazebo::physics::E
             min_normal = next_normal;
             min_dist = next_normal.Length();
         }
+
     }
 
     // Get the actor at a distance of obstacle_margin from the nearest obstacle
@@ -1693,6 +1693,7 @@ void FlowFollower::UpdatePositionContactObstacles(std::vector<gazebo::physics::E
 
     // Reset acceleration
     this->acceleration = 0;
+
 }
 
 

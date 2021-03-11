@@ -357,6 +357,8 @@ void Puppeteer::OnUpdate(const gazebo::common::UpdateInfo &_info)
         vehicle->OnUpdate(_info, dt, near_vehicles, near_objects);
     }
 
+
+
     ////////////////////
     // Handle Robot path
     ////////////////////
@@ -467,7 +469,7 @@ boost::shared_ptr<Vehicle> Puppeteer::CreateVehicle(gazebo::physics::ActorPtr ac
         attribute = attribute->GetNextElement("plugin");
     }
 
-    double max_speed = 1;
+    double max_speed = this->vehicle_params["max_speed"];
 
     if (actor_info.find("max_speed") != actor_info.end())
     {
@@ -608,6 +610,7 @@ void Puppeteer::ReadParams()
         ROS_ERROR("ERROR READING COMMON VEHICLE PARAMS");
         vehicle_params["mass"] = 1;
         vehicle_params["max_force"] = 10;
+        vehicle_params["max_speed"] = 0.77;
         vehicle_params["slowing_distance"] = 2;
         vehicle_params["arrival_distance"] = 0.5;
         vehicle_params["obstacle_margin"] = 0.4;

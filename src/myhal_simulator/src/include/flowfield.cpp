@@ -383,7 +383,8 @@ bool FlowField::Lookup(ignition::math::Vector3d pos, ignition::math::Vector2d &r
     return true;
 }
 
-bool FlowField::SmoothLookup(ignition::math::Vector3d pos, ignition::math::Vector2d &res)
+
+bool FlowField::SmoothFlowLookup(ignition::math::Vector3d pos, ignition::math::Vector2d &res)
 {
     int r2, c2;
     if(!PosToIndicies(pos + ignition::math::Vector3d(0.5 * resolution, -0.5 * resolution, 0), r2, c2))
@@ -417,6 +418,49 @@ bool FlowField::SmoothLookup(ignition::math::Vector3d pos, ignition::math::Vecto
         res = avg_flow;
         return true;
 
+}
+
+
+double FlowField::Linear(const double &t, 
+   const double &a, 
+   const double &b)
+{
+    //return (1 - t) * a + t * b;
+    return a + t * (b - a);
+}
+
+double FlowField::Bilinear(const double &tx, 
+   const double &ty, 
+   const double &c00, 
+   const double &c10, 
+   const double &c01, 
+   const double &c11) 
+{ 
+    float  a = Linear(tx, c00, c10);
+    float  b = Linear(tx, c01, c11);
+    return Linear(ty, a, b);
+} 
+
+double FlowField::BilinearValueLookup(ignition::math::Vector3d pos)
+{
+    // Get row and columns of the 4th interpollating corner (bottom right)
+    int r2, c2;
+    if(!PosToIndicies(pos + ignition::math::Vector3d(0.5 * resolution, -0.5 * resolution, 0), r2, c2))
+        return false;
+
+
+    // Get the four data values
+    double v00 = value_function[r2 - 1][c2 - 1];
+    double v10 = value_function[r2 - 1][c2];
+    double v01 = value_function[r2][c2 - 1];
+    double v11 = value_function[r2][c2];
+
+    // Get the interpolating coefficient
+    double tx = (pos.X() - boundary.Min().X()) / resolution + 0.5 - (double) c2;
+    double ty = (boundary.Max().Y() - pos.Y()) / resolution + 0.5 - (double) r2;
+
+    // Interpolate
+    return Bilinear(tx, ty, v00, v10, v01, v11);
 }
 
 

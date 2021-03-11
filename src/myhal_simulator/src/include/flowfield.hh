@@ -53,7 +53,12 @@ class FlowField{
         void Compute(std::vector<std::vector<int>>& costmap);
 
         bool Lookup(ignition::math::Vector3d pos, ignition::math::Vector2d &res);
-        bool SmoothLookup(ignition::math::Vector3d pos, ignition::math::Vector2d &res);
+        bool SmoothFlowLookup(ignition::math::Vector3d pos, ignition::math::Vector2d &res);
+
+
+        double Linear(const double &t, const double &a, const double &b);
+        double Bilinear(const double &tx, const double &ty, const double &c00, const double &c10, const double &c01, const double &c11);
+        double BilinearValueLookup(ignition::math::Vector3d pos);
 
         double Reachability();
 

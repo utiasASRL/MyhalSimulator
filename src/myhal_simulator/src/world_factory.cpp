@@ -433,7 +433,14 @@ void WorldHandler::LoadParams(){
             return;
         }
 
-        std::shared_ptr<Scenario> scenario = std::make_shared<Scenario>(std::stod(info["pop_density"]), std::stod(info["table_percentage"]), info["actor"]);
+        int pop_num = -1;
+        int pop_density = -1;
+        if (info.count("pop_density"))
+            pop_density = std::stod(info["pop_density"]);
+        if (info.count("pop_num"))
+            pop_num = std::stoi(info["pop_num"]);
+
+        std::shared_ptr<Scenario> scenario = std::make_shared<Scenario>(pop_density, pop_num, std::stod(info["table_percentage"]), info["actor"]);
 
         /*std::vector<std::string> model_list; 
 
@@ -592,8 +599,12 @@ void WorldHandler::FillRoom(std::shared_ptr<RoomInfo> room_info){
          
     }
    
-    if (this->use_custom_spawn_room.find(room_info->room_name) != std::string::npos){
-        int num_actors = (int) ((scenario->pop_density)*(room_info->room->Area()));
+    if (this->use_custom_spawn_room.find(room_info->room_name) != std::string::npos)
+    {
+        int num_actors = scenario->pop_num;
+        if (num_actors <= 0)
+            num_actors = (int) floor((scenario->pop_density)*(room_info->room->Area()));
+
         // todo: replace by function that divide the density to get desired number of actors while avoiding empty rooms
         // To avoid empty rooms, only apply to room that have a non-zero density. Originally wanted to use room names but its not available here
         if (num_actors!=0){
@@ -625,7 +636,11 @@ void WorldHandler::FillRoom(std::shared_ptr<RoomInfo> room_info){
     }
 
     else{
-        int num_actors = (int) ((scenario->pop_density)*(room_info->room->Area()));
+        
+        int num_actors = scenario->pop_num;
+        if (num_actors <= 0)
+            num_actors = (int) floor((scenario->pop_density)*(room_info->room->Area()));
+            
         auto a_info = this->actor_info[scenario->actor];
         //auto plugin = this->vehicle_plugins[a_info->plugin];
 
@@ -695,10 +710,11 @@ void WorldHandler::WriteToFile(std::string out_name){
     in.close();
 }
 
-Scenario::Scenario(double _pop_density, double _model_percentage, std::string _actor){
-    this->pop_density = _pop_density;
+Scenario::Scenario(double _pop_density, int _pop_num, double _model_percentage, std::string _actor){
     this->model_percentage = _model_percentage;
     this->actor = _actor;
+    this->pop_density = _pop_density;
+    this->pop_num = _pop_num;
 }
 
 void Scenario::AddModel(std::shared_ptr<ModelInfo> model){

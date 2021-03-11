@@ -76,11 +76,12 @@ class Scenario{
     public:
 
         double pop_density;
+        int pop_num;
         double model_percentage;
         std::string actor;
         
 
-        Scenario(double _pop_denisty, double _model_percentage, std::string _actor);
+        Scenario(double _pop_denisty, int _pop_num, double _model_percentage, std::string _actor);
 
         void AddModel(std::shared_ptr<ModelInfo> model);
         void AddTable(std::shared_ptr<TableInfo> table);

@@ -115,8 +115,6 @@ class Vehicle{
 
         double mass;
 
-        double max_speed;
-
         ignition::math::Pose3d pose;
 
         ignition::math::Vector3d velocity;
@@ -160,6 +158,8 @@ class Vehicle{
         double height = 1;
 
     public:
+
+        double max_speed;
 
         double max_force;
 
@@ -449,4 +449,5 @@ public:
     void FlowForce();
     void UpdatePositionContactObstacles(std::vector<gazebo::physics::EntityPtr>& objects, double dt);
     void OnUpdate(const gazebo::common::UpdateInfo &_info, double dt, std::vector<boost::shared_ptr<Vehicle>> vehicles, std::vector<gazebo::physics::EntityPtr> objects);
+
 };
