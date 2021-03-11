@@ -6,7 +6,7 @@ std::string utilities::color_text(std::string text, std::vector<int> rgb){
     return leading + text + reset;
 }
 
-std::vector<ignition::math::Line3d> utilities::get_box_edges(ignition::math::Box box){
+std::vector<ignition::math::Line3d> utilities::get_box_edges(ignition::math::AxisAlignedBox box){
 	ignition::math::Vector3d min_corner = box.Min();
 	ignition::math::Vector3d max_corner = box.Max();
 	min_corner.Z() = 0;
@@ -25,12 +25,12 @@ std::vector<ignition::math::Line3d> utilities::get_box_edges(ignition::math::Box
 }
 
 std::vector<ignition::math::Line3d> utilities::get_edges(gazebo::physics::EntityPtr entity){
-	ignition::math::Box box = entity->BoundingBox();
+	ignition::math::AxisAlignedBox box = entity->BoundingBox();
 	return utilities::get_box_edges(box);
 }
 
 std::vector<ignition::math::Vector3d> utilities::get_corners(gazebo::physics::EntityPtr entity){
-	ignition::math::Box box = entity->BoundingBox();
+	ignition::math::AxisAlignedBox box = entity->BoundingBox();
 	ignition::math::Vector3d min_corner = box.Min();
 	ignition::math::Vector3d max_corner = box.Max();
 	min_corner.Z() = 0;
@@ -48,7 +48,7 @@ std::vector<ignition::math::Vector3d> utilities::get_corners(gazebo::physics::En
 	return corners;
 }
 
-std::vector<ignition::math::Vector3d> utilities::get_box_corners(ignition::math::Box box){
+std::vector<ignition::math::Vector3d> utilities::get_box_corners(ignition::math::AxisAlignedBox box){
 	ignition::math::Vector3d min_corner = box.Min();
 	ignition::math::Vector3d max_corner = box.Max();
 	min_corner.Z() = 0;
@@ -81,7 +81,7 @@ bool utilities::get_normal_to_edge(ignition::math::Vector3d pos, ignition::math:
     }
 }
 
-bool utilities::inside_box(ignition::math::Box box, ignition::math::Vector3d point, bool edge){
+bool utilities::inside_box(ignition::math::AxisAlignedBox box, ignition::math::Vector3d point, bool edge){
 	ignition::math::Vector3d min_corner = box.Min();
 	ignition::math::Vector3d max_corner = box.Max();
 
@@ -100,11 +100,11 @@ bool utilities::inside_box(ignition::math::Box box, ignition::math::Vector3d poi
 
 
 
-double utilities::width(ignition::math::Box box){
+double utilities::width(ignition::math::AxisAlignedBox box){
 	return std::abs(box.Max().X() - box.Min().X());
 }
 
-double utilities::height(ignition::math::Box box){
+double utilities::height(ignition::math::AxisAlignedBox box){
 	return std::abs(box.Max().Y() - box.Min().Y());
 }
 
@@ -122,7 +122,7 @@ void utilities::print_vector(ignition::math::Vector3d vec, bool newline){
 
 //returns the shortest normal vector between pos and one of the edges on the bounding box of entity
 // will return the shortest corner distance if the normal does not exist 
-ignition::math::Vector3d utilities::min_box_repulsive_vector(ignition::math::Vector3d pos, ignition::math::Box box){
+ignition::math::Vector3d utilities::min_box_repulsive_vector(ignition::math::Vector3d pos, ignition::math::AxisAlignedBox box){
     auto edges = utilities::get_box_edges(box);
 	ignition::math::Vector3d min_normal;
 	double min_mag = 10e9;
@@ -216,7 +216,7 @@ ignition::math::Vector3d utilities::min_repulsive_vector(ignition::math::Vector3
 }
 
 
-bool utilities::contains(ignition::math::Box b1, ignition::math::Box b2){
+bool utilities::contains(ignition::math::AxisAlignedBox b1, ignition::math::AxisAlignedBox b2){
 
 	ignition::math::Vector3d min_corner = b2.Min();
 	ignition::math::Vector3d max_corner = b2.Max();
@@ -244,7 +244,7 @@ output: the vector that is the shortest between the point and some point on the 
 
 if it cannot be projected onto a side: returns min corner distance 
 */
-double utilities::dist_to_box(ignition::math::Vector3d pos, ignition::math::Box box){
+double utilities::dist_to_box(ignition::math::Vector3d pos, ignition::math::AxisAlignedBox box){
 	// get all planes that make up the box 
 
 	auto min = ignition::math::Vector3d(std::min(box.Min().X(), box.Max().X()), std::min(box.Min().Y(), box.Max().Y()), std::min(box.Min().Z(), box.Max().Z()));

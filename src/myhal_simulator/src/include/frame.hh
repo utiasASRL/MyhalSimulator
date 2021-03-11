@@ -203,13 +203,13 @@ class BoxObject{
 
     private:
 
-        ignition::math::Box box;
+        ignition::math::AxisAlignedBox box;
 
         int cat;
 
     public:
 
-        BoxObject(ignition::math::Box box, int cat): box(box), cat(cat) {};
+        BoxObject(ignition::math::AxisAlignedBox box, int cat): box(box), cat(cat) {};
 
         double MinX(){
             return this->box.Min().X();
@@ -239,7 +239,7 @@ class BoxObject{
             return this->cat;
         }
 
-        ignition::math::Box Box(){
+        ignition::math::AxisAlignedBox Box(){
             return this->box;
         }
 
@@ -294,7 +294,7 @@ std::vector<BoxObject> ReadObjects(happly::PLYData &plyIn, std::string element_n
     std::vector<BoxObject> boxes;
 
     for (int i = 0; i< min_x.size(); i++){
-        boxes.push_back(BoxObject(ignition::math::Box(min_x[i], min_y[i], min_z[i], max_x[i], max_y[i], max_z[i]), cat[i]));
+        boxes.push_back(BoxObject(ignition::math::AxisAlignedBox(min_x[i], min_y[i], min_z[i], max_x[i], max_y[i], max_z[i]), cat[i]));
     }
 
     return boxes;

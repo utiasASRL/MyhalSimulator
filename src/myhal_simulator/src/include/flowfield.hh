@@ -35,7 +35,7 @@ class FlowField{
 
         double obstacle_strength;
 
-        ignition::math::Box boundary;
+        ignition::math::AxisAlignedBox boundary;
 
         FlowField();
         FlowField(boost::shared_ptr<Costmap> costmap0, ignition::math::Vector3d goal0, double obstacle_range0, double obstacle_strength0);

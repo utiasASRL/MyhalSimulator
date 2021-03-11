@@ -37,7 +37,7 @@ void Model::AddToWorld(std::string &world_string)
     world_string += sdf;
 }
 
-ignition::math::Box Model::GetCollisionBox()
+ignition::math::AxisAlignedBox Model::GetCollisionBox()
 {
     // return the smallest box that this object can be contained within
 
@@ -65,7 +65,7 @@ ignition::math::Box Model::GetCollisionBox()
         }
     }
 
-    return ignition::math::Box(ignition::math::Vector3d(min_x, min_y, 0), ignition::math::Vector3d(max_x, max_y, 10));
+    return ignition::math::AxisAlignedBox(ignition::math::Vector3d(min_x, min_y, 0), ignition::math::Vector3d(max_x, max_y, 10));
 }
 
 double Model::GetWidth(){
@@ -381,9 +381,9 @@ TableGroup::TableGroup(std::shared_ptr<Model> _table_model, std::shared_ptr<Mode
 
 ///Room
 
-Room::Room(double x_min, double y_min, double x_max, double y_max, std::vector<ignition::math::Box> walls, std::vector<ignition::math::Pose3d> route, bool _enclosed = false)
+Room::Room(double x_min, double y_min, double x_max, double y_max, std::vector<ignition::math::AxisAlignedBox> walls, std::vector<ignition::math::Pose3d> route, bool _enclosed = false)
 {
-    this->boundary = ignition::math::Box(ignition::math::Vector3d(x_min, y_min, 0), ignition::math::Vector3d(x_max, y_max, 10));
+    this->boundary = ignition::math::AxisAlignedBox(ignition::math::Vector3d(x_min, y_min, 0), ignition::math::Vector3d(x_max, y_max, 10));
     this->enclosed = _enclosed;
 
     if (this->enclosed)

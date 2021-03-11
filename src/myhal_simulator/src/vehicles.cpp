@@ -301,7 +301,7 @@ void Vehicle::AvoidObstacles(std::vector<gazebo::physics::EntityPtr> objects)
     //     double interaction_range = 1 + ignition::math::Rand::DblUniform(-0.25,0.25);
 
     //     for (gazebo::physics::EntityPtr object: objects){
-    //         ignition::math::Box box = object->BoundingBox();
+    //         ignition::math::AxisAlignedBox box = object->BoundingBox();
 
     //         ignition::math::Vector3d rad = this->pose.Pos() - box.Center();
     // 		double dist = rad.Length();
@@ -331,7 +331,7 @@ void Vehicle::AvoidObstacles(std::vector<gazebo::physics::EntityPtr> objects)
     {
 
         // Get object bounding box
-        ignition::math::Box box = object->BoundingBox();
+        ignition::math::AxisAlignedBox box = object->BoundingBox();
 
         // inflate the box slightly
         double inflate = 0.1;
@@ -1323,7 +1323,7 @@ void ExtendedSocialForce_Actor::ExtendedSFRobot(std::vector<gazebo::physics::Ent
         {
 
             //std::cout<<"applying robot force"<< std::endl;
-            ignition::math::Box box = object->BoundingBox();
+            ignition::math::AxisAlignedBox box = object->BoundingBox();
 
             ignition::math::Vector3d rad = this->pose.Pos() - box.Center();
             double dist = rad.Length();
@@ -1365,7 +1365,7 @@ void ExtendedSocialForce_Actor::ExtendedSFObstacle(std::vector<gazebo::physics::
 
     for (gazebo::physics::EntityPtr object : objects)
     {
-        ignition::math::Box box = object->BoundingBox();
+        ignition::math::AxisAlignedBox box = object->BoundingBox();
 
         ignition::math::Vector3d rad = this->pose.Pos() - box.Center();
         double dist = rad.Length();
@@ -1446,7 +1446,7 @@ void Custom_Wanderer::SetNextTarget(std::vector<boost::shared_ptr<Vehicle>> vehi
         }
     }
 
-    ignition::math::v4::Vector3d goal;
+    ignition::math::Vector3d goal;
     if (this->custom_actor_goal.find("goal_x_" + std::to_string(count)) == custom_actor_goal.end())
     {
         goal.Set(this->custom_actor_goal["goal_x_0"], this->custom_actor_goal["goal_y_0"], 0);
@@ -1631,7 +1631,7 @@ void FlowFollower::UpdatePositionContactObstacles(std::vector<gazebo::physics::E
     {
 
         // Get object bounding box
-        ignition::math::Box box = object->BoundingBox();
+        ignition::math::AxisAlignedBox box = object->BoundingBox();
 
         // Check height for doors
         double min_z = std::min(box.Min().Z(), box.Max().Z());

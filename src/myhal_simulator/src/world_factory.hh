@@ -134,7 +134,7 @@ class WorldHandler{
 
         std::string user_name;
 
-        std::vector<ignition::math::Box> walls;
+        std::vector<ignition::math::AxisAlignedBox> walls;
 
         double robot_radius = std::sqrt((0.21*0.21) + (0.165*0.165));
 

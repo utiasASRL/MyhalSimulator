@@ -1,12 +1,20 @@
 #!/bin/bash
 
-echo $USER
+#######
+# Intro
+#######
 
-source /home/$USER/catkin_ws/devel/setup.bash
-
+# First some sources and imports
+source /home/$USER/.bashrc
+source devel/setup.bash
 export GAZEBO_PLUGIN_PATH=${GAZEBO_PLUGIN_PATH}:~/catkin_ws/devel/lib
+
+# Get the commad that started this file
 myInvocation="$(printf %q "$BASH_SOURCE")$((($#)) && printf ' %q' "$@")"
 
+#################
+# Parse arguments
+#################
 
 GUI=false # -v flag
 TOUR="A_tour" # -t (arg) flag
@@ -34,6 +42,15 @@ e) VIZ_GAZ=true;; # are we going to vizualize topics in gazebo
 esac
 done
 
+
+#########################################################################################################################
+echo ""
+echo ""
+echo "    +-----------------+"
+echo "    | Command summary |"
+echo "    +-----------------+"
+echo ""
+
 echo "Folder Name: $t"
 
 MINSTEP=0.0001
@@ -42,12 +59,6 @@ echo "Min step size: $MINSTEP"
 echo -e "TOUR: $TOUR\nGUI: $GUI\nLOADWORLD: $LOADWORLD\nFILTER: $FILTER\nMAPPING: $MAPPING\nGTCLASS: $GTCLASS"
 
 sleep 1
-
-killall gzserver
-killall gzclient
-killall rviz
-killall roscore
-killall rosmaster
 
 c_method="ground_truth"
 
@@ -61,15 +72,36 @@ else
         c_method="ground_truth"
     fi
 fi
-
 export GTCLASSIFY=$GTCLASS
 
 echo "Running tour: $TOUR"
 
+#########################################################################################################################
+echo ""
+echo ""
+echo "    +------------------+"
+echo "    | Starting roscore |"
+echo "    +------------------+"
+echo ""
+
+# Kill possible running ros nodes
+killall gzserver
+killall gzclient
+killall rviz
+killall roscore
+killall rosmaster
+
+# Start roscore with specific port
 roscore -p $ROSPORT&
 
-until rostopic list; do sleep 0.5; done #wait until rosmaster has started 
+# Wait until rosmaster has started 
+until rostopic list; do sleep 0.5; done 
 
+echo ""
+echo "roscore has started"
+echo ""
+
+# Load all the parameters in ros master
 rosparam load src/myhal_simulator/params/$PARAMS/custom_simulation_params.yaml
 rosparam load src/myhal_simulator/params/$PARAMS/common_vehicle_params.yaml
 rosparam load src/myhal_simulator/params/$PARAMS/animation_params.yaml
@@ -90,7 +122,8 @@ rosparam set gmapping_status true
 rosparam set loc_method $MAPPING
 rosparam set min_step $MINSTEP
 rosparam set viz_gaz $VIZ_GAZ
-  
+
+# Save parameters in log files
 mkdir "/home/$USER/Myhal_Simulation/simulated_runs/$t"
 mkdir "/home/$USER/Myhal_Simulation/simulated_runs/$t/logs-$t"
 mkdir "/home/$USER/Myhal_Simulation/simulated_runs/$t/logs-$t/videos/"
@@ -110,26 +143,73 @@ echo -e "$(cat /home/$USER/catkin_ws/src/myhal_simulator/params/$PARAMS/plugin_p
 echo -e "\n" >> $PARAMFILE
 echo -e "tour_name: $TOUR" >> $PARAMFILE
 
+echo ""
+echo "Parameters loaded"
+echo ""
+
 sleep 0.1
+
+#########################################################################################################################
+echo ""
+echo ""
+echo "    +-----------------------+"
+echo "    | Creation of the world |"
+echo "    +-----------------------+"
+echo ""
 
 WORLDFILE="/home/$USER/catkin_ws/src/myhal_simulator/worlds/myhal_sim.world"
 
 if [[ -z $LOADWORLD ]]; then
+
+    echo ""
+    echo "Creating a world file"
+    echo ""
+
     rosrun myhal_simulator world_factory
     rosparam set load_world "none"
+
 else
+
     WORLDFILE="/home/$USER/Myhal_Simulation/simulated_runs/$LOADWORLD/logs-$LOADWORLD/myhal_sim.world"
-    rosparam set load_world $LOADWORLD
+
+    echo ""
     echo "Loading world $WORLDFILE"
+    echo ""
+
+    rosparam set load_world $LOADWORLD
+
 fi
+
+echo ""
+echo "OK"
+echo ""
 
 cp $WORLDFILE "/home/$USER/Myhal_Simulation/simulated_runs/$t/logs-$t/"
 
+sleep 0.1
+
+
+#########################################################################################################################
+echo ""
+echo ""
+echo "    +---------------------+"
+echo "    | Starting simulation |"
+echo "    +---------------------+"
+echo ""
+
+# Recording simulation data
 rosbag record -O "/home/$USER/Myhal_Simulation/simulated_runs/$t/raw_data.bag" /clock /shutdown_signal /velodyne_points /move_base/local_costmap/costmap /move_base/global_costmap/costmap /ground_truth/state /map /move_base/NavfnROS/plan /amcl_pose /tf /tf_static /move_base/result /tour_data /optimal_path /classified_points &
+
+# Start the python assessor
 rosrun dashboard assessor.py &
 echo -e "\033[1;4;34mRUNNING SIM\033[0m"
 sleep 2.5
+
+
+# Launch p1
 roslaunch jackal_velodyne p1.launch gui:=$GUI world_name:=$WORLDFILE #extra_gazebo_args:="-s libdirector.so"
+
+# In the end of the simu, run data processing
 sleep 0.5
 echo "Running data_processing.py"
 rosrun dashboard data_processing.py $t $FILTER

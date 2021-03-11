@@ -790,7 +790,7 @@ class Dashboard:
             c+=1
             res.append(run_l)
 
-        print tabulate(res,headers=header)
+        print(tabulate(res,headers=header))
 
     def list_runs(self, num = 10):
         ''' displays meta data for the num most recent runs '''
@@ -914,7 +914,7 @@ class Dashboard:
 
             run_l.append(run.meta[f])
 
-        print tabulate([run_l], headers=header)
+        print(tabulate([run_l], headers=header))
 
     def list_dirs(self):
         ''' list all directories in the experimental folder and whether or not they are a valid run '''
@@ -926,7 +926,7 @@ class Dashboard:
             else:
                 res.append([name, 'false'])
 
-        print tabulate(res, headers = header)
+        print(tabulate(res, headers = header))
 
     def remove_dir(self, name = None, clear_old = False):
         ''' remove names directory from experiments folder if it exists '''
@@ -958,7 +958,7 @@ class Dashboard:
         runs = series.runs
         for i in range(len(runs)):
             runs[i] = runs[i].name
-        print 'Runs to be removed:'
+        print('Runs to be removed:')
         self.list_runs_helper(runs)
         confirm = raw_input('Input DEL to confirm series deletion\n')
         if (confirm == 'DEL'):
@@ -992,9 +992,9 @@ class Dashboard:
         for plot in self.display.plots:
             plot.series_list = self.display.series_map.values()
             if (isinstance(plot, plot_class)):
-                print bc.color(plot.__class__.__name__ + ": ",bc.BOLD)
+                print(bc.color(plot.__class__.__name__ + ": ",bc.BOLD))
                 found = True
-                print plot.info()
+                print(plot.info())
 
         if (not found):
             logging.info('Plot type not found in display')
@@ -1012,20 +1012,20 @@ class Dashboard:
             logging.info('Video Files Not Found')
             return
         
-        print "Available videos for " + name + ":"
+        print("Available videos for " + name + ":")
         for i in range(len(vids)):
             vid = vids[i]
-            print "[" + str(i) + "] " + vid
+            print("[" + str(i) + "] " + vid)
 
         ind = input("Input the index you would like to view/save:\n")
         if (type(ind) != int or ind < 0 or ind >= len(vids)):
-            print "Invalid index"
+            print("Invalid index")
             return
 
         if (save_path != ""):
-            print "Saving " + vids[ind] + " to " + save_path
+            print("Saving " + vids[ind] + " to " + save_path)
             shutil.copyfile(vid_path + vids[ind], save_path)
 
-        print "Playing " + vids[ind]
+        print("Playing " + vids[ind])
         
         subprocess.call("xdg-open " + vid_path + vids[ind], shell = True)

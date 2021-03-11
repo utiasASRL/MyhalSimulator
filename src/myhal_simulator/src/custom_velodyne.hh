@@ -44,10 +44,10 @@
 
 struct CollObj{
 	int cat;
-	ignition::math::Box box;
+	ignition::math::AxisAlignedBox box;
 
 
-	CollObj(int cat, ignition::math::Box box){
+	CollObj(int cat, ignition::math::AxisAlignedBox box){
 		this->cat = cat;
 		this->box = box;
 	}
@@ -163,7 +163,7 @@ namespace gazebo
 
         boost::shared_ptr<QuadTree> active_quadtree; 
 
-		ignition::math::Box building_box; 
+		ignition::math::AxisAlignedBox building_box; 
 
 		std::vector<gazebo::physics::EntityPtr> collision_entities;
 

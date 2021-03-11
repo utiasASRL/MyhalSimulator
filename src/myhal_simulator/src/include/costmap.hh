@@ -54,7 +54,7 @@ public:
 	
 	double resolution;
 
-	ignition::math::Box boundary;
+	ignition::math::AxisAlignedBox boundary;
 
 	ignition::math::Vector3d top_left;
 
@@ -70,9 +70,9 @@ public:
 
 	std::vector<std::vector<int>> GetNeighbours(std::vector<int> curr_ind, bool diag = false);
 
-	Costmap(ignition::math::Box boundary, double resolution);
+	Costmap(ignition::math::AxisAlignedBox boundary, double resolution);
 
-	void AddObject(ignition::math::Box object);
+	void AddObject(ignition::math::AxisAlignedBox object);
 
 	std::string ToString();
 

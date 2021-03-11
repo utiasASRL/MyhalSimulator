@@ -3,6 +3,9 @@
 #include <algorithm>
 #include <queue>
 
+
+
+
 template <class T, class priority_t>
 class PriorityQueue : public std::priority_queue<std::pair<priority_t, T>, std::vector<std::pair<priority_t, T>>, std::greater<std::pair<priority_t, T>>>
 {
@@ -10,7 +13,7 @@ class PriorityQueue : public std::priority_queue<std::pair<priority_t, T>, std::
 
 		typedef typename 
 			std::priority_queue<
-				T, 
+				std::pair<priority_t, T>, 
 				std::vector<std::pair<priority_t, T>>,  
 				std::greater<std::pair<priority_t, T>>>::container_type::const_iterator const_iterator;
 
@@ -54,7 +57,7 @@ class PriorityQueue : public std::priority_queue<std::pair<priority_t, T>, std::
             return this->c.size();
         }
 
-        bool clear() {
+        void clear() {
 		    this->c.clear();
 	    }
 

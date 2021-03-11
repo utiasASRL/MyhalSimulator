@@ -38,7 +38,7 @@ class TourParser{
 
         std::vector<ignition::math::Pose3d> route_digits;
 
-        ignition::math::Box bounds = ignition::math::Box(ignition::math::Vector3d(-21.55, -21.4,0), ignition::math::Vector3d(21.55, 21.4,0));
+        ignition::math::AxisAlignedBox bounds = ignition::math::AxisAlignedBox(ignition::math::Vector3d(-21.55, -21.4,0), ignition::math::Vector3d(21.55, 21.4,0));
 
         double resolution = 0.1; 
 

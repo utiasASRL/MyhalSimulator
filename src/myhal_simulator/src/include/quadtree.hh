@@ -14,11 +14,11 @@ enum types {vehicle_type, entity_type, box_type};
 
 struct QTData{
 
-    ignition::math::Box box;
+    ignition::math::AxisAlignedBox box;
     boost::shared_ptr<void> data;
     types type;
 
-    QTData(ignition::math::Box box, boost::shared_ptr<void> data, types type);
+    QTData(ignition::math::AxisAlignedBox box, boost::shared_ptr<void> data, types type);
 };
 
 class QuadTree{
@@ -28,7 +28,7 @@ class QuadTree{
 
         const int capacity = 1;
 
-        ignition::math::Box boundary;
+        ignition::math::AxisAlignedBox boundary;
 
         std::vector<QTData> objects;
 
@@ -39,13 +39,13 @@ class QuadTree{
 
     public:
 
-        QuadTree(ignition::math::Box _boundary);
+        QuadTree(ignition::math::AxisAlignedBox _boundary);
 
         bool Insert(QTData data);
 
         void Subdivide();
 
-        std::vector<QTData> QueryRange(ignition::math::Box range);
+        std::vector<QTData> QueryRange(ignition::math::AxisAlignedBox range);
 
         void Print();
 };

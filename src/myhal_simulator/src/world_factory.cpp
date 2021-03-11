@@ -160,7 +160,7 @@ void WorldHandler::LoadParams(){
     }
 
         
-    this->costmap = std::make_shared<Costmap>(ignition::math::Box(ignition::math::Vector3d(-21.55,-21.4,0), ignition::math::Vector3d(21.55,21.4,0)), 0.2);
+    this->costmap = std::make_shared<Costmap>(ignition::math::AxisAlignedBox(ignition::math::Vector3d(-21.55,-21.4,0), ignition::math::Vector3d(21.55,21.4,0)), 0.2);
 
     happly::PLYData plyIn("/home/" + this->user_name + "/catkin_ws/src/myhal_simulator/params/default_params/myhal_walls.ply");
     auto static_objects = ReadObjects(plyIn);

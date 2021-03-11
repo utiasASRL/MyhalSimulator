@@ -252,7 +252,7 @@ namespace gazebo
             
             auto min = ignition::math::Vector3d(act->WorldPose().Pos().X() - 0.2, act->WorldPose().Pos().Y() - 0.2, 0);
             auto max = ignition::math::Vector3d(act->WorldPose().Pos().X() + 0.2, act->WorldPose().Pos().Y() + 0.2, 0);
-            auto box = ignition::math::Box(min,max);
+            auto box = ignition::math::AxisAlignedBox(min,max);
             auto new_node = QTData(box, act, vehicle_type);
             this->active_quadtree->Insert(new_node);
 
@@ -386,7 +386,7 @@ namespace gazebo
                     double resolution = 0.7;
                     auto min = ignition::math::Vector3d(point.X() - resolution, point.Y() - resolution, 0);
                     auto max = ignition::math::Vector3d(point.X() + resolution, point.Y() + resolution, 0);
-                    auto query_range = ignition::math::Box(min,max);
+                    auto query_range = ignition::math::AxisAlignedBox(min,max);
 
                     std::vector<CollObj> check_objects;
                     
@@ -426,7 +426,7 @@ namespace gazebo
                                 cat = 2; // moving actors 
                             }
                             
-                            auto box = ignition::math::Box(ignition::math::Vector3d(actor->WorldPose().Pos().X()-0.2, actor->WorldPose().Pos().Y()-0.2,0), ignition::math::Vector3d(actor->WorldPose().Pos().X()+0.2, actor->WorldPose().Pos().Y()+0.2, 1));
+                            auto box = ignition::math::AxisAlignedBox(ignition::math::Vector3d(actor->WorldPose().Pos().X()-0.2, actor->WorldPose().Pos().Y()-0.2,0), ignition::math::Vector3d(actor->WorldPose().Pos().X()+0.2, actor->WorldPose().Pos().Y()+0.2, 1));
                             check_objects.push_back(CollObj(cat, box));
                             //near_actors.push_back(boost::static_pointer_cast<gazebo::physics::Actor>(n.data));
                         }
@@ -555,7 +555,7 @@ namespace gazebo
                 this->actor_speed[act->GetName()] = 0;
                 auto min = ignition::math::Vector3d(act->WorldPose().Pos().X() - 0.2, act->WorldPose().Pos().Y() - 0.2, 0);
                 auto max = ignition::math::Vector3d(act->WorldPose().Pos().X() + 0.2, act->WorldPose().Pos().Y() + 0.2, 0);
-                auto box = ignition::math::Box(min,max);
+                auto box = ignition::math::AxisAlignedBox(min,max);
                 auto new_node = QTData(box, act, vehicle_type);
                 this->active_quadtree->Insert(new_node);
                 continue;

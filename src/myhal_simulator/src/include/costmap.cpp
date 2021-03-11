@@ -1,6 +1,6 @@
 #include "costmap.hh"
 
-Costmap::Costmap(ignition::math::Box boundary, double resolution){
+Costmap::Costmap(ignition::math::AxisAlignedBox boundary, double resolution){
     this->boundary = boundary;
     this->resolution = resolution;
 
@@ -24,7 +24,7 @@ Costmap::Costmap(ignition::math::Box boundary, double resolution){
 
 }
 
-void Costmap::AddObject(ignition::math::Box object){
+void Costmap::AddObject(ignition::math::AxisAlignedBox object){
     object.Min().Z() = 0;
     object.Max().Z() = 0;
 

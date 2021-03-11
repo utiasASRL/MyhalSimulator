@@ -22,15 +22,15 @@ if __name__ == "__main__":
     
     username = os.environ['USER']
     if (len(sys.argv)-1 < 2):
-        print "ERROR: must input filename and filter status"
+        print("ERROR: must input filename and filter status")
         exit()
     filename = sys.argv[1]
     filter_status = True if (sys.argv[2] == "true") else False
-    print "Processing data for file", filename
+    print("Processing data for file", filename)
 
     path = "/home/" + username + "/Myhal_Simulation/simulated_runs/" + filename + "/"
     if (not os.path.isdir(path)):
-        print 'File ' + path + ' has been deleted, aborting data processing'
+        print('File ' + path + ' has been deleted, aborting data processing')
         exit()
 
     logs_path = path + "logs-" + filename + "/"
@@ -38,7 +38,7 @@ if __name__ == "__main__":
     # load in meta data
 
     if (not os.path.exists(logs_path + "meta.json")):
-        print 'meta.json is missing, aborting data processing'
+        print('meta.json is missing, aborting data processing')
         exit()
 
     file = open(logs_path + "meta.json", "r")
@@ -53,12 +53,12 @@ if __name__ == "__main__":
             bag = rosbag.Bag(path + "localization_test.bag")
             localization_test = True
         except:
-            print "ERROR: invalid filename"
+            print("ERROR: invalid filename")
             exit()
         
     pickle_dict = {}
 
-    print "Reading lidar frames"
+    print("Reading lidar frames")
 
     # read in lidar frames
     frames = bt.read_pointcloud_frames("/velodyne_points", bag)
@@ -69,10 +69,10 @@ if __name__ == "__main__":
             try:
                 os.mkdir(path + dir_name)
             except OSError:
-                print ("Creation of the classifed_frames directory failed")
+                print(("Creation of the classifed_frames directory failed"))
                 exit()
 
-        print "Writing",len(frames),"lidar frames"
+        print("Writing",len(frames),"lidar frames")
 
     # write lidar frames to .ply files 
     for frame in frames:
@@ -97,10 +97,10 @@ if __name__ == "__main__":
             try:
                 os.mkdir(path + dir_name)
             except OSError:
-                print ("Creation of the classifed_frames directory failed")
+                print(("Creation of the classifed_frames directory failed"))
                 exit()
 
-        print "Writing",len(frames_bis),"lidar frames"
+        print("Writing",len(frames_bis),"lidar frames")
 
     # write classified frames to .ply files 
     for frame in frames_bis:
@@ -119,7 +119,7 @@ if __name__ == "__main__":
 
 
 
-    print "Reading trajectories"
+    print("Reading trajectories")
 
     # read in ground truth pose
     gt_traj = bt.read_nav_odometry("/ground_truth/state",bag)
@@ -162,11 +162,11 @@ if __name__ == "__main__":
     pickle_dict['gt_traj'] = bt.trajectory_to_array(gt_traj)
     
     if (amcl_status):
-        print "Saving amcl_traj"
+        print("Saving amcl_traj")
         pickle_dict['amcl_traj'] = bt.trajectory_to_array(tf_traj)
         
     else:
-        print "Saving gmapping_traj"
+        print("Saving gmapping_traj")
         pickle_dict['gmapping_traj'] = bt.trajectory_to_array(tf_traj)
 
     #pickle_dict['loc_traj'] = bt.trajectory_to_array(tf_traj)
@@ -176,7 +176,7 @@ if __name__ == "__main__":
     ply.PlyData([el]).write(path + "/loc_pose.ply")
     
 
-    print "Dumping data to", logs_path + "processed_data.pickle"
+    print("Dumping data to", logs_path + "processed_data.pickle")
     with open(logs_path + 'processed_data.pickle', 'wb') as handle:
         pickle.dump(pickle_dict, handle, protocol=pickle.HIGHEST_PROTOCOL)
     
@@ -202,7 +202,7 @@ if __name__ == "__main__":
         mode = ["sentry","hoverer", "stalker"]
         mode = mode[int(s_name[1])] + "_" + str(count) + "_" + str(fps)
 
-        print "Converting " + str(num_pics) +  " .jpg files at " + str(fps) + " fps to create " + mode + ".mp4 that is: {:.2f}s long".format(num_pics/float(fps))
+        print("Converting " + str(num_pics) +  " .jpg files at " + str(fps) + " fps to create " + mode + ".mp4 that is: {:.2f}s long".format(num_pics/float(fps)))
         FNULL = open(os.devnull, 'w')
         
 
@@ -212,7 +212,7 @@ if __name__ == "__main__":
         if (retcode == 0): # a success
             shutil.rmtree(vid_path + dir) 
         else:
-            print 'Video creation failed'
+            print('Video creation failed')
         FNULL.close()
 
         count+=1
@@ -221,7 +221,7 @@ if __name__ == "__main__":
         
     duration = RealTime.time() - start_time
     
-    print "Data processed in", "{:.2f}".format(duration) ,"seconds"
+    print("Data processed in", "{:.2f}".format(duration) ,"seconds")
 
 
 

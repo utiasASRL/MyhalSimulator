@@ -3,13 +3,13 @@
 
 
 
-QTData::QTData(ignition::math::Box box, boost::shared_ptr<void> data, types type){
+QTData::QTData(ignition::math::AxisAlignedBox box, boost::shared_ptr<void> data, types type){
     this->box = box;
     this->data = data;
     this->type = type;
 }
 
-QuadTree::QuadTree(ignition::math::Box _boundary){
+QuadTree::QuadTree(ignition::math::AxisAlignedBox _boundary){
     this->boundary = _boundary;
 }
 
@@ -21,10 +21,10 @@ void QuadTree::Subdivide(){
 	ignition::math::Vector3d top_l = corners[2];
 	ignition::math::Vector3d top_r = corners[3];
 
-    this->top_left = std::make_shared<QuadTree>(ignition::math::Box((bot_l + top_l) /2, (top_l+top_r) /2));
-    this->top_right = std::make_shared<QuadTree>(ignition::math::Box((bot_l + top_r) /2, top_r));
-    this->bot_left = std::make_shared<QuadTree>(ignition::math::Box(bot_l, (bot_l + top_r) /2));
-    this->bot_right = std::make_shared<QuadTree>(ignition::math::Box((bot_l + bot_r) /2, (top_r+bot_r) /2));
+    this->top_left = std::make_shared<QuadTree>(ignition::math::AxisAlignedBox((bot_l + top_l) /2, (top_l+top_r) /2));
+    this->top_right = std::make_shared<QuadTree>(ignition::math::AxisAlignedBox((bot_l + top_r) /2, top_r));
+    this->bot_left = std::make_shared<QuadTree>(ignition::math::AxisAlignedBox(bot_l, (bot_l + top_r) /2));
+    this->bot_right = std::make_shared<QuadTree>(ignition::math::AxisAlignedBox((bot_l + bot_r) /2, (top_r+bot_r) /2));
 }
 
 
@@ -55,7 +55,7 @@ bool QuadTree::Insert(QTData data){
     return true;
 }
 
-std::vector<QTData> QuadTree::QueryRange(ignition::math::Box range){
+std::vector<QTData> QuadTree::QueryRange(ignition::math::AxisAlignedBox range){
 
     std::vector<QTData> res;
 

@@ -25,20 +25,20 @@ class Assessor(object):
         self.start_time = rospy.get_param("/start_time", None)
         self.mapping_status = rospy.get_param("/gmapping_mapping", False)
         if self.start_time is None:
-            print "Error setting start time"
+            print("Error setting start time")
         try:
             self.log_file = open("/home/" + self.username +
                                  "/Myhal_Simulation/simulated_runs/"
                                  + self.start_time + "/logs-" + self.start_time + "/log.txt", "a")
         except IOError:
-            print "Could not find/open log file"
+            print("Could not find/open log file")
             exit()
         self.avg_speed = 0
         timeout = 60
         self.max_samples = int(timeout/0.1)
         self.num_samples = 0
-        self.last_msg = np.array((0, 0, 0, 0), dtype=[("x", np.float), ("y", np.float),
-                                                      ("z", np.float), ("t", np.float)])
+        self.last_msg = np.array((0, 0, 0, 0), dtype=[("x", np.float64), ("y", np.float64),
+                                                      ("z", np.float64), ("t", np.float64)])
         self.shutdown_pub = rospy.Publisher("shutdown_signal", Bool, queue_size=1)
         self.odom_to_base = None
         self.map_to_odom = None
@@ -57,25 +57,25 @@ class Assessor(object):
         ''' called whenever a ground truth pose message is recieved '''
         pos = np.array((msg.pose.pose.position.x, msg.pose.pose.position.y,
                         msg.pose.pose.position.z, msg.header.stamp.to_sec()),
-                       dtype=[("x", np.float), ("y", np.float), ("z", np.float),
-                              ("t", np.float)])
+                       dtype=[("x", np.float64), ("y", np.float64), ("z", np.float64),
+                              ("t", np.float64)])
         inst_speed = np.hypot(self.last_msg['x']-pos['x'],
                               (self.last_msg['y'] - pos["y"])/
                               (self.last_msg["t"] - pos["t"]))
         self.running_average(inst_speed)
         self.last_msg = pos
         if not self.mapping_status:
-            print "Time: {:.2f} s\nPos: ({:.2f}, {:.2f}) m".format(pos["t"],
+            print("Time: {:.2f} s\nPos: ({:.2f}, {:.2f}) m".format(pos["t"],
                                                                   pos["x"],
-                                                                  pos["y"])
-            print "Average speed across {:.1f} s: {:.2f} m/s".format(0.1 * self.num_samples,
-                                                                self.avg_speed)
+                                                                  pos["y"]))
+            print("Average speed across {:.1f} s: {:.2f} m/s".format(0.1 * self.num_samples,
+                                                                self.avg_speed))
         drift = 0
         if (self.tour_length is not None):
             if self.curr_t != -1:
-                print "Seeking target {}/{}".format(self.curr_t, self.tour_length)
+                print("Seeking target {}/{}".format(self.curr_t, self.tour_length))
             else:
-                print "Tour failed, Seeking target {}/{}".format(self.curr_t, self.tour_length) 
+                print("Tour failed, Seeking target {}/{}".format(self.curr_t, self.tour_length))
         if (self.odom_to_base is not None and self.map_to_odom is not None):
 
             otob = PoseStamped()
@@ -90,8 +90,8 @@ class Assessor(object):
             est_pose = tf2_geometry_msgs.do_transform_pose(otob, self.map_to_odom)
             drift = np.hypot(est_pose.pose.position.x - pos['x'], est_pose.pose.position.y - pos['y'])
             if not self.mapping_status:
-                print "Estimated Pos: ({:.2f}, {:.2f}) m".format(est_pose.pose.position.x, est_pose.pose.position.y)
-            print "Drift: {:.2f} m".format(drift)
+                print("Estimated Pos: ({:.2f}, {:.2f}) m".format(est_pose.pose.position.x, est_pose.pose.position.y))
+            print("Drift: {:.2f} m".format(drift))
 
         lower_lim_speed = 0.03
         upper_lim_speed = 0.08
@@ -99,16 +99,16 @@ class Assessor(object):
         lower_lim_drift = 0.5
         if (self.num_samples >= self.max_samples):
             if (self.avg_speed < upper_lim_speed and self.avg_speed > lower_lim_speed) or (drift > lower_lim_drift and drift < upper_lim_drift):
-                print "Warning, Robot may be stuck"
+                print("Warning, Robot may be stuck")
             if (self.avg_speed < lower_lim_speed) or (drift > upper_lim_drift):
-                print "Robot stuck, aborting run"
+                print("Robot stuck, aborting run")
                 self.log_file.write("Tour failed: robot got stuck\n")
                 self.log_file.close()
                 shutdown = Bool()
                 shutdown.data = False
                 self.shutdown_pub.publish(shutdown.data)
 
-        print "\n"
+        print("\n")
 
     def tf_callback(self, msg):
         for transform in msg.transforms:

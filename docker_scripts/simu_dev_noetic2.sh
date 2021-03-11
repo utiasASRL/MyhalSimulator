@@ -90,7 +90,7 @@ other_args="-v $XSOCK:$XSOCK \
 docker run $docker_args \
 $volumes \
 $other_args \
---name "$USER-noetic2-$ROSPORT" \
+--name "$USER-simu2-dev" \
 docker_ros_noetic2_$USER \
 $command 
 

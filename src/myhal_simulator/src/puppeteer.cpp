@@ -79,7 +79,7 @@ void Puppeteer::Load(gazebo::physics::WorldPtr _world, sdf::ElementPtr _sdf)
             this->vehicles.push_back(new_vehicle);
             auto min = ignition::math::Vector3d(new_vehicle->GetPose().Pos().X() - 0.4, new_vehicle->GetPose().Pos().Y() - 0.4, 0);
             auto max = ignition::math::Vector3d(new_vehicle->GetPose().Pos().X() + 0.4, new_vehicle->GetPose().Pos().Y() + 0.4, 0);
-            auto box = ignition::math::Box(min, max);
+            auto box = ignition::math::AxisAlignedBox(min, max);
             auto new_node = QTData(box, new_vehicle, vehicle_type);
             this->vehicle_quadtree->Insert(new_node);
         }
@@ -307,7 +307,7 @@ void Puppeteer::OnUpdate(const gazebo::common::UpdateInfo &_info)
     {
         auto min = ignition::math::Vector3d(vehicle->GetPose().Pos().X() - 0.4, vehicle->GetPose().Pos().Y() - 0.4, 0);
         auto max = ignition::math::Vector3d(vehicle->GetPose().Pos().X() + 0.4, vehicle->GetPose().Pos().Y() + 0.4, 0);
-        auto box = ignition::math::Box(min, max);
+        auto box = ignition::math::AxisAlignedBox(min, max);
         auto new_node = QTData(box, vehicle, vehicle_type);
         this->vehicle_quadtree->Insert(new_node);
     }
@@ -327,7 +327,7 @@ void Puppeteer::OnUpdate(const gazebo::common::UpdateInfo &_info)
         double quad_range = vehicle_params["actor_margin"] + 0.5;
         auto min = ignition::math::Vector3d(vehicle_pos.Pos().X() - quad_range, vehicle_pos.Pos().Y() - quad_range, 0);
         auto max = ignition::math::Vector3d(vehicle_pos.Pos().X() + quad_range, vehicle_pos.Pos().Y() + quad_range, 0);
-        auto query_range = ignition::math::Box(min, max);
+        auto query_range = ignition::math::AxisAlignedBox(min, max);
 
         // Query objects in quadtree
         std::vector<QTData> query_objects = this->static_quadtree->QueryRange(query_range);

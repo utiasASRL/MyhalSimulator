@@ -67,7 +67,7 @@ void TourParser::ReadTourParams(){
         std::cout << "ERROR READING TOP LEFT CORNER";
     }
 
-    this->bounds = ignition::math::Box(ignition::math::Vector3d(b[0], b[1],0), ignition::math::Vector3d(b[2], b[3],0));
+    this->bounds = ignition::math::AxisAlignedBox(ignition::math::Vector3d(b[0], b[1],0), ignition::math::Vector3d(b[2], b[3],0));
 }
 
 void TourParser::ParseTour()

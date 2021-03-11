@@ -37,7 +37,7 @@ namespace myhal{
 
             void AddToWorld(std::string &world_string);
 
-            ignition::math::Box GetCollisionBox();
+            ignition::math::AxisAlignedBox GetCollisionBox();
 
             bool DoesCollide(std::shared_ptr<Model> other);
 
@@ -126,15 +126,15 @@ namespace myhal{
 
         public: 
 
-            ignition::math::Box boundary; 
+            ignition::math::AxisAlignedBox boundary; 
             
-            std::vector<ignition::math::Box> walls;
+            std::vector<ignition::math::AxisAlignedBox> walls;
 
             std::vector<ignition::math::Pose3d> route;
 
             std::vector<std::shared_ptr<Model>> models;
 
-            Room(double x_min, double y_min, double x_max, double y_max, std::vector<ignition::math::Box> walls, std::vector<ignition::math::Pose3d> route,  bool _enclosed);
+            Room(double x_min, double y_min, double x_max, double y_max, std::vector<ignition::math::AxisAlignedBox> walls, std::vector<ignition::math::Pose3d> route,  bool _enclosed);
 
             bool AddModel(std::shared_ptr<Model> model); //if safety is true, it prevents model collisions 
 

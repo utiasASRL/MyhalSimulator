@@ -87,7 +87,7 @@ class Puppeteer: public gazebo::WorldPlugin{
 
         boost::shared_ptr<QuadTree> vehicle_quadtree2; 
 
-        ignition::math::Box building_box; 
+        ignition::math::AxisAlignedBox building_box; 
 
         std::vector<boost::shared_ptr<Follower>> follower_queue;
 
