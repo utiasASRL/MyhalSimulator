@@ -199,6 +199,8 @@ void Puppeteer::OnUpdate(const gazebo::common::UpdateInfo &_info)
 
     // Get the time elapsed since the last call to this function
     double dt = (_info.simTime - this->last_update).Double();
+    double dt_real = (_info.realTime - this->last_real).Double();
+
 
     // Only update stuff with a certain frequency
     if (dt < 1 / this->update_freq)
@@ -206,6 +208,7 @@ void Puppeteer::OnUpdate(const gazebo::common::UpdateInfo &_info)
         return;
     }
     this->last_update = _info.simTime;
+    this->last_real = _info.realTime;
 
     ///////////////////
     // Timing variables
@@ -213,7 +216,8 @@ void Puppeteer::OnUpdate(const gazebo::common::UpdateInfo &_info)
 
     // Visualization boolean
     bool publish_flow = false;
-    bool show_flow_forces = true;
+    bool show_flow_forces = false;
+    bool cout_speeds = false;
 
     // Timing variables
     bool verbose = false;
@@ -221,6 +225,7 @@ void Puppeteer::OnUpdate(const gazebo::common::UpdateInfo &_info)
     std::vector<std::string> clock_str;
     if (verbose)
     {
+        std::cout << "real time elapsed = " << dt_real << " sim time = " << dt << std::endl;
         clock_str.push_back("Robot Init ......... ");
         clock_str.push_back("Cam handle ......... ");
         clock_str.push_back("Vehicles quadtree .. ");
@@ -314,6 +319,8 @@ void Puppeteer::OnUpdate(const gazebo::common::UpdateInfo &_info)
 
     t_debug.push_back(std::clock());
 
+    std::vector<double> speeds;
+
     // Calling update for each vehicle
     for (auto vehicle : this->vehicles)
     {
@@ -355,6 +362,21 @@ void Puppeteer::OnUpdate(const gazebo::common::UpdateInfo &_info)
 
         // Update the forces on vehicle
         vehicle->OnUpdate(_info, dt, near_vehicles, near_objects);
+        
+        if (cout_speeds)
+            speeds.push_back(vehicle->GetVelocity().Length());
+    }
+
+
+    if (cout_speeds)
+    {
+        std::cout.precision(2);
+        std::cout << std::fixed << " ------- Speeds: ";
+        for (auto veh_speed : speeds)
+        {
+            std::cout << veh_speed << " ";
+        }
+        std::cout << std::endl;
     }
 
 
@@ -482,6 +504,9 @@ boost::shared_ptr<Vehicle> Puppeteer::CreateVehicle(gazebo::physics::ActorPtr ac
             std::cout << "Error converting max_speed argument to double" << std::endl;
         }
     }
+
+    // Randomize the max speed
+    max_speed = ignition::math::Rand::DblNormal(max_speed, 0.1);
 
     if (actor_info.find("vehicle_type") != actor_info.end())
     {

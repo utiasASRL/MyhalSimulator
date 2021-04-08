@@ -93,5 +93,5 @@ docker run $docker_args \
 $volumes_noetic \
 $other_args \
 --name "$USER-noetic-$ROSPORT" \
-docker_ros_noetic_$USER \
+docker_ros_noetic2_$USER \
 "./classifier.sh"

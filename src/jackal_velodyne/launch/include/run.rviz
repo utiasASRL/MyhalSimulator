@@ -5,6 +5,7 @@ Panels:
     Property Tree Widget:
       Expanded:
         - /Global Options1
+        - /Map2
       Splitter Ratio: 0.625
     Tree Height: 734
   - Class: rviz/Selection
@@ -240,12 +241,12 @@ Visualization Manager:
       Class: rviz/Map
       Color Scheme: costmap
       Draw Behind: false
-      Enabled: true
+      Enabled: false
       Name: Map
       Topic: /move_base/global_costmap/costmap
       Unreliable: false
       Use Timestamp: false
-      Value: true
+      Value: false
     - Alpha: 1
       Buffer Length: 1
       Class: rviz/Path
@@ -277,13 +278,13 @@ Visualization Manager:
         {}
       Queue Size: 100
       Value: false
-    - Alpha: 0.699999988079071
+    - Alpha: 0.8999999761581421
       Class: rviz/Map
       Color Scheme: costmap
       Draw Behind: false
       Enabled: true
       Name: Map
-      Topic: /move_base/local_costmap/costmap
+      Topic: /collision_visu
       Unreliable: false
       Use Timestamp: false
       Value: true
@@ -436,5 +437,5 @@ Window Geometry:
   Views:
     collapsed: true
   Width: 1920
-  X: 3840
-  Y: 23
+  X: 1920
+  Y: 31

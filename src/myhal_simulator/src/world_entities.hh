@@ -113,7 +113,7 @@ namespace myhal{
             std::shared_ptr<Model> table_model;
             std::shared_ptr<Model> chair_model;
 
-            TableGroup(std::shared_ptr<Model> _table_model, std::shared_ptr<Model> _chair_model, int _num_chairs, double _rotation_angle);
+            TableGroup(std::shared_ptr<Model> _table_model, std::shared_ptr<Model> _chair_model, double _rotation_angle);
 
     };
 

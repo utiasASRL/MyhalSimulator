@@ -420,6 +420,39 @@ bool FlowField::SmoothFlowLookup(ignition::math::Vector3d pos, ignition::math::V
 
 }
 
+double FlowField::SmoothValueLookup(ignition::math::Vector3d pos)
+{
+    int r2, c2;
+    if(!PosToIndicies(pos + ignition::math::Vector3d(0.5 * resolution, -0.5 * resolution, 0), r2, c2))
+        return false;
+
+    double avg_tot = 0;
+    double avg_value = 0;
+
+    for (int r = r2 - 1; r < r2 + 1; r++)
+    {
+        for (int c = c2 - 1; c < c2 + 1; c++)
+        {
+            if (value_function[r][c] < 10e8)
+            {
+                double pix_x = (double)c * resolution + boundary.Min().X() + resolution / 2;
+                double pix_y = boundary.Max().Y() - (double)r * resolution - resolution / 2;
+                double weight = resolution - (pos - ignition::math::Vector3d(pix_x, pix_y, pos.Z())).Length();
+                if (weight > 0)
+                {
+                    avg_value += weight * value_function[r][c];
+                    avg_tot += weight;
+                }
+            }
+        }
+    }
+    if (avg_tot > 0)
+        return avg_value / avg_tot;
+    else
+        return  10e9;
+
+}
+
 
 double FlowField::Linear(const double &t, 
    const double &a, 

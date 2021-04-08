@@ -54,6 +54,7 @@ class FlowField{
 
         bool Lookup(ignition::math::Vector3d pos, ignition::math::Vector2d &res);
         bool SmoothFlowLookup(ignition::math::Vector3d pos, ignition::math::Vector2d &res);
+        double SmoothValueLookup(ignition::math::Vector3d pos);
 
 
         double Linear(const double &t, const double &a, const double &b);

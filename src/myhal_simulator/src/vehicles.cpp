@@ -172,6 +172,8 @@ Vehicle::Vehicle(gazebo::physics::ActorPtr _actor,
     this->all_objects = objects;
     this->height = initial_pose.Pos().Z();
 
+    this->flow_force = ignition::math::Vector3d(0, 0, 0);
+
     std::map<std::string, gazebo::common::SkeletonAnimation *>::iterator it;
     std::map<std::string, gazebo::common::SkeletonAnimation *> skel_anims = this->actor->SkeletonAnimations();
 
@@ -355,7 +357,7 @@ void Vehicle::AvoidObstacles(std::vector<gazebo::physics::EntityPtr> objects)
         //if the person has somehow arrived inside an object, dont count collisions with that object so it can eventually leave
         if (utilities::inside_box(box, this->pose.Pos()))
         {
-            std::cout << " ----> WARNING: " << this->GetName()  << " is in an obstacle" << std::endl;
+            //std::cout << " ----> WARNING: " << this->GetName()  << " is in an obstacle" << std::endl;
             // TODO Apply force to repel from obstacle center
             continue;
         }
@@ -413,7 +415,7 @@ void Vehicle::AvoidActors(std::vector<boost::shared_ptr<Vehicle>> vehicles)
             rad.Normalize();
 
             // Force value defined by gaussian
-            double exp_term = dist_cropped / (actor_margin / 6);
+            double exp_term = dist_cropped / (actor_margin / 5);
             exp_term *= exp_term;
             rep_force = rad * exp(-exp_term) * 0.5 * max_force;
 
@@ -500,6 +502,8 @@ bool Vehicle::IsStill()
     return this->still;
 }
 
+
+//----------------------------------------------------------------------------------------------------------------------------------------------
 // WANDERER
 
 void Wanderer::OnUpdate(const gazebo::common::UpdateInfo &_info, double dt, std::vector<boost::shared_ptr<Vehicle>> vehicles, std::vector<gazebo::physics::EntityPtr> objects)
@@ -534,6 +538,8 @@ void Wanderer::SetNextTarget()
     this->curr_target.Z() = this->height;
 }
 
+
+//----------------------------------------------------------------------------------------------------------------------------------------------
 // RANDOM WALKER
 
 void RandomWalker::OnUpdate(const gazebo::common::UpdateInfo &_info, double dt, std::vector<boost::shared_ptr<Vehicle>> vehicles, std::vector<gazebo::physics::EntityPtr> objects)
@@ -628,6 +634,8 @@ void RandomWalker::SetNextTarget(std::vector<gazebo::physics::EntityPtr> objects
     }
 }
 
+
+//----------------------------------------------------------------------------------------------------------------------------------------------
 // BOID
 
 Boid::Boid(gazebo::physics::ActorPtr _actor,
@@ -796,6 +804,8 @@ void Boid::Cohesion(std::vector<boost::shared_ptr<Vehicle>> vehicles)
     }
 }
 
+
+//----------------------------------------------------------------------------------------------------------------------------------------------
 /// STANDER
 
 Stander::Stander(gazebo::physics::ActorPtr _actor,
@@ -905,6 +915,9 @@ void Stander::OnUpdate(const gazebo::common::UpdateInfo &_info, double dt, std::
     this->UpdateModel(dt);
 }
 
+
+//----------------------------------------------------------------------------------------------------------------------------------------------
+
 Sitter::Sitter(gazebo::physics::ActorPtr _actor, std::string _chair_name, std::vector<gazebo::physics::EntityPtr> objects, double height)
     : Vehicle(_actor, 1, 1, 1, ignition::math::Pose3d(100, 100, 0.5, 0, 0, 0), ignition::math::Vector3d(0, 0, 0), objects)
 {
@@ -944,6 +957,9 @@ void Sitter::UpdateModel(double dt)
     this->actor->SetWorldPose(this->pose, true, true);
     this->actor->SetScriptTime(this->actor->ScriptTime() + dt * this->animation_factor);
 }
+
+
+//----------------------------------------------------------------------------------------------------------------------------------------------
 
 Follower::Follower(gazebo::physics::ActorPtr _actor,
                    double _mass,
@@ -1071,6 +1087,9 @@ void Follower::OnUpdate(const gazebo::common::UpdateInfo &_info, double dt, std:
     this->UpdateModel();
 }
 
+
+//----------------------------------------------------------------------------------------------------------------------------------------------
+
 void PathFollower::Follow()
 {
 
@@ -1151,6 +1170,9 @@ void PathFollower::RePath()
     // std::ofstream out("output.txt");
     // out << costmap_string;
 }
+
+
+//----------------------------------------------------------------------------------------------------------------------------------------------
 
 ////////////////////////////////////
 // ExtendedSocialForce_Actor
@@ -1388,6 +1410,9 @@ void ExtendedSocialForce_Actor::ExtendedSFObstacle(std::vector<gazebo::physics::
     this->ApplyForce(boundary_force);
 }
 
+
+//----------------------------------------------------------------------------------------------------------------------------------------------
+
 // CUSTOM_WANDERER
 /*
 * Custom_Wanderer will follow the goals defined in custom_simulation_params.yaml. 
@@ -1458,6 +1483,7 @@ void Custom_Wanderer::SetNextTarget(std::vector<boost::shared_ptr<Vehicle>> vehi
     this->curr_target = this->pose.Pos() + goal;
     this->curr_target.Z() = this->height;
 }
+
 
 //----------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -1554,17 +1580,20 @@ void FlowFollower::CheckGoal()
         }
     }
 
-    if (distance_to_goal > 10e8)
-        ROS_WARN_STREAM(this->GetName() << " at an unreachable point of the flow map #" << current_flow);
+    // if (distance_to_goal > 10e8)
+    //     ROS_WARN_STREAM(this->GetName() << " at an unreachable point of the flow map #" << current_flow);
 
 }
 
 void FlowFollower::UpdateDistance()
 {
-    int r, c;
-    if (!flow_fields[current_flow]->PosToIndicies(this->pose.Pos(), r, c))
-        throw std::out_of_range("FlowFollower position outside the flow map");
-    distance_to_goal = flow_fields[current_flow]->value_function[r][c];
+
+    distance_to_goal = flow_fields[current_flow]->SmoothValueLookup(this->pose.Pos());
+
+    // int r, c;
+    // if (!flow_fields[current_flow]->PosToIndicies(this->pose.Pos(), r, c))
+    //     throw std::out_of_range("FlowFollower position outside the flow map");
+    // distance_to_goal = flow_fields[current_flow]->value_function[r][c];
 }
 
 void FlowFollower::FlowForce()
@@ -1578,7 +1607,7 @@ void FlowFollower::FlowForce()
     ignition::math::Vector3d steer(flow.X(), flow.Y(), 0);
 
     // Set the standard flow force to 30% of the max force (can be higher close to obstacles) 
-    steer *= 0.3 * max_force / flow_fields[current_flow]->resolution;
+    steer *= 0.2 * max_force / flow_fields[current_flow]->resolution;
 
     // Flow is the direction of the desired speed
     //ignition::math::Vector3d desired_v(flow.X(), flow.Y(), 0);

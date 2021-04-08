@@ -500,6 +500,9 @@ void PointMapSLAM::gotCloud(const sensor_msgs::PointCloud2::ConstPtr& msg)
 	// Debugging messages //
 	////////////////////////
 
+	double duration = 1000 * (t[t.size() - 1] - t[0]) / (double)CLOCKS_PER_SEC;
+	ROS_ERROR_STREAM("Processed Frame " << msg->header.frame_id << " with stamp " << stamp << " in " <<  duration << " ms");
+
 	if (params.verbose)
 	{
 		for (size_t i = 0; i < min(t.size() - 1, clock_str.size()); i++)
@@ -759,6 +762,8 @@ int main(int argc, char **argv)
 		points_topic = "/classified_points";
 	else
 		points_topic = "/velodyne_points";
+	
+	points_topic = "/velodyne_points";
 
 	ROS_WARN_STREAM("Subscribing to " << points_topic);
 	ros::Subscriber lidar_sub = nh.subscribe(points_topic, 1, &PointMapSLAM::gotCloud, &mapper);

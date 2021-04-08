@@ -83,25 +83,24 @@ bool Model::DoesCollide(std::shared_ptr<Model> other)
 
     auto other_box = other->GetCollisionBox();
     auto this_box = this->GetCollisionBox();
-
     if (other_box.Intersects(this_box))
     {
         return true;
     }
 
     //redundancy check: TODO: remove
-    double minx = other_box.Min().X();
-    double miny = other_box.Min().Y();
-    double maxx = other_box.Max().X();
-    double maxy = other_box.Max().Y();
+    // double minx = other_box.Min().X();
+    // double miny = other_box.Min().Y();
+    // double maxx = other_box.Max().X();
+    // double maxy = other_box.Max().Y();
 
-    if (this->pose.Pos().X() > std::min(minx, maxx) && this->pose.Pos().X() < std::max(minx, maxx))
-    {
-        if (this->pose.Pos().Y() > std::min(miny, maxy) && this->pose.Pos().Y() < std::max(miny, maxy))
-        {
-            return true;
-        }
-    }
+    // if (this->pose.Pos().X() > std::min(minx, maxx) && this->pose.Pos().X() < std::max(minx, maxx))
+    // {
+    //     if (this->pose.Pos().Y() > std::min(miny, maxy) && this->pose.Pos().Y() < std::max(miny, maxy))
+    //     {
+    //         return true;
+    //     }
+    // }
 
     return false;
 }
@@ -339,10 +338,9 @@ std::string Camera::CreateSDF(){
 
 ///TableGroup
 
-TableGroup::TableGroup(std::shared_ptr<Model> _table_model, std::shared_ptr<Model> _chair_model, int _num_chairs, double _rotation_angle){
+TableGroup::TableGroup(std::shared_ptr<Model> _table_model, std::shared_ptr<Model> _chair_model, double _rotation_angle){
     this->table_model = _table_model;
     this->chair_model = _chair_model;
-    this->num_chairs = std::min(_num_chairs,4); //TODO: allow more chairs in the future
 
     this->rotation_angle = _rotation_angle;
     this->table_model->RotateClockwise(_rotation_angle);
@@ -351,30 +349,88 @@ TableGroup::TableGroup(std::shared_ptr<Model> _table_model, std::shared_ptr<Mode
     auto pos = table_model->pose.Pos();
     pos.Z() = 0;
 
-    int start = ignition::math::Rand::IntUniform(0,3);
+    // Chair size
+    double chair_w = this->chair_model->GetWidth();
+    double chair_radius = 0.5 * std::sqrt(std::pow(this->chair_model->GetWidth(), 2) + std::pow(this->chair_model->GetLength(), 2));
+    
+    // Set chair gap (relatively to chair width)
+    double chair_gap = 1.8 * chair_w;
 
-    // make sitter plugin:
+    // First get all possible chair possitions
+    // ***************************************
 
-    for (int i = start; i < start+num_chairs; i++){
+    std::vector<ignition::math::Vector3d> chairs_positions;
+    for (int i = 0; i < 4; i++)
+    {
+        // Get the edge length => number of chairs
+        auto table_edge = ignition::math::Line3d(corners[(i+1)%(corners.size())], corners[i%(corners.size())]);
+        double edge_l = table_edge.Length();
+        int egdes_chairs_n = (int) std::floor(edge_l / chair_gap);
+        if (egdes_chairs_n < 1 &&  edge_l > chair_w)
+            egdes_chairs_n = 1;
+
+        // Get the egde border length
+        double border_l = 0.5 * (edge_l - (egdes_chairs_n - 1) * chair_gap);
+        
+        // find normal of the edge (pointing outwartds)
+        ignition::math::Vector3d normal;
+        if (!utilities::get_normal_to_edge(pos, table_edge, normal))
+            continue;
+        normal *= -1;
+        normal.Normalize();
+
+        // Get edge vector and normal vector
+        ignition::math::Vector3d edge_vector = table_edge.Direction();
+        edge_vector.Normalize();
+
+        // Get position of the first chair along the edge
+        auto A = table_edge[0] + edge_vector * border_l;
+
+        // Loop on chairs positions
+        for (int j = 0; j < egdes_chairs_n; j++)
+        {
+            // Position of the chair along the table edge
+            auto res_pos = A + edge_vector * (j * chair_gap);
+
+            // Get position of the chair relatively to the table (gaussian distribution arround the perfect position)
+            // Chair cannot be inside table
+            double dist = ignition::math::Rand::DblNormal(1.2 * chair_radius, 0.7 * chair_radius);
+            while (dist < 1.05 * chair_radius)
+                dist = ignition::math::Rand::DblNormal(1.2 * chair_radius, 0.7 * chair_radius);
+            
+            // Offset in tangential direction
+            double offset = ignition::math::Rand::DblNormal(0, 0.4 * chair_radius);
+
+            // Apply offset
+            res_pos += normal * dist + edge_vector * offset;
+
+            // Save positions
+            chairs_positions.push_back(res_pos);
+        }
+    }
+
+    // Then spawn chairs
+    // *****************
+
+    double chair_spawn_odd = 0.7;
+
+    for (auto& chair_pos: chairs_positions)
+    {
+        if (ignition::math::Rand::DblUniform() > chair_spawn_odd)
+            continue;
+
+        // Create chair model
         std::shared_ptr<Model> new_chair = std::make_shared<IncludeModel>("chair", table_model->pose, this->chair_model->model_file, this->chair_model->GetWidth(), this->chair_model->GetWidth());
+
+        // Rotate it randomly
         new_chair->RotateClockwise(ignition::math::Rand::DblUniform(0,6.28));
 
-        auto table_edge = ignition::math::Line3d(corners[(i+1)%(corners.size())], corners[i%(corners.size())]);
-       
-        // find normal from tables center to edge 
-        ignition::math::Vector3d normal;
-    
-        
-        if (utilities::get_normal_to_edge(pos, table_edge, normal)){
-            normal*=-1;
-            auto res_pos = pos+normal;
-            normal.Normalize();
-            normal*= (new_chair->GetWidth()/1.5); //TODO: fix this
-            res_pos+=normal;
-            new_chair->Reposition(res_pos.X(), res_pos.Y());
+        // Reposition
+        new_chair->Reposition(chair_pos.X(), chair_pos.Y());
 
-            this->chairs.push_back(new_chair);
-        }
+        // Add to the table chairs
+        this->chairs.push_back(new_chair);
+
     }
 
 }

@@ -5,10 +5,6 @@ plugin_names:
   - basic_random_walker
   - basic_follower
   - long_term_stander
-  - advanced_extendedSF
-  - custom_wanderer
-  - path_follower
-  - flow_follower
 
 basic_wanderer:
   vehicle_type: wanderer
@@ -38,19 +34,3 @@ long_term_stander:
   max_speed: "0.7"
   standing_duration: "20"
   walking_duration: "20"
-
-advanced_extendedSF:
-  vehicle_type: extendedSF_actor
-  max_speed: "1"
-
-custom_wanderer:
-  vehicle_type: custom_wanderer
-  max_speed: "1"
-
-path_follower: 
-  vehicle_type: "path_follower"
-  max_speed: "1"
-
-flow_follower: 
-  vehicle_type: "flow_follower"
-  max_speed: "0.9"

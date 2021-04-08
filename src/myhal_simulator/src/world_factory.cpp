@@ -365,9 +365,9 @@ void WorldHandler::LoadParams(){
         }
         std::shared_ptr<ModelInfo> m_info;
         if (info.find("height") != info.end()){
-            m_info = std::make_shared<ModelInfo>(name, info["filename"], std::stod(info["width"])+2*this->robot_radius, std::stod(info["length"])+2*this->robot_radius, std::stod(info["height"]));
+            m_info = std::make_shared<ModelInfo>(name, info["filename"], std::stod(info["width"]), std::stod(info["length"]), std::stod(info["height"]));
         } else{
-            m_info = std::make_shared<ModelInfo>(name, info["filename"], std::stod(info["width"])+2*this->robot_radius, std::stod(info["length"])+2*this->robot_radius);
+            m_info = std::make_shared<ModelInfo>(name, info["filename"], std::stod(info["width"]), std::stod(info["length"]));
         }
         this->model_info[name] = m_info;
     }
@@ -424,6 +424,9 @@ void WorldHandler::LoadParams(){
         return;
     }
 
+
+    std::cout << "\n-----------------------------------------" << std::endl;
+    std::cout << "Reading Scenarios: " << std::endl;
     for (auto name: scenario_names){
 
         
@@ -434,13 +437,47 @@ void WorldHandler::LoadParams(){
         }
 
         int pop_num = -1;
-        int pop_density = -1;
+        double pop_density = -1;
+        double pop_rand_range = -1;
         if (info.count("pop_density"))
             pop_density = std::stod(info["pop_density"]);
         if (info.count("pop_num"))
             pop_num = std::stoi(info["pop_num"]);
+        if (info.count("pop_rand_range"))
+            pop_rand_range = std::stod(info["pop_rand_range"]);
 
-        std::shared_ptr<Scenario> scenario = std::make_shared<Scenario>(pop_density, pop_num, std::stod(info["table_percentage"]), info["actor"]);
+        // Random population density
+        if (pop_density > 0 && pop_rand_range > 0)
+        {
+            double min_density = std::max(0.0, pop_density - pop_rand_range);
+            double max_density = pop_density + pop_rand_range;
+            pop_density = ignition::math::Rand::DblUniform(min_density, max_density);
+        }
+
+        // Random table percentage
+        double table_percentage = -1;
+        double table_rand_range = -1;
+        if (info.count("table_percentage"))
+            table_percentage = std::stod(info["table_percentage"]);
+        if (info.count("table_rand_range"))
+            table_rand_range = std::stod(info["table_rand_range"]);
+            
+        if (table_percentage > 0 && table_rand_range > 0)
+        {
+            double min_percentage = std::max(0.0, table_percentage - table_rand_range);
+            double max_percentage = std::min(1.0, table_percentage + table_rand_range);
+            table_percentage = ignition::math::Rand::DblUniform(min_percentage, max_percentage);
+        }
+
+        std::cout << name << ": Tables = " << (int)(table_percentage* 100) << "%  |  Actors = " << (int)(pop_density* 100)<< "%" << std::endl;
+        std::shared_ptr<Scenario> scenario = std::make_shared<Scenario>(pop_density, pop_num, table_percentage, info["actor"]);
+
+        // Save info in log file
+        std::ofstream log_file;
+        std::string filepath = "/home/" + user_name + "/Myhal_Simulation/simulated_runs/" + start_time + "/";
+        log_file.open(filepath + "/logs-" + start_time + "/log.txt", std::ios_base::app);
+        log_file << "\nScenario: " << name << "\nTables: " << table_percentage << "\nActors: " << pop_density << std::endl;
+        log_file.close();
 
         /*std::vector<std::string> model_list; 
 
@@ -469,6 +506,7 @@ void WorldHandler::LoadParams(){
 
         this->scenarios[name] = scenario;
     }
+    std::cout << "-----------------------------------------" << std::endl;
 
     //READ CUSTOM SCENARIO INFO
 
@@ -533,13 +571,19 @@ void WorldHandler::FillRoom(std::shared_ptr<RoomInfo> room_info){
         std::cout << "ERROR: YOU HAVE SPECIFIED A SCENARIO THAT DOESN'T EXIST" << std::endl;
         return;
     }
+
+    // Get scenario and number of tables
     auto scenario = this->scenarios[room_info->scenario];
-    
     int num_models = (int) (scenario->model_percentage*((room_info->positions.size())));
     
+    // Shuffle the order of the possible table positions
     std::random_shuffle(room_info->positions.begin(), room_info->positions.end());
     
-    for (int i = 0; i < num_models; ++i){
+    // Add the tables
+    // **************
+
+    for (int i = 0; i < num_models; ++i)
+    {
 
         auto t_info = scenario->GetRandomTable();
 
@@ -558,17 +602,19 @@ void WorldHandler::FillRoom(std::shared_ptr<RoomInfo> room_info){
 
             
             auto t_model_info = this->model_info[t_info->table_name];
-
             auto c_model_info = this->model_info[t_info->chair_name];
             
             auto table_model = std::make_shared<myhal::IncludeModel>(t_model_info->name, random_pose, t_model_info->filename, t_model_info->width, t_model_info->length);
             auto chair_model = std::make_shared<myhal::IncludeModel>(c_model_info->name, random_pose, c_model_info->filename, c_model_info->width, c_model_info->length);
 
+            // Add table and a random number of chairs
             double rotation = 1.5707 * ignition::math::Rand::IntUniform(0,1);
-            auto table_group = std::make_shared<myhal::TableGroup>(table_model, chair_model, ignition::math::Rand::IntUniform(2,4), rotation); 
+            auto table_group = std::make_shared<myhal::TableGroup>(table_model, chair_model, rotation); 
             room_info->room->AddModel(table_group->table_model);
             
-            for (auto chair: table_group->chairs){
+            // Add Sitter on the chairs
+            for (auto chair: table_group->chairs)
+            {
                 room_info->room->AddModel(chair);
                 // 50% chance of someone sitting on the chair 
                 if (ignition::math::Rand::IntUniform(0,1) == 1){

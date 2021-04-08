@@ -25,8 +25,8 @@
     <param name="motion_distortion" value="false"/>
     <param name="lidar_n_lines" value="32"/>
 
-    <!-- <param name="init_map_day" value="2020-10-02-13-39-05"/> -->
-    <param name="init_map_ind" value="2"/>
+    <param name="init_map_day" value="2020-10-02-13-39-05"/>
+    <param name="init_map_ind" value="1"/>
 
     <param name="h_scale" value="0.5"/>
     <param name="r_scale" value="4.0"/>

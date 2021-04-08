@@ -20,7 +20,7 @@ empty:
 
 flow_follower_low_density:
   pop_density: "0"
-  pop_num: "20"
+  pop_num: "15"
   table_percentage: "0"
   actor: actor_flow_follower
   table_group_list: all_group

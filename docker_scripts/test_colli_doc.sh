@@ -5,7 +5,7 @@
 ########
 
 echo ""
-echo "Running ros-collider docker"
+echo "Running ros-melodic and ros-noetic docker. Remember you can set ROSPORT to a custom value"
 echo ""
 
 rosport=$ROSPORT
@@ -16,14 +16,18 @@ while getopts dc: option
 do
 case "${option}"
 in
-d) detach=true;; 
+d) detach=true;;
 c) command=${OPTARG};;
 esac
 done
 
+if [ -n "$command" ]; then
+  echo -e "Running command $command\n"
+fi
+
 if [[ -z "$ROSPORT" ]]; then
-    echo "WARNING: didn't provide ROSPORT, setting it to 1100"
-    export ROSPORT=1100
+    echo "WARNING: didn't provide ROSPORT, setting it to random value, this could result in conflicts." 1>&2
+    export ROSPORT=$(($RANDOM%30000+1101))
 fi
 
 last_line=$(tail -1 ~/.bashrc)
@@ -37,31 +41,27 @@ gazport=$(($rosport+1))
 export ROSPORT=$(($ROSPORT+2))
 echo "export ROSPORT=$ROSPORT" >> ~/.bashrc
 
-##########################
-# Start docker container #
-##########################
-
-# Docker run arguments
-docker_args="-it --rm --shm-size=64g "
-
-# Running on gpu (Uncomment to enable gpu)
-docker_args="${docker_args} --gpus all "
+###########################
+# Start docker containers #
+###########################
 
 # Docker run arguments (depending if we run detached or not)
+docker_args="-it --rm --shm-size=64g --gpus all "
+
+# Running detached
 if [ "$detach" = true ] ; then
-    # args for detached docker
     docker_args="-d ${docker_args}"
-    now=`date +%Y-%m-%d_%H-%M-%S`
-    mkdir -p $PWD/../../KPConv_results/Log_"$now"
 fi
 
 # Create folder for simulation if not already there
 mkdir -p "$PWD/../../Simulation_Data/simulated_runs"
 
 # Volumes (modify with your own path here)
-volumes="-v $PWD/../../MyhalSimulator-DeepCollider:/home/$USER/catkin_ws \
+volumes_melodic="-v $PWD/..:/home/$USER/catkin_ws \
+-v $PWD/../../Simulation_Data:/home/$USER/Myhal_Simulation "
+
+volumes_noetic="-v $PWD/../../MyhalSimulator-DeepCollider:/home/$USER/catkin_ws \
 -v $PWD/../../Simulation_Data:/home/$USER/Myhal_Simulation \
--v $PWD/../../MyhalSimulator:/home/$USER/MyhalSimulator \
 -v $PWD/../../KPConv_Data:/home/$USER/Data/MyhalSim \
 -v $PWD/../../KPConv_results:/home/$USER/catkin_ws/src/collision_trainer/results"
 
@@ -78,17 +78,28 @@ other_args="-v $XSOCK:$XSOCK \
     -e GAZEBO_MASTER_URI=http://$HOSTNAME:$gazport \
     -e ROSPORT=$rosport "
 
+# Execute the collider docker in detach mode
+docker run -d --gpus all -i --rm --shm-size=64g \
+$volumes_noetic \
+$other_args \
+--name "$USER-collider-$ROSPORT" \
+docker_ros_noetic2_$USER \
+"./collider.sh"
+
+# Attach a log parameters and log the detached docker
+now=`date +%Y-%m-%d_%H-%M-%S`
+docker logs -f "$USER-collider-$ROSPORT" &> $PWD/../../Simulation_Data/log_"$now"_collider.txt &
+
 # Execute the command in docker (Example of command: ./master.sh -ve -m 2 -p Sc1_params -t A_tour)
 docker run $docker_args \
-$volumes \
+$volumes_melodic \
 $other_args \
---name "$USER-training-dev" \
-docker_ros_noetic2_$USER
+--name "$USER-melodic-$ROSPORT" \
+docker_ros_melodic_$USER \
+$command
 
 # Attach a log parameters and log the detached docker
 if [ "$detach" = true ] ; then
-    docker logs -f "$USER-training-$ROSPORT" &> $PWD/../../KPConv_results/Log_"$now"/log.txt &
+    docker logs -f "$USER-melodic-$ROSPORT" &> $PWD/../../Simulation_Data/log_"$now"_melodic.txt &
 fi
-
-source ~/.bashrc
 

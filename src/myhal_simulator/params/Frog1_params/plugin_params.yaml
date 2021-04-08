@@ -53,4 +53,4 @@ path_follower:
 
 flow_follower: 
   vehicle_type: "flow_follower"
-  max_speed: "1.5"
+  max_speed: "0.9"

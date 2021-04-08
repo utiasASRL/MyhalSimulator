@@ -37,6 +37,7 @@
 #include <geometry_msgs/TransformStamped.h>
 #include <chrono>
 #include <thread>
+#include <iomanip>
 
 typedef pcl::PointCloud<pcl::PointXYZ> PointCloud;
 typedef boost::shared_ptr<SmartCam> SmartCamPtr;
@@ -74,6 +75,7 @@ class Puppeteer: public gazebo::WorldPlugin{
         double update_freq = 60;
 
         gazebo::common::Time last_update;
+        gazebo::common::Time last_real;
 
         std::map<std::string, double> vehicle_params;
 

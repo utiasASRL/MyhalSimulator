@@ -60,7 +60,7 @@ else
 fi
 
 # Running on gpu (Uncomment to enable gpu)
-docker_args="${docker_args} --gpus all "
+docker_args="${docker_args} --runtime=nvidia"
 
 # Create folder for simulation if not already there
 mkdir -p "$PWD/../../Simulation_Data/simulated_runs"
@@ -71,9 +71,10 @@ volumes="-v $PWD/..:/home/$USER/catkin_ws \
 
 # Additional arguments to be able to open GUI
 XSOCK=/tmp/.X11-unix
-XAUTH=/home/$USER/.Xauthority
-other_args="-v $XSOCK:$XSOCK \
-    -v $XAUTH:$XAUTH \
+#XAUTH=/home/$USER/.Xauthority
+XAUTH=/tmp/.docker.xauth
+other_args="-v $XAUTH:$XAUTH:rw \
+    -v $XSOCK:$XSOCK:rw \
     --net=host \
     --privileged \
 	-e XAUTHORITY=${XAUTH} \
@@ -89,7 +90,13 @@ $volumes \
 $other_args \
 --name "$USER-melodic-$ROSPORT" \
 docker_ros_melodic_$USER \
-$command 
+$command
+
+# Attach a log parameters and log the detached docker
+if [ "$detach" = true ] ; then
+    now=`date +%Y-%m-%d_%H-%M-%S`
+    docker logs -f "$USER-melodic-$ROSPORT" &> $PWD/../../Simulation_Data/log_"$now".txt &
+fi
 
 # Finish
 echo "Final Sourcing ..."
