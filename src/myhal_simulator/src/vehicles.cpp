@@ -158,7 +158,9 @@ Vehicle::Vehicle(gazebo::physics::ActorPtr _actor,
                  double _max_speed,
                  ignition::math::Pose3d initial_pose,
                  ignition::math::Vector3d initial_velocity,
-                 std::vector<gazebo::physics::EntityPtr> objects)
+                 std::vector<gazebo::physics::EntityPtr> objects,
+                 double _obstacle_margin,
+                 double _actor_margin)
 {
 
     this->actor = _actor;
@@ -171,6 +173,8 @@ Vehicle::Vehicle(gazebo::physics::ActorPtr _actor,
     this->acceleration = 0;
     this->all_objects = objects;
     this->height = initial_pose.Pos().Z();
+    this->obstacle_margin = _obstacle_margin;
+    this->actor_margin = _actor_margin;
 
     this->flow_force = ignition::math::Vector3d(0, 0, 0);
 
@@ -190,8 +194,14 @@ Vehicle::Vehicle(gazebo::physics::ActorPtr _actor,
 void Vehicle::OnUpdate(const gazebo::common::UpdateInfo &_info, double dt, std::vector<boost::shared_ptr<Vehicle>> vehicles, std::vector<gazebo::physics::EntityPtr> objects)
 {
     this->Seek(this->curr_target);
-    this->UpdateModel();
-    this->UpdatePosition(dt);
+}
+
+void Vehicle::OnPoseUpdate(const gazebo::common::UpdateInfo &_info, double dt, std::vector<gazebo::physics::EntityPtr> objects)
+{
+    // Update
+    UpdatePosition(dt);
+    // UpdatePositionContactObstacles(objects, dt);
+    UpdateModel();
 }
 
 gazebo::physics::ActorPtr Vehicle::GetActor()
@@ -242,6 +252,101 @@ void Vehicle::UpdatePosition(double dt)
 
     this->pose.Rot() = ignition::math::Quaterniond(IGN_PI_2, 0, current_yaw + yaw_diff.Radian() * 0.1);
 
+    this->acceleration = 0;
+}
+
+/*
+*   CustomAvoidObstacles: FLowFollowers can use the flow value function to know where obstacles are and avoid them
+*   This function uses the current acceleration to determine if a collision is going to happen and correct it accordingly
+*/
+void Vehicle::UpdatePositionContactObstacles(std::vector<gazebo::physics::EntityPtr> &objects, double dt)
+{
+
+    // First predict future to see if there is contact
+    // ***********************************************
+
+    // Predict the velocity and next position of the actor
+    auto predicted_velocity = this->velocity + acceleration * dt;
+    if (predicted_velocity.Length() > max_speed)
+    {
+        predicted_velocity.Normalize();
+        predicted_velocity *= max_speed;
+    }
+
+    // Predict next position
+    auto next_pos = this->pose.Pos() + predicted_velocity * dt;
+
+    // Correct the next position to avoid getting into an obstacle
+    // ***********************************************************
+
+    // Find the closest obstacle
+    bool inside_obstacle = false;
+    ignition::math::Vector3d min_normal(0, 0, 0);
+    double min_dist = 10e9;
+    for (gazebo::physics::EntityPtr object : objects)
+    {
+
+        // Get object bounding box
+        ignition::math::Box box = object->BoundingBox();
+
+        // Check height for doors
+        double min_z = std::min(box.Min().Z(), box.Max().Z());
+        if (min_z > 1.5)
+            continue;
+
+        // Get the vector from closest box point to the current pos
+        auto next_normal = utilities::min_box_repulsive_vector(next_pos, box);
+
+        // Check if the person would arrive inside an object
+        if (utilities::inside_box(box, next_pos))
+        {
+            inside_obstacle = true;
+            break;
+        }
+
+        // Otherwise consider the closest object the person would arrive to
+        if (next_normal.Length() < min_dist)
+        {
+            min_normal = next_normal;
+            min_dist = next_normal.Length();
+        }
+    }
+
+    // Get the actor at a distance of obstacle_margin from the nearest obstacle
+    double dist = min_normal.Length();
+    min_normal.Normalize();
+    if (inside_obstacle)
+        next_pos += min_normal * (-obstacle_margin - dist);
+    else if (dist < obstacle_margin)
+        next_pos += min_normal * (obstacle_margin - dist);
+
+    // Back propgate this new position to speed
+    // ****************************************
+
+    this->velocity = (next_pos - this->pose.Pos()) / dt;
+    this->pose.Pos() = next_pos;
+
+    // Finish with the orientation update
+    // **********************************
+
+    // Get new direction
+    ignition::math::Vector3d direction = this->velocity;
+    direction.Normalize();
+
+    // Get the diff in yaw
+    double dir_yaw = atan2(direction.Y(), direction.X());
+    double current_yaw = this->pose.Rot().Yaw();
+    ignition::math::Angle yaw_diff = dir_yaw - current_yaw + IGN_PI_2;
+
+    // Safe check yaw diff
+    yaw_diff.Normalize();
+    if (this->velocity.Length() < 10e-2)
+        yaw_diff = 0;
+
+    // Update pose
+    this->pose.Rot() = ignition::math::Quaterniond(IGN_PI_2, 0, current_yaw + yaw_diff.Radian() * 0.1);
+
+    // Reset acceleration
     this->acceleration = 0;
 }
 
@@ -298,78 +403,57 @@ void Vehicle::Arrival(ignition::math::Vector3d target, double weight)
 
 void Vehicle::AvoidObstacles(std::vector<gazebo::physics::EntityPtr> objects)
 {
-    //     ignition::math::Vector3d boundary_force = ignition::math::Vector3d(0,0,0);
-    //     double interaction_strength = 0.8 + ignition::math::Rand::DblUniform(-0.1,0.1);
-    //     double interaction_range = 1 + ignition::math::Rand::DblUniform(-0.25,0.25);
-
-    //     for (gazebo::physics::EntityPtr object: objects){
-    //         ignition::math::Box box = object->BoundingBox();
-
-    //         ignition::math::Vector3d rad = this->pose.Pos() - box.Center();
-    // 		double dist = rad.Length();
-    //         dist = std::max(0.0, dist-0.2); //acounting for the radius of the person
-
-    //         auto dir = this->curr_target;
-    //         dir.Normalize();
-    //         rad.Normalize();
-    //         double angle_rad_dir = std::acos(dir.Dot(rad));
-    //         double SF_form_factor = 0.2 + 0.4 * (1 + std::cos(angle_rad_dir));
-    //         rad *= interaction_strength * std::exp(-dist/interaction_range) * SF_form_factor;
-
-    //         if (dist < this->obstacle_margin){
-    // 			rad *= 100; //multiply force if we're too close
-    //             std::cout<<"Too close to the obstacle : " << this->GetName() <<std::endl;
-    // 		}
-    //         boundary_force += rad;
-    //         std::cout << this->GetName() << " boundary force: " << boundary_force << std::endl;
-    //     }
-    //     boundary_force.Z() = 0;
-    //     this->ApplyForce(boundary_force);
-    // }
-
     ignition::math::Vector3d boundary_force = ignition::math::Vector3d(0, 0, 0);
 
     for (gazebo::physics::EntityPtr object : objects)
     {
+        // Ignore robot
+        if (object->GetName() == "jackal")
+            continue;
 
         // Get object bounding box
         ignition::math::Box box = object->BoundingBox();
 
-        // inflate the box slightly
-        double inflate = 0.1;
-        if (object->GetName() == "jackal")
-        {
-            inflate = 0.2;
-        }
-        box.Min().X() -= inflate;
-        box.Max().X() += inflate;
-        box.Min().Y() -= inflate;
-        box.Max().Y() += inflate;
+        // // inflate the box slightly => Useless as we crop dist after
+        // double inflate = 0.1;
+        // box.Min().X() -= inflate;
+        // box.Max().X() += inflate;
+        // box.Min().Y() -= inflate;
+        // box.Max().Y() += inflate;
 
         // Check height for doors
         double min_z = std::min(box.Min().Z(), box.Max().Z());
         if (min_z > 1.5)
             continue;
 
-        // Get the vector from closest box point to the current pos
-        ignition::math::Vector3d min_normal = utilities::min_box_repulsive_vector(this->pose.Pos(), box);
+        ignition::math::Vector3d min_normal;
+        double dist;
 
-        //if the person has somehow arrived inside an object, dont count collisions with that object so it can eventually leave
+        // If the person has somehow arrived inside an object, force to leave
         if (utilities::inside_box(box, this->pose.Pos()))
         {
+            // Apply the max force to repel from obstacle center
+            min_normal = this->pose.Pos() - box.Center();
+            min_normal.Z() = 0;
+            dist = 0.0;
             //std::cout << " ----> WARNING: " << this->GetName()  << " is in an obstacle" << std::endl;
-            // TODO Apply force to repel from obstacle center
-            continue;
+        }
+        else
+        {
+            // Get the vector from closest box point to the current pos
+            min_normal = utilities::min_box_repulsive_vector(this->pose.Pos(), box);
+            min_normal.Z() = 0;
+            dist = min_normal.Length();
         }
 
-        // Compute boundary force 
-        double dist = min_normal.Length();
+        // Compute boundary force
+        dist = std::max(0.0, dist - this->obstacle_margin); //acounting for the radius of the person
         if (dist < this->obstacle_margin)
         {
             min_normal.Normalize();
             double exp_term = dist / (obstacle_margin / 2);
             exp_term *= exp_term;
-            boundary_force += min_normal * (max_force *  exp(-exp_term));
+            boundary_force += min_normal * (0.8 * max_force * exp(-exp_term));
         }
     }
 
@@ -380,9 +464,46 @@ void Vehicle::AvoidObstacles(std::vector<gazebo::physics::EntityPtr> objects)
         boundary_force *= this->max_force;
     }
 
-
     // Apply force
     boundary_force.Z() = 0;
+    this->ApplyForce(boundary_force);
+}
+
+void Vehicle::AvoidRobot(std::vector<gazebo::physics::EntityPtr> objects)
+{
+
+    ignition::math::Vector3d boundary_force = ignition::math::Vector3d(0, 0, 0);
+
+    for (gazebo::physics::EntityPtr object : objects)
+    {
+        if (object->GetName() == "jackal")
+        {
+            ignition::math::Box box = object->BoundingBox();
+
+            ignition::math::Vector3d rad = this->pose.Pos() - box.Center();
+            rad.Z() = 0;
+            double dist = rad.Length();
+            dist = std::max(0.0, dist - 0.2); // acounting for the radius of the person
+
+            // Compute boundary force
+            if (dist < this->actor_margin)
+            {
+                rad.Normalize();
+                double exp_term = dist / (actor_margin / 2);
+                exp_term *= exp_term;
+                boundary_force += rad * (0.4 * max_force * exp(-exp_term));
+            }
+        }
+    }
+
+    // Clip max force
+    if (boundary_force.Length() > this->max_force)
+    {
+        boundary_force.Normalize();
+        boundary_force *= this->max_force;
+    }
+
+    // Apply force
     this->ApplyForce(boundary_force);
 }
 
@@ -405,19 +526,19 @@ void Vehicle::AvoidActors(std::vector<boost::shared_ptr<Vehicle>> vehicles)
 
         ignition::math::Vector3d diff_pos = this_pos - other_pos;
         double dist = diff_pos.Length();
-        double dist_cropped = std::max(0.0, dist - 0.25); //acounting for the radius of the person
+        double dist_cropped = std::max(0.0, dist - 0.5); //acounting for the radius of the two person
 
         ignition::math::Vector3d rep_force(0, 0, 0);
-        if ( 1e-6 < dist && dist < this->actor_margin)
+        if (1e-6 < dist && dist < this->actor_margin)
         {
             // Normalize force vector
             ignition::math::Vector3d rad(diff_pos);
             rad.Normalize();
 
             // Force value defined by gaussian
-            double exp_term = dist_cropped / (actor_margin / 5);
+            double exp_term = dist_cropped / (actor_margin / 4);
             exp_term *= exp_term;
-            rep_force = rad * exp(-exp_term) * 0.5 * max_force;
+            rep_force = rad * exp(-exp_term) * 0.4 * max_force;
 
             ignition::math::Vector3d other_flow_force = vehicles[i]->flow_force;
             if (flow_force.Length() > 0 && other_flow_force.Length() > 0)
@@ -447,17 +568,16 @@ void Vehicle::AvoidActors(std::vector<boost::shared_ptr<Vehicle>> vehicles)
                     other_tan *= -1;
                 if (self_tan.Dot(other_tan) > 0)
                 {
-                        if (self_angle < other_angle)
-                            self_tan *= -1;
+                    if (self_angle < other_angle)
+                        self_tan *= -1;
                 }
 
                 // Tangential force value
                 double tangential_v = 0.5 * flow_force.Length() * exp(-other_term) * exp(-self_term);
                 rep_force += self_tan * tangential_v;
             }
-
         }
-        
+
         steer += rep_force;
     }
 
@@ -469,7 +589,6 @@ void Vehicle::AvoidActors(std::vector<boost::shared_ptr<Vehicle>> vehicles)
     }
     steer.Z() = 0;
 
-    
     showed_force = steer;
     this->ApplyForce(steer);
     // if(steer.Length() != 0){
@@ -502,7 +621,6 @@ bool Vehicle::IsStill()
     return this->still;
 }
 
-
 //----------------------------------------------------------------------------------------------------------------------------------------------
 // WANDERER
 
@@ -513,9 +631,7 @@ void Wanderer::OnUpdate(const gazebo::common::UpdateInfo &_info, double dt, std:
     this->Seek(this->curr_target);
     this->AvoidActors(vehicles);
     this->AvoidObstacles(objects);
-
-    this->UpdatePosition(dt);
-    this->UpdateModel();
+    this->AvoidRobot(objects);
 }
 
 void Wanderer::SetNextTarget()
@@ -538,7 +654,6 @@ void Wanderer::SetNextTarget()
     this->curr_target.Z() = this->height;
 }
 
-
 //----------------------------------------------------------------------------------------------------------------------------------------------
 // RANDOM WALKER
 
@@ -553,9 +668,7 @@ void RandomWalker::OnUpdate(const gazebo::common::UpdateInfo &_info, double dt, 
     this->Seek(this->curr_target);
     this->AvoidActors(vehicles);
     this->AvoidObstacles(objects); //TODO: make sure this is safe here
-
-    this->UpdatePosition(dt);
-    this->UpdateModel();
+    this->AvoidRobot(objects);
 }
 
 void RandomWalker::SetNextTarget(std::vector<gazebo::physics::EntityPtr> objects)
@@ -634,7 +747,6 @@ void RandomWalker::SetNextTarget(std::vector<gazebo::physics::EntityPtr> objects
     }
 }
 
-
 //----------------------------------------------------------------------------------------------------------------------------------------------
 // BOID
 
@@ -649,8 +761,10 @@ Boid::Boid(gazebo::physics::ActorPtr _actor,
            double _cohesion,
            double _separation,
            double angle,
-           double radius)
-    : Vehicle(_actor, _mass, _max_force, _max_speed, initial_pose, initial_velocity, objects)
+           double radius,
+           double _obstacle_margin,
+           double _actor_margin)
+    : Vehicle(_actor, _mass, _max_force, _max_speed, initial_pose, initial_velocity, objects, _obstacle_margin, _actor_margin)
 {
     this->weights[ALI] = _alignement;
     this->weights[COH] = _cohesion;
@@ -667,9 +781,6 @@ void Boid::OnUpdate(const gazebo::common::UpdateInfo &_info, double dt, std::vec
     this->Cohesion(vehicles);
     this->Separation(vehicles);
     this->AvoidObstacles(objects);
-
-    this->UpdatePosition(dt);
-    this->UpdateModel();
 }
 
 void Boid::Separation(std::vector<boost::shared_ptr<Vehicle>> vehicles)
@@ -804,7 +915,6 @@ void Boid::Cohesion(std::vector<boost::shared_ptr<Vehicle>> vehicles)
     }
 }
 
-
 //----------------------------------------------------------------------------------------------------------------------------------------------
 /// STANDER
 
@@ -817,8 +927,10 @@ Stander::Stander(gazebo::physics::ActorPtr _actor,
                  std::vector<gazebo::physics::EntityPtr> objects,
                  double _standing_duration,
                  double _walking_duration,
+                 double _obstacle_margin,
+                 double _actor_margin,
                  int start_mode)
-    : Wanderer(_actor, _mass, _max_force, _max_speed, initial_pose, initial_velocity, objects)
+    : Wanderer(_actor, _mass, _max_force, _max_speed, initial_pose, initial_velocity, objects, _obstacle_margin, _actor_margin)
 {
 
     this->standing_duration = std::max(0.0, _standing_duration + ignition::math::Rand::DblUniform(-0.5, 0.5));
@@ -896,8 +1008,7 @@ void Stander::OnUpdate(const gazebo::common::UpdateInfo &_info, double dt, std::
         this->Seek(this->curr_target);
         this->AvoidActors(vehicles);
         this->AvoidObstacles(objects);
-
-        this->UpdatePosition(dt);
+        this->AvoidRobot(objects);
 
         if ((_info.simTime - this->walking_start).Double() >= this->walking_duration)
         {
@@ -911,15 +1022,15 @@ void Stander::OnUpdate(const gazebo::common::UpdateInfo &_info, double dt, std::
             }
         }
     }
-
-    this->UpdateModel(dt);
 }
-
 
 //----------------------------------------------------------------------------------------------------------------------------------------------
 
-Sitter::Sitter(gazebo::physics::ActorPtr _actor, std::string _chair_name, std::vector<gazebo::physics::EntityPtr> objects, double height)
-    : Vehicle(_actor, 1, 1, 1, ignition::math::Pose3d(100, 100, 0.5, 0, 0, 0), ignition::math::Vector3d(0, 0, 0), objects)
+Sitter::Sitter(gazebo::physics::ActorPtr _actor,
+               std::string _chair_name,
+               std::vector<gazebo::physics::EntityPtr> objects,
+               double height)
+    : Vehicle(_actor, 1, 1, 1, ignition::math::Pose3d(100, 100, 0.5, 0, 0, 0), ignition::math::Vector3d(0, 0, 0), objects, 0.2, 1.0)
 {
     this->chair_name = _chair_name;
     bool found = false;
@@ -948,7 +1059,7 @@ Sitter::Sitter(gazebo::physics::ActorPtr _actor, std::string _chair_name, std::v
 
 void Sitter::OnUpdate(const gazebo::common::UpdateInfo &_info, double dt, std::vector<boost::shared_ptr<Vehicle>> vehicles, std::vector<gazebo::physics::EntityPtr> objects)
 {
-    this->UpdateModel(dt);
+    return;
 }
 
 void Sitter::UpdateModel(double dt)
@@ -957,7 +1068,6 @@ void Sitter::UpdateModel(double dt)
     this->actor->SetWorldPose(this->pose, true, true);
     this->actor->SetScriptTime(this->actor->ScriptTime() + dt * this->animation_factor);
 }
-
 
 //----------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -968,8 +1078,10 @@ Follower::Follower(gazebo::physics::ActorPtr _actor,
                    ignition::math::Pose3d initial_pose,
                    ignition::math::Vector3d initial_velocity,
                    std::vector<gazebo::physics::EntityPtr> objects,
-                   std::string _leader_name, bool blocking)
-    : Vehicle(_actor, _mass, _max_force, _max_speed, initial_pose, initial_velocity, objects)
+                   std::string _leader_name, bool blocking,
+                   double _obstacle_margin,
+                   double _actor_margin)
+    : Vehicle(_actor, _mass, _max_force, _max_speed, initial_pose, initial_velocity, objects, _obstacle_margin, _actor_margin)
 {
 
     this->leader_name = _leader_name;
@@ -1082,11 +1194,8 @@ void Follower::OnUpdate(const gazebo::common::UpdateInfo &_info, double dt, std:
 
     this->AvoidActors(vehicles);
     this->AvoidObstacles(objects);
-
-    this->UpdatePosition(dt);
-    this->UpdateModel();
+    this->AvoidRobot(objects);
 }
-
 
 //----------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -1120,8 +1229,10 @@ PathFollower::PathFollower(gazebo::physics::ActorPtr _actor,
                            ignition::math::Vector3d initial_velocity,
                            std::vector<gazebo::physics::EntityPtr> objects,
                            boost::shared_ptr<Costmap> costmap,
-                           boost::shared_ptr<std::vector<ignition::math::Pose3d>> digits_coordinates)
-    : Wanderer(_actor, _mass, _max_force, _max_speed, initial_pose, initial_velocity, objects)
+                           boost::shared_ptr<std::vector<ignition::math::Pose3d>> digits_coordinates,
+                           double _obstacle_margin,
+                           double _actor_margin)
+    : Wanderer(_actor, _mass, _max_force, _max_speed, initial_pose, initial_velocity, objects, _obstacle_margin, _actor_margin)
 {
     this->costmap = costmap;
     this->digits_coordinates = digits_coordinates;
@@ -1139,9 +1250,7 @@ void PathFollower::OnUpdate(const gazebo::common::UpdateInfo &_info, double dt, 
     this->Follow();
     this->AvoidActors(vehicles);
     this->AvoidObstacles(objects);
-
-    this->UpdatePosition(dt);
-    this->UpdateModel();
+    this->AvoidRobot(objects);
 }
 
 void PathFollower::RePath()
@@ -1171,7 +1280,6 @@ void PathFollower::RePath()
     // out << costmap_string;
 }
 
-
 //----------------------------------------------------------------------------------------------------------------------------------------------
 
 ////////////////////////////////////
@@ -1188,9 +1296,6 @@ void ExtendedSocialForce_Actor::OnUpdate(const gazebo::common::UpdateInfo &_info
     this->ExtendedSFHuman(vehicles);
     this->ExtendedSFRobot(objects);
     this->ExtendedSFObstacle(objects);
-
-    this->UpdatePosition(dt);
-    this->UpdateModel();
 }
 
 void ExtendedSocialForce_Actor::SetNextTarget(std::vector<gazebo::physics::EntityPtr> objects)
@@ -1410,7 +1515,6 @@ void ExtendedSocialForce_Actor::ExtendedSFObstacle(std::vector<gazebo::physics::
     this->ApplyForce(boundary_force);
 }
 
-
 //----------------------------------------------------------------------------------------------------------------------------------------------
 
 // CUSTOM_WANDERER
@@ -1428,8 +1532,10 @@ Custom_Wanderer::Custom_Wanderer(gazebo::physics::ActorPtr _actor,
                                  ignition::math::Vector3d initial_velocity,
                                  std::vector<gazebo::physics::EntityPtr> objects,
                                  std::map<std::string, double> _custom_actor_goal,
-                                 std::vector<std::string> _vehicle_names)
-    : Vehicle(_actor, _mass, _max_force, _max_speed, initial_pose, initial_velocity, objects)
+                                 std::vector<std::string> _vehicle_names,
+                                 double _obstacle_margin,
+                                 double _actor_margin)
+    : Vehicle(_actor, _mass, _max_force, _max_speed, initial_pose, initial_velocity, objects, _obstacle_margin, _actor_margin)
 {
     this->custom_actor_goal = _custom_actor_goal;
     this->vehicle_names = _vehicle_names;
@@ -1442,9 +1548,7 @@ void Custom_Wanderer::OnUpdate(const gazebo::common::UpdateInfo &_info, double d
     this->Seek(this->curr_target);
     this->AvoidActors(vehicles);
     this->AvoidObstacles(objects);
-
-    this->UpdatePosition(dt);
-    this->UpdateModel();
+    this->AvoidRobot(objects);
 }
 
 /*
@@ -1484,20 +1588,19 @@ void Custom_Wanderer::SetNextTarget(std::vector<boost::shared_ptr<Vehicle>> vehi
     this->curr_target.Z() = this->height;
 }
 
-
 //----------------------------------------------------------------------------------------------------------------------------------------------
 
 FlowFollower::FlowFollower(gazebo::physics::ActorPtr _actor,
-                                double _mass,
-                                double _max_force,
-                                double _max_speed,
-                                ignition::math::Pose3d initial_pose,
-                                ignition::math::Vector3d initial_velocity,
-                                std::vector<gazebo::physics::EntityPtr> objects,
-                                std::vector<boost::shared_ptr<FlowField>>& flow_fields0,
-                                double _obstacle_margin,
-                                double _actor_margin)
-    : Vehicle(_actor, _mass, _max_force, _max_speed, initial_pose, initial_velocity, objects)
+                           double _mass,
+                           double _max_force,
+                           double _max_speed,
+                           ignition::math::Pose3d initial_pose,
+                           ignition::math::Vector3d initial_velocity,
+                           std::vector<gazebo::physics::EntityPtr> objects,
+                           std::vector<boost::shared_ptr<FlowField>> &flow_fields0,
+                           double _obstacle_margin,
+                           double _actor_margin)
+    : Vehicle(_actor, _mass, _max_force, _max_speed, initial_pose, initial_velocity, objects, _obstacle_margin, _actor_margin)
 {
 
     // Init variables
@@ -1506,8 +1609,6 @@ FlowFollower::FlowFollower(gazebo::physics::ActorPtr _actor,
     flow_fields = flow_fields0;
     current_flow = 0;
     distance_to_goal = 0;
-    obstacle_margin = _obstacle_margin;
-    actor_margin = _actor_margin;
 
     // Choose a valid initial flow to follow
     // *************************************
@@ -1529,8 +1630,6 @@ FlowFollower::FlowFollower(gazebo::physics::ActorPtr _actor,
         if (distance_to_goal < 10e8)
             break;
     }
-
-
 }
 
 void FlowFollower::OnUpdate(const gazebo::common::UpdateInfo &_info, double dt, std::vector<boost::shared_ptr<Vehicle>> vehicles, std::vector<gazebo::physics::EntityPtr> objects)
@@ -1541,12 +1640,18 @@ void FlowFollower::OnUpdate(const gazebo::common::UpdateInfo &_info, double dt, 
     // 2. Apply a force on the actor according to the flow field
     FlowForce();
 
-    // 3. Apply force form other actors
+    // 3. Apply force from other actors
     AvoidActors(vehicles);
+
+    // 4. Apply force from robot
+    AvoidRobot(objects);
 
     // Get total applied force from the summed acceleration
     //showed_force = acceleration * mass;
+}
 
+void FlowFollower::OnPoseUpdate(const gazebo::common::UpdateInfo &_info, double dt, std::vector<gazebo::physics::EntityPtr> objects)
+{
     // Update
     UpdatePositionContactObstacles(objects, dt);
     UpdateModel();
@@ -1582,7 +1687,6 @@ void FlowFollower::CheckGoal()
 
     // if (distance_to_goal > 10e8)
     //     ROS_WARN_STREAM(this->GetName() << " at an unreachable point of the flow map #" << current_flow);
-
 }
 
 void FlowFollower::UpdateDistance()
@@ -1606,7 +1710,7 @@ void FlowFollower::FlowForce()
     // Apply flow directly as a force. the flow length on a standard pixel = resolution
     ignition::math::Vector3d steer(flow.X(), flow.Y(), 0);
 
-    // Set the standard flow force to 30% of the max force (can be higher close to obstacles) 
+    // Set the standard flow force to 30% of the max force (can be higher close to obstacles)
     steer *= 0.2 * max_force / flow_fields[current_flow]->resolution;
 
     // Flow is the direction of the desired speed
@@ -1627,29 +1731,42 @@ void FlowFollower::FlowForce()
     ApplyForce(steer);
 }
 
-/*
-*   CustomAvoidObstacles: FLowFollowers can use the flow value function to know where obstacles are and avoid them
-*   This function uses the current acceleration to determine if a collision is going to happen and correct it accordingly
-*/
-void FlowFollower::UpdatePositionContactObstacles(std::vector<gazebo::physics::EntityPtr>& objects, double dt)
+
+//----------------------------------------------------------------------------------------------------------------------------------------------
+
+Bouncer::Bouncer(gazebo::physics::ActorPtr _actor,
+                           double _mass,
+                           double _max_force,
+                           double _max_speed,
+                           ignition::math::Pose3d initial_pose,
+                           ignition::math::Vector3d initial_velocity,
+                           std::vector<gazebo::physics::EntityPtr> objects,
+                           double _obstacle_margin,
+                           double _actor_margin)
+    : Vehicle(_actor, _mass, _max_force, _max_speed, initial_pose, initial_velocity, objects, _obstacle_margin, _actor_margin)
 {
 
-    // First predict future to see if there is contact
-    // ***********************************************
+    // Choose an initial direction
+    // ***************************
 
-    // Predict the velocity and next position of the actor
-    auto predicted_velocity = this->velocity +  acceleration * dt;
-    if (predicted_velocity.Length() > max_speed)
-    {
-        predicted_velocity.Normalize();
-        predicted_velocity *= max_speed;
-    }
+    // Random orientation
+    double theta = ignition::math::Rand::DblUniform(-IGN_PI, IGN_PI);
+
+    // Corresponding speed
+    this->velocity = ignition::math::Vector3d(cos(theta), sin(theta), 0) * _max_speed;
+
+
+    return;
+}
+
+void Bouncer::OnUpdate(const gazebo::common::UpdateInfo &_info, double dt, std::vector<boost::shared_ptr<Vehicle>> vehicles, std::vector<gazebo::physics::EntityPtr> objects)
+{
+
+    // Handle collisions with obstacles
+    // ********************************
 
     // Predict next position
-    auto next_pos = this->pose.Pos() + predicted_velocity * dt;
-
-    // Correct the next position to avoid getting into an obstacle
-    // ***********************************************************
+    auto next_pos = this->pose.Pos() + this->velocity * dt;
 
     // Find the closest obstacle
     bool inside_obstacle = false;
@@ -1657,91 +1774,82 @@ void FlowFollower::UpdatePositionContactObstacles(std::vector<gazebo::physics::E
     double min_dist = 10e9;
     for (gazebo::physics::EntityPtr object : objects)
     {
-
-        // Get object bounding box
-        ignition::math::Box box = object->BoundingBox();
-
-        // Check height for doors
-        double min_z = std::min(box.Min().Z(), box.Max().Z());
-        if (min_z > 1.5)
-            continue;
-
-        // Get the vector from closest box point to the current pos
-        auto next_normal = utilities::min_box_repulsive_vector(next_pos, box);
-
-        // Check if the person would arrive inside an object
-        if (utilities::inside_box(box, next_pos))
+        
+        // Special case of the robot (handle it like )
+        if (object->GetName() == "jackal")
         {
-            inside_obstacle = true;
-            break;
+            ignition::math::Box box = object->BoundingBox();
+            ignition::math::Vector3d rad = this->pose.Pos() - box.Center();
+            rad.Z() = 0;
+            double dist = rad.Length();
+            rad.Normalize();
+            
+            // Bounce if we are too close 3 times obstacle margin for robot 
+            if (dist < 3 * obstacle_margin)
+                PlaneBounce(rad, dt);
         }
-
-        // Otherwise consider the closest object the person would arrive to
-        if (next_normal.Length() < min_dist)
+        else
         {
-            min_normal = next_normal;
-            min_dist = next_normal.Length();
-        }
+            // Get object bounding box
+            ignition::math::Box box = object->BoundingBox();
 
+            // Check height for doors
+            double min_z = std::min(box.Min().Z(), box.Max().Z());
+            if (min_z > 1.5)
+                continue;
+
+            // Get the vector from closest box point to the current pos
+            auto next_normal = utilities::min_box_repulsive_vector(next_pos, box);
+            next_normal.Z() = 0;
+            
+            // Correct the normal direction in case the next position is inside and obstacle
+            double dist;
+            if (utilities::inside_box(box, next_pos))
+            {
+                next_normal *= -1;
+                dist = 0;
+            }
+            else
+            {
+                dist = next_normal.Length();
+            }
+            next_normal.Normalize();
+
+            // Bounce if we are too close (obstacle margin is the limit)
+            if (dist < obstacle_margin)
+                PlaneBounce(next_normal, dt);
+        }
     }
 
-    // Get the actor at a distance of obstacle_margin from the nearest obstacle
-    double dist = min_normal.Length();
-    min_normal.Normalize();
-    if (inside_obstacle)
-        next_pos += min_normal * (-obstacle_margin - dist);
-    else if (dist < obstacle_margin)
-        next_pos += min_normal * (obstacle_margin - dist);
+    // Handle collisions with vehicles
+    // *******************************
+    
+    for (int i = 0; i < (int)vehicles.size(); i++)
+    {
+        auto other = vehicles[i]->GetActor();
+        if (other == this->actor)
+            continue;
 
+        ignition::math::Vector3d diff_pos = this->pose.Pos() - other->WorldPose().Pos();
+        diff_pos.Z() = 0;
+        double dist = diff_pos.Length();
+        diff_pos.Normalize();
+        
+        // Bounce if we are too close 3 times obstacle margin for robot 
+        if (dist < 3 * obstacle_margin)
+            PlaneBounce(diff_pos, dt);
+    }
 
-    // Back propgate this new position to speed
-    // ****************************************
-
-    this->velocity = (next_pos - this->pose.Pos()) / dt;
-    this->pose.Pos() = next_pos;
-
-    // Finish with the orientation update
-    // **********************************
-
-    // Get new direction
-    ignition::math::Vector3d direction = this->velocity;
-    direction.Normalize();
-
-    // Get the diff in yaw
-    double dir_yaw = atan2(direction.Y(), direction.X());
-    double current_yaw = this->pose.Rot().Yaw();
-    ignition::math::Angle yaw_diff = dir_yaw - current_yaw + IGN_PI_2;
-
-    // Safe check yaw diff
-    yaw_diff.Normalize();
-    if (this->velocity.Length() < 10e-2)
-        yaw_diff = 0;
-
-    // Update pose
-    this->pose.Rot() = ignition::math::Quaterniond(IGN_PI_2, 0, current_yaw + yaw_diff.Radian() * 0.1);
-
-    // Reset acceleration
-    this->acceleration = 0;
 
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+void Bouncer::PlaneBounce(const ignition::math::Vector3d& normal, double dt)
+{
+    // Flip speed in the direction of the normal vector
+    double correction = normal.Dot(this->velocity);
+    if (correction < 0)
+    {
+        // we want: velocity += - 2 * correction * normal
+        this->acceleration += normal * (-2 * correction / dt);
+    }
+}

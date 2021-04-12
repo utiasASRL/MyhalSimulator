@@ -36,13 +36,13 @@ lounge_532:
   geometry: g532
   positions: p532
   enclosed: "0"
-  scenario: Rand_wanderers_rand_tables
+  scenario: Rand_bouncers_rand_tables
 
 study_space_546:
   geometry: g546
   positions: p546
   enclosed: "0"
-  scenario: Rand_wanderers_rand_tables
+  scenario: Rand_bouncers_rand_tables
 
 irm_lab_580:
   geometry: g580

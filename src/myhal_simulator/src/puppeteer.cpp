@@ -201,7 +201,6 @@ void Puppeteer::OnUpdate(const gazebo::common::UpdateInfo &_info)
     double dt = (_info.simTime - this->last_update).Double();
     double dt_real = (_info.realTime - this->last_real).Double();
 
-
     // Only update stuff with a certain frequency
     if (dt < 1 / this->update_freq)
     {
@@ -319,8 +318,6 @@ void Puppeteer::OnUpdate(const gazebo::common::UpdateInfo &_info)
 
     t_debug.push_back(std::clock());
 
-    std::vector<double> speeds;
-
     // Calling update for each vehicle
     for (auto vehicle : this->vehicles)
     {
@@ -362,11 +359,42 @@ void Puppeteer::OnUpdate(const gazebo::common::UpdateInfo &_info)
 
         // Update the forces on vehicle
         vehicle->OnUpdate(_info, dt, near_vehicles, near_objects);
-        
+    }
+
+    // Calling update pose for each vehicle
+    std::vector<double> speeds;
+    for (auto vehicle : this->vehicles)
+    {
+        // Init containers for  close by vehicles
+        std::vector<gazebo::physics::EntityPtr> near_objects;
+
+        // Init query range
+        auto vehicle_pos = vehicle->GetPose();
+        double quad_range = vehicle_params["actor_margin"] + 0.5;
+        auto min = ignition::math::Vector3d(vehicle_pos.Pos().X() - quad_range, vehicle_pos.Pos().Y() - quad_range, 0);
+        auto max = ignition::math::Vector3d(vehicle_pos.Pos().X() + quad_range, vehicle_pos.Pos().Y() + quad_range, 0);
+        auto query_range = ignition::math::Box(min, max);
+
+        // Query objects in quadtree
+        std::vector<QTData> query_objects = this->static_quadtree->QueryRange(query_range);
+        for (auto n : query_objects)
+        {
+            if (n.type == entity_type)
+            {
+                near_objects.push_back(boost::static_pointer_cast<gazebo::physics::Entity>(n.data));
+            }
+        }
+        if (this->robot != nullptr && (vehicle_pos.Pos() - this->robot->WorldPose().Pos()).Length() < quad_range)
+        {
+            near_objects.push_back(this->robot);
+        }
+
+        // Update the forces on vehicle
+        vehicle->OnPoseUpdate(_info, dt, near_objects);
+
         if (cout_speeds)
             speeds.push_back(vehicle->GetVelocity().Length());
     }
-
 
     if (cout_speeds)
     {
@@ -378,8 +406,6 @@ void Puppeteer::OnUpdate(const gazebo::common::UpdateInfo &_info)
         }
         std::cout << std::endl;
     }
-
-
 
     ////////////////////
     // Handle Robot path
@@ -506,32 +532,75 @@ boost::shared_ptr<Vehicle> Puppeteer::CreateVehicle(gazebo::physics::ActorPtr ac
     }
 
     // Randomize the max speed
-    max_speed = ignition::math::Rand::DblNormal(max_speed, 0.1);
+    max_speed = ignition::math::Rand::DblNormal(max_speed, 0.2);
 
     if (actor_info.find("vehicle_type") != actor_info.end())
     {
         if (actor_info["vehicle_type"] == "wanderer")
         {
-            res = boost::make_shared<Wanderer>(actor, this->vehicle_params["mass"], this->vehicle_params["max_force"], max_speed, actor->WorldPose(), ignition::math::Vector3d(0, 0, 0), this->collision_entities);
+            res = boost::make_shared<Wanderer>(actor,
+                                               this->vehicle_params["mass"],
+                                               this->vehicle_params["max_force"],
+                                               max_speed,
+                                               actor->WorldPose(),
+                                               ignition::math::Vector3d(0, 0, 0),
+                                               this->collision_entities,
+                                               vehicle_params["obstacle_margin"],
+                                               vehicle_params["actor_margin"]);
         }
         else if (actor_info["vehicle_type"] == "custom_wanderer")
         {
-            res = boost::make_shared<Custom_Wanderer>(actor, this->vehicle_params["mass"], this->vehicle_params["max_force"], max_speed, actor->WorldPose(), ignition::math::Vector3d(0, 0, 0), this->collision_entities, this->custom_actor_goal, this->vehicles_names);
+            res = boost::make_shared<Custom_Wanderer>(actor,
+                                                      this->vehicle_params["mass"],
+                                                      this->vehicle_params["max_force"],
+                                                      max_speed, actor->WorldPose(),
+                                                      ignition::math::Vector3d(0, 0, 0),
+                                                      this->collision_entities,
+                                                      this->custom_actor_goal,
+                                                      this->vehicles_names,
+                                                      vehicle_params["obstacle_margin"],
+                                                      vehicle_params["actor_margin"]);
         }
         else if (actor_info["vehicle_type"] == "random_walker")
         {
-            res = boost::make_shared<RandomWalker>(actor, this->vehicle_params["mass"], this->vehicle_params["max_force"], max_speed, actor->WorldPose(), ignition::math::Vector3d(0, 0, 0), this->collision_entities);
+            res = boost::make_shared<RandomWalker>(actor,
+                                                   this->vehicle_params["mass"],
+                                                   this->vehicle_params["max_force"],
+                                                   max_speed, actor->WorldPose(),
+                                                   ignition::math::Vector3d(0, 0, 0),
+                                                   this->collision_entities,
+                                                   vehicle_params["obstacle_margin"],
+                                                   vehicle_params["actor_margin"]);
         }
         else if (actor_info["vehicle_type"] == "extendedSF_actor")
         {
-            res = boost::make_shared<ExtendedSocialForce_Actor>(actor, this->vehicle_params["mass"], this->vehicle_params["max_force"], max_speed, actor->WorldPose(), ignition::math::Vector3d(0, 0, 0), this->collision_entities);
+            res = boost::make_shared<ExtendedSocialForce_Actor>(actor,
+                                                                this->vehicle_params["mass"],
+                                                                this->vehicle_params["max_force"],
+                                                                max_speed, actor->WorldPose(),
+                                                                ignition::math::Vector3d(0, 0, 0),
+                                                                this->collision_entities,
+                                                                vehicle_params["obstacle_margin"],
+                                                                vehicle_params["actor_margin"]);
         }
         else if (actor_info["vehicle_type"] == "boid")
         {
             auto random_vel = ignition::math::Vector3d(ignition::math::Rand::DblUniform(-1, 1), ignition::math::Rand::DblUniform(-1, 1), 0);
             random_vel.Normalize();
             random_vel *= 2;
-            res = boost::make_shared<Boid>(actor, this->vehicle_params["mass"], this->vehicle_params["max_force"], max_speed, actor->WorldPose(), random_vel, this->collision_entities, this->boid_params["alignement"], this->boid_params["cohesion"], this->boid_params["separation"], this->boid_params["FOV_angle"], this->boid_params["FOV_radius"]); // read in as params
+            res = boost::make_shared<Boid>(actor,
+                                           this->vehicle_params["mass"],
+                                           this->vehicle_params["max_force"],
+                                           max_speed, actor->WorldPose(),
+                                           random_vel,
+                                           this->collision_entities,
+                                           this->boid_params["alignement"],
+                                           this->boid_params["cohesion"],
+                                           this->boid_params["separation"],
+                                           this->boid_params["FOV_angle"],
+                                           this->boid_params["FOV_radius"],
+                                           vehicle_params["obstacle_margin"],
+                                           vehicle_params["actor_margin"]); // read in as params
         }
         else if (actor_info["vehicle_type"] == "stander")
         {
@@ -563,7 +632,18 @@ boost::shared_ptr<Vehicle> Puppeteer::CreateVehicle(gazebo::physics::ActorPtr ac
                 }
             }
 
-            res = boost::make_shared<Stander>(actor, 1, 10, max_speed, actor->WorldPose(), ignition::math::Vector3d(0, 0, 0), this->collision_entities, standing_duration, walking_duration, this->vehicle_params["start_mode"]); // read in as params
+            res = boost::make_shared<Stander>(actor,
+                                              1,
+                                              10,
+                                              max_speed,
+                                              actor->WorldPose(),
+                                              ignition::math::Vector3d(0, 0, 0),
+                                              this->collision_entities,
+                                              standing_duration,
+                                              walking_duration,
+                                              this->vehicle_params["start_mode"],
+                                              vehicle_params["obstacle_margin"],
+                                              vehicle_params["actor_margin"]);
         }
         else if (actor_info["vehicle_type"] == "sitter")
         {
@@ -586,7 +666,17 @@ boost::shared_ptr<Vehicle> Puppeteer::CreateVehicle(gazebo::physics::ActorPtr ac
             {
                 leader_name = actor_info["leader"];
 
-                res = boost::make_shared<Follower>(actor, 1, 10, max_speed, actor->WorldPose(), ignition::math::Vector3d(0, 0, 0), this->collision_entities, leader_name, (bool)this->vehicle_params["blocking"]); // read in as params
+                res = boost::make_shared<Follower>(actor,
+                                                   1,
+                                                   10,
+                                                   max_speed,
+                                                   actor->WorldPose(),
+                                                   ignition::math::Vector3d(0, 0, 0),
+                                                   this->collision_entities,
+                                                   leader_name,
+                                                   (bool)this->vehicle_params["blocking"],
+                                                   vehicle_params["obstacle_margin"],
+                                                   vehicle_params["actor_margin"]);
                 this->follower_queue.push_back(boost::dynamic_pointer_cast<Follower>(res));
             }
             else
@@ -597,20 +687,42 @@ boost::shared_ptr<Vehicle> Puppeteer::CreateVehicle(gazebo::physics::ActorPtr ac
         else if (actor_info["vehicle_type"] == "path_follower")
         {
 
-            res = boost::make_shared<PathFollower>(actor, this->vehicle_params["mass"], this->vehicle_params["max_force"], max_speed, actor->WorldPose(), ignition::math::Vector3d(0, 0, 0), this->collision_entities, this->costmap, this->digits_coordinates);
+            res = boost::make_shared<PathFollower>(actor,
+                                                   this->vehicle_params["mass"],
+                                                   this->vehicle_params["max_force"],
+                                                   max_speed,
+                                                   actor->WorldPose(),
+                                                   ignition::math::Vector3d(0, 0, 0),
+                                                   this->collision_entities,
+                                                   this->costmap,
+                                                   this->digits_coordinates,
+                                                   vehicle_params["obstacle_margin"],
+                                                   vehicle_params["actor_margin"]);
         }
         else if (actor_info["vehicle_type"] == "flow_follower")
         {
 
-            res = boost::make_shared<FlowFollower>(actor, 
-            this->vehicle_params["mass"], 
-            this->vehicle_params["max_force"], 
-            max_speed, actor->WorldPose(), 
-            ignition::math::Vector3d(0, 0, 0), 
-            collision_entities, 
-            flow_fields,
-            vehicle_params["obstacle_margin"],
-            vehicle_params["actor_margin"]);
+            res = boost::make_shared<FlowFollower>(actor,
+                                                   this->vehicle_params["mass"],
+                                                   this->vehicle_params["max_force"],
+                                                   max_speed, actor->WorldPose(),
+                                                   ignition::math::Vector3d(0, 0, 0),
+                                                   collision_entities,
+                                                   flow_fields,
+                                                   vehicle_params["obstacle_margin"],
+                                                   vehicle_params["actor_margin"]);
+        }
+        else if (actor_info["vehicle_type"] == "bouncer")
+        {
+
+            res = boost::make_shared<Bouncer>(actor,
+                                                   this->vehicle_params["mass"],
+                                                   this->vehicle_params["max_force"],
+                                                   max_speed, actor->WorldPose(),
+                                                   ignition::math::Vector3d(0, 0, 0),
+                                                   collision_entities,
+                                                   vehicle_params["obstacle_margin"],
+                                                   vehicle_params["actor_margin"]);
         }
         else
         {

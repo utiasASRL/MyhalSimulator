@@ -36,8 +36,9 @@ do
   do
     for ARGS in "-fg"
     do
+      for PARAMS in "RandBounce_params"
       # for PARAMS in "RandWand_params"
-      for PARAMS in "RandFlow_params"
+      # for PARAMS in "RandFlow_params"
       do
         for TOUR in "A_tour" "B_tour" "C_tour"
         #for TOUR in "A_tour"

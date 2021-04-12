@@ -94,15 +94,9 @@ chair_office:
 actor_names:
   - actor_basic_wanderer
   - actor_basic_stander
-  - actor_basic_boid
-  - actor_basic_random_walker
-  - actor_basic_follower
   - actor_long_term_stander
-  - actor_extendedSF
-  - actor_custom_wanderer
-  - actor_path_follower
-  - actor_flow_follower
-  
+  - actor_bouncer
+
 actor_basic_wanderer: 
   filename: model://actor/meshes/SKIN_man_blue_shirt.dae
   plugin: basic_wanderer
@@ -113,45 +107,16 @@ actor_basic_stander:
   plugin: basic_stander
   obstacle_margin: "0.25"
 
-actor_basic_boid: 
-  filename: model://actor/meshes/SKIN_man_blue_shirt.dae
-  plugin: basic_boid
-  obstacle_margin: "0.25"
-
-actor_basic_random_walker:
-  filename: model://actor/meshes/SKIN_man_blue_shirt.dae
-  plugin: basic_random_walker
-  obstacle_margin: "0.25"
-
-actor_basic_follower:
-  filename: model://actor/meshes/SKIN_man_blue_shirt.dae
-  plugin: basic_follower
-  obstacle_margin: "0.25"
-
 actor_long_term_stander:
   filename: model://actor/meshes/SKIN_man_blue_shirt.dae
   plugin: long_term_stander
   obstacle_margin: "0.25"
-
-actor_extendedSF:
+  
+actor_bouncer: 
   filename: model://actor/meshes/SKIN_man_blue_shirt.dae
-  plugin: advanced_extendedSF
-  obstacle_margin: "0.25"
+  plugin: bouncer
+  obstacle_margin: "0.4"
 
-actor_custom_wanderer: 
-  filename: model://actor/meshes/SKIN_man_blue_shirt.dae
-  plugin: custom_wanderer
-  obstacle_margin: "0.25"
-
-actor_path_follower: 
-  filename: model://actor/meshes/SKIN_man_blue_shirt.dae
-  plugin: path_follower
-  obstacle_margin: "0.25"
-
-actor_flow_follower: 
-  filename: model://actor/meshes/SKIN_man_blue_shirt.dae
-  plugin: flow_follower
-  obstacle_margin: "0.25"
 
 # table group parameters 
 

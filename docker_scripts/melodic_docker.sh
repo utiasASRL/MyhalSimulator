@@ -71,10 +71,10 @@ volumes="-v $PWD/..:/home/$USER/catkin_ws \
 
 # Additional arguments to be able to open GUI
 XSOCK=/tmp/.X11-unix
-#XAUTH=/home/$USER/.Xauthority
-XAUTH=/tmp/.docker.xauth
-other_args="-v $XAUTH:$XAUTH:rw \
-    -v $XSOCK:$XSOCK:rw \
+XAUTH=/home/$USER/.Xauthority
+#XAUTH=/tmp/.docker.xauth
+other_args="-v $XAUTH:$XAUTH \
+    -v $XSOCK:$XSOCK \
     --net=host \
     --privileged \
 	-e XAUTHORITY=${XAUTH} \
