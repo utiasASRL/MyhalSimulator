@@ -216,7 +216,7 @@ void Puppeteer::OnUpdate(const gazebo::common::UpdateInfo &_info)
     // Visualization boolean
     bool publish_flow = false;
     bool show_flow_forces = false;
-    bool cout_speeds = false;
+    bool cout_speeds = true;
 
     // Timing variables
     bool verbose = false;
@@ -532,7 +532,8 @@ boost::shared_ptr<Vehicle> Puppeteer::CreateVehicle(gazebo::physics::ActorPtr ac
     }
 
     // Randomize the max speed
-    max_speed = ignition::math::Rand::DblNormal(max_speed, 0.2);
+    if (this->vehicle_params["max_speed_std"] > 0)
+        max_speed = ignition::math::Rand::DblNormal(max_speed, this->vehicle_params["max_speed_std"]);
 
     if (actor_info.find("vehicle_type") != actor_info.end())
     {
@@ -748,6 +749,7 @@ void Puppeteer::ReadParams()
         vehicle_params["mass"] = 1;
         vehicle_params["max_force"] = 10;
         vehicle_params["max_speed"] = 0.77;
+        vehicle_params["max_speed_std"] = 0.2;
         vehicle_params["slowing_distance"] = 2;
         vehicle_params["arrival_distance"] = 0.5;
         vehicle_params["obstacle_margin"] = 0.4;
