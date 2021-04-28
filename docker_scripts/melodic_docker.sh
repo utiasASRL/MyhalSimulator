@@ -60,7 +60,7 @@ else
 fi
 
 # Running on gpu (Uncomment to enable gpu)
-# docker_args="${docker_args} --runtime=nvidia"
+docker_args="${docker_args} --runtime=nvidia"
 
 # Create folder for simulation if not already there
 mkdir -p "$PWD/../../Simulation_Data/simulated_runs"
