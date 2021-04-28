@@ -11,7 +11,9 @@
                 "/usr/include/**",
                 "${workspaceFolder}/**",
                 "${workspaceFolder}/src/point_slam/src",
-                "${workspaceFolder}/src/point_slam/include"
+                "${workspaceFolder}/src/point_slam/include",
+                "${workspaceFolder}/src/teb_local_planner/src",
+                "${workspaceFolder}/src/teb_local_planner/include"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/g++",
