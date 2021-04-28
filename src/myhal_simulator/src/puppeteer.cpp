@@ -216,7 +216,7 @@ void Puppeteer::OnUpdate(const gazebo::common::UpdateInfo &_info)
     // Visualization boolean
     bool publish_flow = false;
     bool show_flow_forces = false;
-    bool cout_speeds = true;
+    bool cout_speeds = false;
 
     // Timing variables
     bool verbose = false;
