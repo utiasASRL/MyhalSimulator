@@ -30,18 +30,18 @@ fi
 # Loop Tours #
 ##############
 
-for i in {1..5}
+for i in {1..1}
 do
   for MAPPING in "2"
   do
     for ARGS in "-fg"
     do
-      for PARAMS in "RandBounce_params"
-      # for PARAMS in "RandWand_params"
+      # for PARAMS in "RandBounce_params"
+      for PARAMS in "RandWand_params"
       # for PARAMS in "RandFlow_params"
       do
-        #for TOUR in "A_tour" "B_tour" "C_tour"
-        for TOUR in "A_short"
+        for TOUR in "A_tour" "B_tour" "C_tour"
+        #for TOUR in "A_short"
         do
 
           echo ""

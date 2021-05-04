@@ -581,8 +581,13 @@ class RunHandler:
             content = txt_f.readlines()
         successes = [int(line.startswith('Reached target')) for line in content 
                      if line.startswith('Reached target') or line.startswith('Failed to')]
-        meta_d['targets_reached'] = float(np.sum(successes)) / len(successes)
-        meta_d['success_status'] = bool(successes[-1])
+
+        if len(successes) > 0:
+            meta_d['targets_reached'] = float(np.sum(successes)) / len(successes)
+            meta_d['success_status'] = bool(successes[-1])
+        else:
+            meta_d['targets_reached'] = -0.01
+            meta_d['success_status'] = False
 
         self.run_map[name] = Run(name, meta_d)
         self.run_inds.append(name)
@@ -779,8 +784,9 @@ class Dashboard:
                             continue
                         scens[i] = scens[i].encode('utf-8')
                         i+=1    
-                    #run_l.append(',\n'.join(scens))
-                    run_l.append(scens[0].split('_')[0])
+                    # compress the scenario name for display
+                    particules = scens[0].split('_')[:2]
+                    run_l.append('_'.join([part[:4] for part in particules]))
                 elif (f == 'targets_reached'):
                     run_l.append('{:7.1f}%'.format(100*run.meta[f]))
                 else:
