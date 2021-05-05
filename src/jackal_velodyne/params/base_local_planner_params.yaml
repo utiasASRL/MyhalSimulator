@@ -40,7 +40,7 @@ TebLocalPlannerROS:
  # Obstacles
     
  min_obstacle_dist: 0.4
- include_costmap_obstacles: True
+ include_costmap_obstacles: False
  costmap_obstacles_behind_robot_dist: 1.0
  obstacle_poses_affected: 30
  costmap_converter_plugin: ""
@@ -62,10 +62,10 @@ TebLocalPlannerROS:
  weight_kinematics_forward_drive: 1
  weight_kinematics_turning_radius: 1
  weight_optimaltime: 1
- weight_obstacle: 0.1
+ weight_obstacle: 0
  weight_dynamic_obstacle: 10 # not in use yet
  alternative_time_cost: False # not in use yet
- weight_predicted_costmap: 0.002 # direct multiplier of the error function for predicted costmaps
+ weight_predicted_costmap: 0.03 # direct multiplier of the error function for predicted costmaps
 
  # Homotopy Class Planner
 
