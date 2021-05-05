@@ -501,7 +501,7 @@ void PointMapSLAM::gotCloud(const sensor_msgs::PointCloud2::ConstPtr& msg)
 	////////////////////////
 
 	double duration = 1000 * (t[t.size() - 1] - t[0]) / (double)CLOCKS_PER_SEC;
-	ROS_ERROR_STREAM("Processed Frame " << msg->header.frame_id << " with stamp " << stamp << " in " <<  duration << " ms");
+	ROS_WARN_STREAM("Processed Frame " << msg->header.frame_id << " with stamp " << stamp << " in " <<  duration << " ms");
 
 	if (params.verbose)
 	{

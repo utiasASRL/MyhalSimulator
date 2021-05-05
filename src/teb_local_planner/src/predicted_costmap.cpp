@@ -133,12 +133,74 @@ void PredictedCostmap3D::initialize(const teb_local_planner::VoxGrid voxel_grid)
   grid_origin_x = voxel_grid.origin.x;
   grid_origin_y = voxel_grid.origin.y;
   theta_ = voxel_grid.theta;
+  
+  // data_ is a flattened array 3D in row-major order
+  data_.reserve(width_ * height_ * depth_);
+  for (std::vector<uint8_t>::const_iterator i = voxel_grid.data.begin(); i != voxel_grid.data.end(); ++i)
+      data_.push_back(unsigned(*i));
 
   // grid3D_ = boost::make_shared<Grid3D>(Grid3D(voxel_grid.data));
 
+  /*
+
+  std::cout << "------------------------------------" << std::endl;
+  std::cout << "stamped_time_" << stamped_time_ << std::endl;
+  std::cout << "initial_time_" << initial_time_ << std::endl;
+  std::cout << "width_" << width_ << std::endl;
+  std::cout << "height_" << height_ << std::endl;
+  std::cout << "depth_" << depth_ << std::endl;
+  std::cout << "dl_" << dl_ << std::endl;
+  std::cout << "dt_" << dt_ << std::endl;
+  std::cout << "grid_origin_x" << grid_origin_x << std::endl;
+  std::cout << "grid_origin_y" << grid_origin_y << std::endl;
+  std::cout << "theta_" << theta_ << std::endl;
+  std::cout << "------------------------------------" << std::endl;
+  
   // data_ is a flattened array 3D in row-major order
+  int dbgi = 1;
+  dbgi = 0;
   for (std::vector<uint8_t>::const_iterator i = voxel_grid.data.begin(); i != voxel_grid.data.end(); ++i)
+  {
       data_.push_back(unsigned(*i));
+
+      if (dbgi == 0 || dbgi == 1 || dbgi == 2 || dbgi == 10 || dbgi == 100 || dbgi == 1000) 
+        std::cout << unsigned(*i) << std::endl;
+      dbgi++;
+
+  }
+  std::cout << "------------------------------------" << std::endl;
+  int row, col, dt;
+  dt = 0;
+  row = 0;
+  col = 0;
+  std::cout << data_[(row * width_ + col)*depth_ + dt] << std::endl;
+  dt = 1;
+  row = 0;
+  col = 0;
+  std::cout << data_[col + width_ * (row +  height_ * dt)] << std::endl;
+  dt = 0;
+  row = 1;
+  col = 0;
+  std::cout << data_[col + width_ * (row +  height_ * dt)] << std::endl;
+  dt = 0;
+  row = 0;
+  col = 1;
+  std::cout << data_[col + width_ * (row +  height_ * dt)] << std::endl;
+  dt = 1;
+  row = 2;
+  col = 3;
+  std::cout << data_[col + width_ * (row +  height_ * dt)] << std::endl;
+  dt = 3;
+  row = 1;
+  col = 2;
+  std::cout << data_[col + width_ * (row +  height_ * dt)]<< std::endl;
+  dt = 2;
+  row = 3;
+  col = 1;
+  std::cout << data_[col + width_ * (row +  height_ * dt)]<< std::endl;
+  std::cout << "------------------------------------" << std::endl;
+  */
+
    
   //TODO: share sobels with other PredictedCostmap
   sobel_x << 1, 0, -1,
@@ -158,8 +220,9 @@ void PredictedCostmap3D::interpolateCostmapValue(VertexPose pos, double *interpo
   int v00, v10, v01, v11;
   double tx, ty, a, b;
   PoseSE2 pos2(pos_SE2.x() + 0.5, pos_SE2.y() + 0.5, pos_SE2.theta());
-
+  
   this->posToIndices(pos_SE2, &r2, &c2);
+
   v00 = this->get(r2-1, c2-1, layer);
   v01 = this->get(r2-1, c2, layer);
   v10 = this->get(r2, c2-1, layer);

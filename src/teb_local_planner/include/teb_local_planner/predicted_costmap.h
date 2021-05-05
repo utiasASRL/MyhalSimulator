@@ -220,7 +220,8 @@ public:
    */
   int get(int row, int col, int dt)
   {
-    return data_[(row * width_ + col)*depth_ + dt];
+    //return data_[(row * width_ + col)*depth_ + dt];
+    return data_[(dt * height_ + row) * width_ + col];
   }
 
   /**

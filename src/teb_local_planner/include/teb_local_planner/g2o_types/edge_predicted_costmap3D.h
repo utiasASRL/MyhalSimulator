@@ -39,6 +39,7 @@ public:
     ROS_ASSERT_MSG(cfg_ && _measurement && robot_model_, "You must call setTebConfig(), setPredictedCostmap3D() and setRobotModel() on EdgePredictedCostmap3D()");
     const VertexPose* bandpt = static_cast<const VertexPose*>(_vertices[0]);
     double interpolation = 0.0;
+    std::cout << "Interpolating " << std::endl; 
     _measurement->interpolateCostmapValue(bandpt->pose(), &interpolation, layer_); 
     std::cout << "Interpolation value at layer: " << layer_ << " " << interpolation << std::endl; 
     _error[0] = interpolation * cfg_->optim.weight_predicted_costmap;
