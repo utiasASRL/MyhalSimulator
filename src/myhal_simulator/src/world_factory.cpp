@@ -659,7 +659,7 @@ void WorldHandler::FillRoom(std::shared_ptr<RoomInfo> room_info){
             auto a_info = this->actor_info[scenario->actor];
 
             for (int i =0; i<num_actors; i++){
-                auto new_actor = std::make_shared<myhal::Actor>(a_info->name, ignition::math::Pose3d(0,0,2,0,0,ignition::math::Rand::DblUniform(0,6.28)), a_info->filename, a_info->width, a_info->length); //TODO randomize initial Rot
+                auto new_actor = std::make_shared<myhal::Actor>(a_info->name, ignition::math::Pose3d(0,0,1,0,0,ignition::math::Rand::DblUniform(0,6.28)), a_info->filename, a_info->width, a_info->length); //TODO randomize initial Rot
 
                 for (auto animation: this->animation_list){
                     new_actor->AddAnimation(animation);

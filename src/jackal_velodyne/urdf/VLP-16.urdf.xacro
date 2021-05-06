@@ -2,7 +2,7 @@
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="VLP-16">
   <xacro:property name="M_PI" value="3.1415926535897931" />
   <!-- Here change gaussianNoise value parameter gaussian_noise_ in custom_velodyne  -->
-  <xacro:macro name="VLP-16" params="*origin parent:=base_link name:=velodyne topic:=/velodyne_points hz:=10 lasers:=16 samples:=1875 collision_range:=0.3 min_range:=0.9 max_range:=130.0 noise:=0.008 min_angle:=-${M_PI} max_angle:=${M_PI} gpu:=true classify:=true">
+  <xacro:macro name="VLP-16" params="*origin parent:=base_link name:=velodyne topic:=/velodyne_points hz:=10 lasers:=16 samples:=1875 collision_range:=0.3 min_range:=0.2 max_range:=130.0 noise:=0.008 min_angle:=-${M_PI} max_angle:=${M_PI} gpu:=true classify:=true">
 
     <joint name="${name}_base_mount_joint" type="fixed">
       <xacro:insert_block name="origin" /> 

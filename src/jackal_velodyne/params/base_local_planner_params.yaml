@@ -21,7 +21,7 @@ TebLocalPlannerROS:
  acc_lim_theta:  5.0
  min_turning_radius: 0.0
  footprint_model: # types: "point", "circular", "two_circles", "line", "polygon"
-   type: "circular"
+   type: "point"
    radius: 0.25 # for type "circular"
    line_start: [-0.3, 0.0] # for type "line"
    line_end: [0.3, 0.0] # for type "line"
@@ -39,10 +39,10 @@ TebLocalPlannerROS:
     
  # Obstacles
     
- min_obstacle_dist: 0.4
+ min_obstacle_dist: 0.2
  include_costmap_obstacles: False
- costmap_obstacles_behind_robot_dist: 1.0
- obstacle_poses_affected: 30
+ costmap_obstacles_behind_robot_dist: 0.2
+ obstacle_poses_affected: 10
  costmap_converter_plugin: ""
  costmap_converter_spin_thread: True
  costmap_converter_rate: 5
@@ -62,10 +62,10 @@ TebLocalPlannerROS:
  weight_kinematics_forward_drive: 1
  weight_kinematics_turning_radius: 1
  weight_optimaltime: 1
- weight_obstacle: 0
+ weight_obstacle: 0.0001
  weight_dynamic_obstacle: 10 # not in use yet
  alternative_time_cost: False # not in use yet
- weight_predicted_costmap: 0.03 # direct multiplier of the error function for predicted costmaps
+ weight_predicted_costmap: 0.002 # direct multiplier of the error function for predicted costmaps
 
  # Homotopy Class Planner
 
