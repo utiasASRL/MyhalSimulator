@@ -1,7 +1,7 @@
 common_vehicle_params:
   mass: 0.2
   max_force: 10
-  max_speed_std: -1.0
+  max_speed_std: 0.2
   slowing_distance: 1.5
   arrival_distance: 0.8
   obstacle_margin: 0.25
