@@ -1,47 +1,87 @@
 TrajectoryPlannerROS:
 
-  # Robot Configuration Parameters
-  acc_lim_x: 2.5
-  acc_lim_theta:  5.0
+ odom_topic: odom
+ map_frame: /odom
+    
+ # Trajectory
+  
+ teb_autosize: True
+ dt_ref: 0.3
+ dt_hysteresis: 0.1
+ global_plan_overwrite_orientation: True
+ max_global_plan_lookahead_dist: 8.0
+ feasibility_check_no_poses: 5
+    
+ # Robot
+         
+ max_vel_x: 1.5               # Actual Jackal value in controller: 2.0 m/s
+ max_vel_x_backwards: 0.5
+ max_vel_theta: 2.0           # Actual Jackal value in controller: 4.0 rad/s
+ acc_lim_x: 4.0               # Actual Jackal value in controller: 20.0 m/s^2
+ acc_lim_theta:  5.0          # Actual Jackal value in controller: 25.0 rad/s^2
+ min_turning_radius: 0.0
+ footprint_model: # types: "point", "circular", "two_circles", "line", "polygon"
+   type: "point"
+   radius: 0.25 # for type "circular"
+   line_start: [-0.3, 0.0] # for type "line"
+   line_end: [0.3, 0.0] # for type "line"
+   front_offset: 0.2 # for type "two_circles"
+   front_radius: 0.2 # for type "two_circles"
+   rear_offset: 0.2 # for type "two_circles"
+   rear_radius: 0.2 # for type "two_circles"
+   vertices: [ [0.25, -0.05], [0.18, -0.05], [0.18, -0.18], [-0.19, -0.18], [-0.25, 0], [-0.19, 0.18], [0.18, 0.18], [0.18, 0.05], [0.25, 0.05] ] # for type "polygon"
 
-  max_vel_x: 2.0
-  min_vel_x: 0.1
+ # GoalTolerance
+    
+ xy_goal_tolerance: 3.0
+ yaw_goal_tolerance: 6.29
+ free_goal_vel: True
+    
+ # Obstacles
+    
+ min_obstacle_dist: 0.2
+ include_costmap_obstacles: False
+ costmap_obstacles_behind_robot_dist: 0.2
+ obstacle_poses_affected: 20
+ costmap_converter_plugin: ""
+ costmap_converter_spin_thread: True
+ costmap_converter_rate: 5
 
-  max_vel_theta: 0.5
-  min_vel_theta: -0.5
-  min_in_place_vel_theta: 0.2
+ # Optimization
+    
+ no_inner_iterations: 5
+ no_outer_iterations: 4
+ optimization_activate: True
+ optimization_verbose: False
+ penalty_epsilon: 0.1
+ weight_max_vel_x: 2
+ weight_max_vel_theta: 1
+ weight_acc_lim_x: 1
+ weight_acc_lim_theta: 1
+ weight_kinematics_nh: 1000
+ weight_kinematics_forward_drive: 100
+ weight_kinematics_turning_radius: 1
+ weight_optimaltime: 1
+ weight_obstacle: 0.00001
+ weight_dynamic_obstacle: 10 # not in use yet
+ alternative_time_cost: False # not in use yet
+ weight_predicted_costmap: 0.0025 # direct multiplier of the error function for predicted costmaps
 
   escape_vel: -0.5
   holonomic_robot: false
 
-  # Goal Tolerance Parameters
-  yaw_goal_tolerance: 6.28
-  xy_goal_tolerance: 0.90
-  latch_xy_goal_tolerance: true
+ enable_homotopy_class_planning: True
+ enable_multithreading: True
+ simple_exploration: False
+ max_number_classes: 4
+ roadmap_graph_no_samples: 15
+ roadmap_graph_area_width: 5
+ h_signature_prescaler: 0.5
+ h_signature_threshold: 0.1
+ obstacle_keypoint_offset: 0.1
+ obstacle_heading_threshold: 0.45
+ visualize_hc_graph: True
 
-  # Forward Simulation Parameters
-  sim_time: 3.0
-  sim_granularity: 0.02
-  angular_sim_granularity: 0.02
-  vx_samples: 12
-  vtheta_samples: 30
-  controller_frequency: 20.0
+ # Publishing
+ publish_feedback : False
 
-  # Trajectory scoring parameters
-  meter_scoring: true # Whether the gdist_scale and pdist_scale parameters should assume that goal_distance and path_distance are expressed in units of meters or cells. Cells are assumed by default (false).
-  occdist_scale:  0.02 #The weighting for how much the controller should attempt to avoid obstacles. default 0.01
-  pdist_scale: 10.0  #     The weighting for how much the controller should stay close to the path it was given . default 0.6
-  gdist_scale: 10.0 #     The weighting for how much the controller should attempt to reach its local goal, also controls speed  default 0.8
-
-  heading_lookahead: 0.325  #How far to look ahead in meters when scoring different in-place-rotation trajectories
-  heading_scoring: false  #Whether to score based on the robot's heading to the path or its distance from the path. default false
-  heading_scoring_timestep: 0.8   #How far to look ahead in time in seconds along the simulated trajectory when using heading scoring (double, default: 0.8)
-  dwa: true #Whether to use the Dynamic Window Approach (DWA)_ or whether to use Trajectory Rollout
-  simple_attractor: false
-  publish_cost_grid_pc: true
-  global_frame_id: map
-
-  #Oscillation Prevention Parameters
-  oscillation_reset_dist: 0.05 #How far the robot must travel in meters before oscillation flags are reset (double, default: 0.05)
-  escape_reset_dist: 0.1
-  escape_reset_theta: 0.1

@@ -535,6 +535,8 @@ boost::shared_ptr<Vehicle> Puppeteer::CreateVehicle(gazebo::physics::ActorPtr ac
     if (this->vehicle_params["max_speed_std"] > 0)
         max_speed = ignition::math::Rand::DblNormal(max_speed, this->vehicle_params["max_speed_std"]);
 
+    
+
     if (actor_info.find("vehicle_type") != actor_info.end())
     {
         if (actor_info["vehicle_type"] == "wanderer")
@@ -715,15 +717,25 @@ boost::shared_ptr<Vehicle> Puppeteer::CreateVehicle(gazebo::physics::ActorPtr ac
         }
         else if (actor_info["vehicle_type"] == "bouncer")
         {
+            
+            ignition::math::Vector3d init_vel;
+            if (this->vehicle_params["custom_theta"] > -0.5)
+            {
+                init_vel = ignition::math::Vector3d(cos(this->vehicle_params["custom_theta"]),
+                                                         sin(this->vehicle_params["custom_theta"]),
+                                                         0) * max_speed;
+            }
+            else
+                init_vel = ignition::math::Vector3d(0, 0, 0);
 
             res = boost::make_shared<Bouncer>(actor,
-                                                   this->vehicle_params["mass"],
-                                                   this->vehicle_params["max_force"],
-                                                   max_speed, actor->WorldPose(),
-                                                   ignition::math::Vector3d(0, 0, 0),
-                                                   collision_entities,
-                                                   vehicle_params["obstacle_margin"],
-                                                   vehicle_params["actor_margin"]);
+                                              this->vehicle_params["mass"],
+                                              this->vehicle_params["max_force"],
+                                              max_speed, actor->WorldPose(),
+                                              init_vel,
+                                              collision_entities,
+                                              vehicle_params["obstacle_margin"],
+                                              vehicle_params["actor_margin"]);
         }
         else
         {
@@ -750,6 +762,7 @@ void Puppeteer::ReadParams()
         vehicle_params["max_force"] = 10;
         vehicle_params["max_speed"] = 0.77;
         vehicle_params["max_speed_std"] = 0.2;
+        vehicle_params["custom_theta"] = -1;
         vehicle_params["slowing_distance"] = 2;
         vehicle_params["arrival_distance"] = 0.5;
         vehicle_params["obstacle_margin"] = 0.4;

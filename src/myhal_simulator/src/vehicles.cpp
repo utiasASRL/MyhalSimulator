@@ -1749,11 +1749,18 @@ Bouncer::Bouncer(gazebo::physics::ActorPtr _actor,
     // Choose an initial direction
     // ***************************
 
-    // Random orientation
-    double theta = ignition::math::Rand::DblUniform(-IGN_PI, IGN_PI);
+    if (initial_velocity.Length() > 0.000001)
+    {
+        this->velocity = initial_velocity;
+    }
+    else
+    {
+        // Random orientation
+        double theta = ignition::math::Rand::DblUniform(-IGN_PI, IGN_PI);
 
-    // Corresponding speed
-    this->velocity = ignition::math::Vector3d(cos(theta), sin(theta), 0) * _max_speed;
+        // Corresponding speed
+        this->velocity = ignition::math::Vector3d(cos(theta), sin(theta), 0) * _max_speed;
+    }
 
 
     return;
