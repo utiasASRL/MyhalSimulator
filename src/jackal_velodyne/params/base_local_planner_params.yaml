@@ -9,16 +9,16 @@ TebLocalPlannerROS:
  dt_ref: 0.3
  dt_hysteresis: 0.1
  global_plan_overwrite_orientation: True
- max_global_plan_lookahead_dist: 6.0
+ max_global_plan_lookahead_dist: 8.0
  feasibility_check_no_poses: 5
     
  # Robot
          
- max_vel_x: 1.0
+ max_vel_x: 1.5               # Actual Jackal value in controller: 2.0 m/s
  max_vel_x_backwards: 0.5
- max_vel_theta: 0.5
- acc_lim_x: 2.5
- acc_lim_theta:  5.0
+ max_vel_theta: 2.0           # Actual Jackal value in controller: 4.0 rad/s
+ acc_lim_x: 4.0               # Actual Jackal value in controller: 20.0 m/s^2
+ acc_lim_theta:  5.0          # Actual Jackal value in controller: 25.0 rad/s^2
  min_turning_radius: 0.0
  footprint_model: # types: "point", "circular", "two_circles", "line", "polygon"
    type: "point"
@@ -33,7 +33,7 @@ TebLocalPlannerROS:
 
  # GoalTolerance
     
- xy_goal_tolerance: 0.9
+ xy_goal_tolerance: 3.0
  yaw_goal_tolerance: 6.29
  free_goal_vel: True
     
@@ -42,7 +42,7 @@ TebLocalPlannerROS:
  min_obstacle_dist: 0.2
  include_costmap_obstacles: False
  costmap_obstacles_behind_robot_dist: 0.2
- obstacle_poses_affected: 10
+ obstacle_poses_affected: 20
  costmap_converter_plugin: ""
  costmap_converter_spin_thread: True
  costmap_converter_rate: 5
@@ -59,13 +59,13 @@ TebLocalPlannerROS:
  weight_acc_lim_x: 1
  weight_acc_lim_theta: 1
  weight_kinematics_nh: 1000
- weight_kinematics_forward_drive: 1
+ weight_kinematics_forward_drive: 100
  weight_kinematics_turning_radius: 1
  weight_optimaltime: 1
- weight_obstacle: 0.0001
+ weight_obstacle: 0.00001
  weight_dynamic_obstacle: 10 # not in use yet
  alternative_time_cost: False # not in use yet
- weight_predicted_costmap: 0.002 # direct multiplier of the error function for predicted costmaps
+ weight_predicted_costmap: 0.0025 # direct multiplier of the error function for predicted costmaps
 
  # Homotopy Class Planner
 
@@ -79,4 +79,8 @@ TebLocalPlannerROS:
  h_signature_threshold: 0.1
  obstacle_keypoint_offset: 0.1
  obstacle_heading_threshold: 0.45
- visualize_hc_graph: False
+ visualize_hc_graph: True
+
+ # Publishing
+ publish_feedback : False
+

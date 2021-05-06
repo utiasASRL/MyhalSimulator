@@ -3,9 +3,9 @@ local_costmap:
    robot_base_frame: base_link
    update_frequency: 5
    publish_frequency: 5.0
-   width: 4
-   height: 4
-   resolution: 0.025
+   width: 8
+   height: 8
+   resolution: 0.06
    static_map: false
    rolling_window: true
 

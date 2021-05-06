@@ -57,6 +57,8 @@
 #include "g2o/solvers/csparse/linear_solver_csparse.h"
 #include "g2o/solvers/cholmod/linear_solver_cholmod.h"
 
+#include <chrono>
+
 
 // register this planner both as a BaseLocalPlanner and as a MBF's CostmapController plugin
 PLUGINLIB_EXPORT_CLASS(teb_local_planner::TebLocalPlannerROS, nav_core::BaseLocalPlanner)
@@ -271,6 +273,10 @@ uint32_t TebLocalPlannerROS::computeVelocityCommands(const geometry_msgs::PoseSt
     return mbf_msgs::ExePathResult::NOT_INITIALIZED;
   }
 
+  // ROS_WARN_STREAM("TEB starting a new plan");
+	// clock_t t0 = std::clock();
+
+
   static uint32_t seq = 0;
   cmd_vel.header.seq = seq++;
   cmd_vel.header.stamp = ros::Time::now();
@@ -473,6 +479,11 @@ uint32_t TebLocalPlannerROS::computeVelocityCommands(const geometry_msgs::PoseSt
   
   // store last command (for recovery analysis etc.)
   last_cmd_ = cmd_vel.twist;
+
+  
+	// clock_t t1 = std::clock();
+  // double duration = 1000 * (t1 - t0) / (double)CLOCKS_PER_SEC;
+  // ROS_WARN_STREAM("TEB Finished in " << duration << " ms");
   
   // Now visualize everything    
   planner_->visualize();
