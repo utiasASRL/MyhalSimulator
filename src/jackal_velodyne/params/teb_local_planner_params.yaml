@@ -10,7 +10,7 @@ TebLocalPlannerROS:
  max_samples: 500
  global_plan_overwrite_orientation: True
  allow_init_with_backwards_motion: False
- max_global_plan_lookahead_dist: 3.0
+ max_global_plan_lookahead_dist: 0
  global_plan_viapoint_sep: -1
  global_plan_prune_distance: 1
  exact_arc_length: False
@@ -19,12 +19,12 @@ TebLocalPlannerROS:
     
  # Robot
          
- max_vel_x: 0.4
+ max_vel_x: 2 #previous 0.4
  max_vel_x_backwards: 0.2
- max_vel_y: 0.0
- max_vel_theta: 0.3
- acc_lim_x: 0.5
- acc_lim_theta: 0.5
+ max_vel_y: 0.0 
+ max_vel_theta: 4.0 #previous 0.3
+ acc_lim_x: 20 #previous 0.5 data from http://wiki.ros.org/diff_drive_controller
+ acc_lim_theta: 25 #previous 0.4
  min_turning_radius: 0.0 # diff-drive robot (can turn on place!)
 
  footprint_model:
@@ -42,12 +42,12 @@ TebLocalPlannerROS:
     
  min_obstacle_dist: 0.25 # This value must also include our robot radius, since footprint_model is set to "point".
  inflation_dist: 0.6
- include_costmap_obstacles: True
+ include_costmap_obstacles: False
  costmap_obstacles_behind_robot_dist: 1.5
  obstacle_poses_affected: 15
 
  dynamic_obstacle_inflation_dist: 0.6
- include_dynamic_obstacles: True
+ include_dynamic_obstacles: False
 
  costmap_converter_plugin: ""
  costmap_converter_spin_thread: True
@@ -76,7 +76,7 @@ TebLocalPlannerROS:
  weight_dynamic_obstacle_inflation: 0.2
  weight_viapoint: 1
  weight_adapt_factor: 2
- weight_predicted_costmap: 0.001
+ weight_predicted_costmap: 0.03
 
  # Homotopy Class Planner
 
