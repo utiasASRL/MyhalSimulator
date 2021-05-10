@@ -3,6 +3,7 @@
 import rospy
 from src.dashboard import *
 from os import listdir
+from os.path import isdir
 
 
 def plots1():
@@ -759,10 +760,47 @@ def tmp():
 
     #D.plot_run('2020-10-01-14-12-22', TrajectoryPlot(only_gt=False))
 
-    D.plot_run('2020-10-23-12-23-57', TranslationError(True))
-    D.plot_run('2020-10-23-12-23-57', TEBoxPlot(True))
-    D.plot_run('2020-10-20-18-18-06', TranslationError(True))
-    D.plot_run('2020-10-20-18-18-06', TEBoxPlot(True))
+    # D.plot_run('2020-10-23-12-23-57', TranslationError(True))
+    # D.plot_run('2020-10-23-12-23-57', TEBoxPlot(True))
+    # D.plot_run('2020-10-20-18-18-06', TranslationError(True))
+    # D.plot_run('2020-10-20-18-18-06', TEBoxPlot(True))
+
+    
+    # Delete failed runs
+    deleted_fails = True
+    if deleted_fails:
+
+        print('\nList of runs that will be deleted:')
+        deleted_names = []
+        for name in D.handler.run_inds[:500]:
+            run = D.handler.run_map[name]
+            if run.meta['targets_reached'] < 0:
+                print('   > ' + name)
+                deleted_names.append(name)
+
+        # Add runs which are not even i nthe list (empty/corrupted folders)
+        path = '/home/' +  os.environ['USER'] +'/Myhal_Simulation/simulated_runs/'
+        dirs = np.sort([f for f in listdir(path) if isdir(path + f)])
+        for name in dirs:
+            if name in D.handler.run_inds:
+                continue
+            print('   > Corrupted ' + name)
+            deleted_names.append(name)
+
+        if deleted_names:
+            confirm = raw_input('\nType \"y\" to confirm you want to delete all listed runs\n')
+            if (confirm == 'y'):
+                for name in deleted_names:
+                    D.handler.user_remove_file(name)
+        else:
+            print('\nNo runs to delete\n')
+
+
+
+
+
+
+
 
     a = 1/0
 
@@ -774,6 +812,8 @@ if __name__ == '__main__':
 
     tmp()
     a = 1/0
+
+
 
     # plots1()
 
