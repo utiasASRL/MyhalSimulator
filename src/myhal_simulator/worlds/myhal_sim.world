@@ -111,7 +111,7 @@
  
 
 		<actor name="actor_bouncer_30">
-			<pose>2.957580 -4.720464 1.000000 0.000000 -0.000000 -1.271706</pose>
+			<pose>-2.189732 1.347433 1.000000 0.000000 -0.000000 -0.327370</pose>
 			<skin>
 				<filename>model://actor/meshes/SKIN_man_blue_shirt.dae</filename>
 			</skin>
@@ -137,7 +137,7 @@
 			</plugin>
 		</actor>
 		<actor name="actor_bouncer_31">
-			<pose>-7.296338 -5.737251 1.000000 0.000000 -0.000000 2.054892</pose>
+			<pose>-3.862235 -0.657795 1.000000 0.000000 -0.000000 2.338940</pose>
 			<skin>
 				<filename>model://actor/meshes/SKIN_man_blue_shirt.dae</filename>
 			</skin>
@@ -163,7 +163,7 @@
 			</plugin>
 		</actor>
 		<actor name="actor_bouncer_32">
-			<pose>-7.363572 -3.419474 1.000000 0.000000 -0.000000 1.961805</pose>
+			<pose>2.897877 -2.752854 1.000000 0.000000 -0.000000 2.388696</pose>
 			<skin>
 				<filename>model://actor/meshes/SKIN_man_blue_shirt.dae</filename>
 			</skin>
@@ -189,7 +189,7 @@
 			</plugin>
 		</actor>
 		<actor name="actor_bouncer_33">
-			<pose>-1.419554 -5.303710 1.000000 0.000000 -0.000000 -2.072424</pose>
+			<pose>-5.676687 1.067037 1.000000 0.000000 -0.000000 -0.636288</pose>
 			<skin>
 				<filename>model://actor/meshes/SKIN_man_blue_shirt.dae</filename>
 			</skin>
@@ -215,7 +215,7 @@
 			</plugin>
 		</actor>
 		<actor name="actor_bouncer_34">
-			<pose>6.385390 0.819096 1.000000 0.000000 -0.000000 -1.831784</pose>
+			<pose>6.191572 -0.013538 1.000000 0.000000 -0.000000 2.915335</pose>
 			<skin>
 				<filename>model://actor/meshes/SKIN_man_blue_shirt.dae</filename>
 			</skin>
@@ -241,7 +241,7 @@
 			</plugin>
 		</actor>
 		<actor name="actor_bouncer_35">
-			<pose>-3.855187 0.908992 1.000000 0.000000 -0.000000 2.049459</pose>
+			<pose>-7.229902 -0.525898 1.000000 0.000000 -0.000000 -2.517220</pose>
 			<skin>
 				<filename>model://actor/meshes/SKIN_man_blue_shirt.dae</filename>
 			</skin>
@@ -267,7 +267,7 @@
 			</plugin>
 		</actor>
 		<actor name="actor_bouncer_36">
-			<pose>-0.457551 -5.194885 1.000000 0.000000 -0.000000 -2.976384</pose>
+			<pose>-4.675508 1.490818 1.000000 0.000000 -0.000000 -1.073985</pose>
 			<skin>
 				<filename>model://actor/meshes/SKIN_man_blue_shirt.dae</filename>
 			</skin>
@@ -293,7 +293,7 @@
 			</plugin>
 		</actor>
 		<actor name="actor_bouncer_37">
-			<pose>5.033076 0.301720 1.000000 0.000000 -0.000000 1.096121</pose>
+			<pose>-2.607423 -2.713928 1.000000 0.000000 -0.000000 -2.263471</pose>
 			<skin>
 				<filename>model://actor/meshes/SKIN_man_blue_shirt.dae</filename>
 			</skin>
@@ -319,7 +319,7 @@
 			</plugin>
 		</actor>
 		<actor name="actor_bouncer_38">
-			<pose>-5.784002 0.206789 1.000000 0.000000 -0.000000 2.606701</pose>
+			<pose>-6.158835 -5.138597 1.000000 0.000000 -0.000000 1.027281</pose>
 			<skin>
 				<filename>model://actor/meshes/SKIN_man_blue_shirt.dae</filename>
 			</skin>
@@ -345,7 +345,7 @@
 			</plugin>
 		</actor>
 		<actor name="actor_bouncer_39">
-			<pose>-7.079441 -4.194183 1.000000 0.000000 -0.000000 -2.252196</pose>
+			<pose>0.799386 -3.179157 1.000000 0.000000 -0.000000 1.069274</pose>
 			<skin>
 				<filename>model://actor/meshes/SKIN_man_blue_shirt.dae</filename>
 			</skin>
@@ -371,7 +371,7 @@
 			</plugin>
 		</actor>
 		<actor name="actor_bouncer_40">
-			<pose>5.594264 -2.287845 1.000000 0.000000 -0.000000 -1.917595</pose>
+			<pose>1.821640 -0.033464 1.000000 0.000000 -0.000000 -2.777819</pose>
 			<skin>
 				<filename>model://actor/meshes/SKIN_man_blue_shirt.dae</filename>
 			</skin>
@@ -397,7 +397,7 @@
 			</plugin>
 		</actor>
 		<actor name="actor_bouncer_41">
-			<pose>0.018802 -11.006238 1.000000 0.000000 -0.000000 1.179335</pose>
+			<pose>-3.677815 -11.600900 1.000000 0.000000 -0.000000 -0.317041</pose>
 			<skin>
 				<filename>model://actor/meshes/SKIN_man_blue_shirt.dae</filename>
 			</skin>
@@ -423,7 +423,7 @@
 			</plugin>
 		</actor>
 		<actor name="actor_bouncer_42">
-			<pose>-0.828339 -17.011378 1.000000 0.000000 -0.000000 0.699812</pose>
+			<pose>-2.092521 -15.324247 1.000000 0.000000 -0.000000 -2.749633</pose>
 			<skin>
 				<filename>model://actor/meshes/SKIN_man_blue_shirt.dae</filename>
 			</skin>
@@ -449,7 +449,7 @@
 			</plugin>
 		</actor>
 		<actor name="actor_bouncer_43">
-			<pose>-0.473247 -11.691648 1.000000 0.000000 -0.000000 -1.807237</pose>
+			<pose>-5.250180 -11.740357 1.000000 0.000000 -0.000000 3.034811</pose>
 			<skin>
 				<filename>model://actor/meshes/SKIN_man_blue_shirt.dae</filename>
 			</skin>
@@ -475,7 +475,7 @@
 			</plugin>
 		</actor>
 		<actor name="actor_bouncer_44">
-			<pose>-0.886399 -12.041115 1.000000 0.000000 -0.000000 2.263216</pose>
+			<pose>-6.616730 -10.396823 1.000000 0.000000 -0.000000 1.743000</pose>
 			<skin>
 				<filename>model://actor/meshes/SKIN_man_blue_shirt.dae</filename>
 			</skin>
@@ -501,7 +501,7 @@
 			</plugin>
 		</actor>
 		<actor name="actor_bouncer_45">
-			<pose>-7.465247 -16.957835 1.000000 0.000000 -0.000000 -2.406773</pose>
+			<pose>-1.478485 -11.927148 1.000000 0.000000 -0.000000 -0.240526</pose>
 			<skin>
 				<filename>model://actor/meshes/SKIN_man_blue_shirt.dae</filename>
 			</skin>
@@ -527,7 +527,7 @@
 			</plugin>
 		</actor>
 		<actor name="actor_bouncer_46">
-			<pose>0.748285 -12.876870 1.000000 0.000000 -0.000000 2.777785</pose>
+			<pose>-3.309720 -12.873776 1.000000 0.000000 -0.000000 -0.496443</pose>
 			<skin>
 				<filename>model://actor/meshes/SKIN_man_blue_shirt.dae</filename>
 			</skin>
@@ -553,7 +553,7 @@
 			</plugin>
 		</actor>
 		<actor name="actor_bouncer_47">
-			<pose>1.605538 -10.648947 1.000000 0.000000 -0.000000 -2.197303</pose>
+			<pose>-7.753869 -12.086311 1.000000 0.000000 -0.000000 -1.801457</pose>
 			<skin>
 				<filename>model://actor/meshes/SKIN_man_blue_shirt.dae</filename>
 			</skin>
@@ -579,7 +579,7 @@
 			</plugin>
 		</actor>
 		<actor name="actor_bouncer_48">
-			<pose>-0.652328 -15.818553 1.000000 0.000000 -0.000000 1.656058</pose>
+			<pose>-7.755699 -14.069021 1.000000 0.000000 -0.000000 -2.797085</pose>
 			<skin>
 				<filename>model://actor/meshes/SKIN_man_blue_shirt.dae</filename>
 			</skin>
@@ -605,7 +605,7 @@
 			</plugin>
 		</actor>
 		<actor name="actor_bouncer_49">
-			<pose>-0.627666 19.292133 1.000000 0.000000 -0.000000 0.693165</pose>
+			<pose>-2.118972 11.838515 1.000000 0.000000 -0.000000 1.177075</pose>
 			<skin>
 				<filename>model://actor/meshes/SKIN_man_blue_shirt.dae</filename>
 			</skin>
@@ -631,7 +631,7 @@
 			</plugin>
 		</actor>
 		<actor name="actor_bouncer_50">
-			<pose>-4.773029 18.344649 1.000000 0.000000 -0.000000 1.687115</pose>
+			<pose>5.550653 10.414910 1.000000 0.000000 -0.000000 2.731228</pose>
 			<skin>
 				<filename>model://actor/meshes/SKIN_man_blue_shirt.dae</filename>
 			</skin>
@@ -657,7 +657,7 @@
 			</plugin>
 		</actor>
 		<actor name="actor_bouncer_51">
-			<pose>-5.434584 17.251612 1.000000 0.000000 -0.000000 -2.369499</pose>
+			<pose>4.178658 16.365175 1.000000 0.000000 -0.000000 1.513717</pose>
 			<skin>
 				<filename>model://actor/meshes/SKIN_man_blue_shirt.dae</filename>
 			</skin>
@@ -683,7 +683,7 @@
 			</plugin>
 		</actor>
 		<actor name="actor_bouncer_52">
-			<pose>1.989964 14.272058 1.000000 0.000000 -0.000000 -1.957772</pose>
+			<pose>-0.854180 16.869174 1.000000 0.000000 -0.000000 1.253591</pose>
 			<skin>
 				<filename>model://actor/meshes/SKIN_man_blue_shirt.dae</filename>
 			</skin>
@@ -709,7 +709,7 @@
 			</plugin>
 		</actor>
 		<actor name="actor_bouncer_53">
-			<pose>-5.931190 16.591821 1.000000 0.000000 -0.000000 -2.923842</pose>
+			<pose>5.580426 13.055527 1.000000 0.000000 -0.000000 -2.891048</pose>
 			<skin>
 				<filename>model://actor/meshes/SKIN_man_blue_shirt.dae</filename>
 			</skin>
@@ -735,7 +735,7 @@
 			</plugin>
 		</actor>
 		<actor name="actor_bouncer_54">
-			<pose>7.360298 14.002117 1.000000 0.000000 -0.000000 0.250095</pose>
+			<pose>6.987388 15.568835 1.000000 0.000000 -0.000000 1.985847</pose>
 			<skin>
 				<filename>model://actor/meshes/SKIN_man_blue_shirt.dae</filename>
 			</skin>
@@ -761,7 +761,7 @@
 			</plugin>
 		</actor>
 		<actor name="actor_bouncer_55">
-			<pose>-2.074128 19.291651 1.000000 0.000000 -0.000000 -3.014033</pose>
+			<pose>3.818709 17.029106 1.000000 0.000000 -0.000000 -0.198479</pose>
 			<skin>
 				<filename>model://actor/meshes/SKIN_man_blue_shirt.dae</filename>
 			</skin>
@@ -787,7 +787,7 @@
 			</plugin>
 		</actor>
 		<actor name="actor_bouncer_56">
-			<pose>-2.142505 17.998035 1.000000 0.000000 -0.000000 -0.680883</pose>
+			<pose>-5.574137 13.515703 1.000000 0.000000 -0.000000 0.796419</pose>
 			<skin>
 				<filename>model://actor/meshes/SKIN_man_blue_shirt.dae</filename>
 			</skin>
@@ -813,7 +813,7 @@
 			</plugin>
 		</actor>
 		<actor name="actor_bouncer_57">
-			<pose>2.908418 16.034338 1.000000 0.000000 -0.000000 -0.435244</pose>
+			<pose>-2.408078 16.886787 1.000000 0.000000 -0.000000 -2.867967</pose>
 			<skin>
 				<filename>model://actor/meshes/SKIN_man_blue_shirt.dae</filename>
 			</skin>
@@ -839,7 +839,7 @@
 			</plugin>
 		</actor>
 		<actor name="actor_bouncer_58">
-			<pose>-5.926429 14.438045 1.000000 0.000000 -0.000000 0.676914</pose>
+			<pose>-6.173443 13.890313 1.000000 0.000000 -0.000000 -2.608631</pose>
 			<skin>
 				<filename>model://actor/meshes/SKIN_man_blue_shirt.dae</filename>
 			</skin>
@@ -865,7 +865,7 @@
 			</plugin>
 		</actor>
 		<actor name="actor_bouncer_59">
-			<pose>-7.195612 18.133259 1.000000 0.000000 -0.000000 1.825979</pose>
+			<pose>7.244884 10.058344 1.000000 0.000000 -0.000000 -3.060851</pose>
 			<skin>
 				<filename>model://actor/meshes/SKIN_man_blue_shirt.dae</filename>
 			</skin>
@@ -891,7 +891,7 @@
 			</plugin>
 		</actor>
 		<actor name="actor_bouncer_60">
-			<pose>4.188973 17.314869 1.000000 0.000000 -0.000000 2.244736</pose>
+			<pose>1.800063 10.256242 1.000000 0.000000 -0.000000 1.627712</pose>
 			<skin>
 				<filename>model://actor/meshes/SKIN_man_blue_shirt.dae</filename>
 			</skin>
@@ -917,7 +917,7 @@
 			</plugin>
 		</actor>
 		<actor name="actor_bouncer_61">
-			<pose>-1.005162 14.809879 1.000000 0.000000 -0.000000 2.941125</pose>
+			<pose>6.098855 18.378772 1.000000 0.000000 -0.000000 -1.831795</pose>
 			<skin>
 				<filename>model://actor/meshes/SKIN_man_blue_shirt.dae</filename>
 			</skin>
@@ -943,7 +943,7 @@
 			</plugin>
 		</actor>
 		<actor name="actor_bouncer_62">
-			<pose>18.134760 1.860019 1.000000 0.000000 -0.000000 -1.950653</pose>
+			<pose>18.836265 4.013677 1.000000 0.000000 -0.000000 -2.822956</pose>
 			<skin>
 				<filename>model://actor/meshes/SKIN_man_blue_shirt.dae</filename>
 			</skin>
@@ -969,7 +969,7 @@
 			</plugin>
 		</actor>
 		<actor name="actor_bouncer_63">
-			<pose>16.783747 -12.551806 1.000000 0.000000 -0.000000 1.500043</pose>
+			<pose>14.931131 3.476560 1.000000 0.000000 -0.000000 1.766747</pose>
 			<skin>
 				<filename>model://actor/meshes/SKIN_man_blue_shirt.dae</filename>
 			</skin>
@@ -995,7 +995,7 @@
 			</plugin>
 		</actor>
 		<actor name="actor_bouncer_64">
-			<pose>19.564961 -14.776783 1.000000 0.000000 -0.000000 0.143045</pose>
+			<pose>16.841201 -1.687064 1.000000 0.000000 -0.000000 -2.034289</pose>
 			<skin>
 				<filename>model://actor/meshes/SKIN_man_blue_shirt.dae</filename>
 			</skin>
@@ -1021,7 +1021,7 @@
 			</plugin>
 		</actor>
 		<actor name="actor_bouncer_66">
-			<pose>18.336903 -18.781169 1.000000 0.000000 -0.000000 1.094575</pose>
+			<pose>18.819962 2.682221 1.000000 0.000000 -0.000000 -2.242241</pose>
 			<skin>
 				<filename>model://actor/meshes/SKIN_man_blue_shirt.dae</filename>
 			</skin>
@@ -1047,33 +1047,7 @@
 			</plugin>
 		</actor>
 		<actor name="actor_bouncer_67">
-			<pose>18.677845 -16.006593 1.000000 0.000000 -0.000000 2.250655</pose>
-			<skin>
-				<filename>model://actor/meshes/SKIN_man_blue_shirt.dae</filename>
-			</skin>
-			<animation name="walking">
-				<filename>model://actor/meshes/ANIMATION_walking.dae</filename>
-				<interpolate_x>true</interpolate_x>
-			</animation>
-			<animation name="talking">
-				<filename>model://actor/meshes/ANIMATION_talking_a.dae</filename>
-				<interpolate_x>true</interpolate_x>
-			</animation>
-			<animation name="standing">
-				<filename>model://actor/meshes/ANIMATION_talking_a.dae</filename>
-				<interpolate_x>true</interpolate_x>
-			</animation>
-			<animation name="sitting">
-				<filename>model://actor/meshes/ANIMATION_sitting.dae</filename>
-				<interpolate_x>true</interpolate_x>
-			</animation>
-			<plugin name="max_speed" filename="1">
-			</plugin>
-			<plugin name="vehicle_type" filename="bouncer">
-			</plugin>
-		</actor>
-		<actor name="actor_bouncer_68">
-			<pose>16.085347 -10.022478 1.000000 0.000000 -0.000000 -2.046919</pose>
+			<pose>15.715576 -16.657388 1.000000 0.000000 -0.000000 -1.751688</pose>
 			<skin>
 				<filename>model://actor/meshes/SKIN_man_blue_shirt.dae</filename>
 			</skin>
@@ -1099,33 +1073,7 @@
 			</plugin>
 		</actor>
 		<actor name="actor_bouncer_69">
-			<pose>15.242027 -17.233811 1.000000 0.000000 -0.000000 0.579609</pose>
-			<skin>
-				<filename>model://actor/meshes/SKIN_man_blue_shirt.dae</filename>
-			</skin>
-			<animation name="walking">
-				<filename>model://actor/meshes/ANIMATION_walking.dae</filename>
-				<interpolate_x>true</interpolate_x>
-			</animation>
-			<animation name="talking">
-				<filename>model://actor/meshes/ANIMATION_talking_a.dae</filename>
-				<interpolate_x>true</interpolate_x>
-			</animation>
-			<animation name="standing">
-				<filename>model://actor/meshes/ANIMATION_talking_a.dae</filename>
-				<interpolate_x>true</interpolate_x>
-			</animation>
-			<animation name="sitting">
-				<filename>model://actor/meshes/ANIMATION_sitting.dae</filename>
-				<interpolate_x>true</interpolate_x>
-			</animation>
-			<plugin name="max_speed" filename="1">
-			</plugin>
-			<plugin name="vehicle_type" filename="bouncer">
-			</plugin>
-		</actor>
-		<actor name="actor_bouncer_70">
-			<pose>18.388417 -4.857615 1.000000 0.000000 -0.000000 -1.626186</pose>
+			<pose>19.063253 -16.988867 1.000000 0.000000 -0.000000 -2.156765</pose>
 			<skin>
 				<filename>model://actor/meshes/SKIN_man_blue_shirt.dae</filename>
 			</skin>
@@ -1151,7 +1099,7 @@
 			</plugin>
 		</actor>
 		<actor name="actor_bouncer_71">
-			<pose>16.216740 -2.621732 1.000000 0.000000 -0.000000 -1.412327</pose>
+			<pose>15.854763 0.075606 1.000000 0.000000 -0.000000 0.874560</pose>
 			<skin>
 				<filename>model://actor/meshes/SKIN_man_blue_shirt.dae</filename>
 			</skin>
@@ -1177,7 +1125,7 @@
 			</plugin>
 		</actor>
 		<actor name="actor_bouncer_72">
-			<pose>15.994082 -13.400600 1.000000 0.000000 -0.000000 -0.846925</pose>
+			<pose>17.369344 -7.570377 1.000000 0.000000 -0.000000 2.030798</pose>
 			<skin>
 				<filename>model://actor/meshes/SKIN_man_blue_shirt.dae</filename>
 			</skin>
@@ -1203,7 +1151,7 @@
 			</plugin>
 		</actor>
 		<actor name="actor_bouncer_73">
-			<pose>-10.787483 2.730129 1.000000 0.000000 -0.000000 2.367380</pose>
+			<pose>-10.526392 -3.728360 1.000000 0.000000 -0.000000 -0.487958</pose>
 			<skin>
 				<filename>model://actor/meshes/SKIN_man_blue_shirt.dae</filename>
 			</skin>
@@ -1229,7 +1177,7 @@
 			</plugin>
 		</actor>
 		<actor name="actor_bouncer_74">
-			<pose>-11.411107 -3.245654 1.000000 0.000000 -0.000000 -0.448013</pose>
+			<pose>-9.954408 -3.900181 1.000000 0.000000 -0.000000 1.686860</pose>
 			<skin>
 				<filename>model://actor/meshes/SKIN_man_blue_shirt.dae</filename>
 			</skin>
@@ -1255,7 +1203,7 @@
 			</plugin>
 		</actor>
 		<actor name="actor_bouncer_75">
-			<pose>-9.433613 0.595025 1.000000 0.000000 -0.000000 -0.492248</pose>
+			<pose>-11.330773 -0.477858 1.000000 0.000000 -0.000000 1.861978</pose>
 			<skin>
 				<filename>model://actor/meshes/SKIN_man_blue_shirt.dae</filename>
 			</skin>
@@ -1281,7 +1229,7 @@
 			</plugin>
 		</actor>
 		<actor name="actor_bouncer_76">
-			<pose>-16.102763 11.152364 1.000000 0.000000 -0.000000 0.859297</pose>
+			<pose>-16.951723 13.161413 1.000000 0.000000 -0.000000 2.856984</pose>
 			<skin>
 				<filename>model://actor/meshes/SKIN_man_blue_shirt.dae</filename>
 			</skin>
@@ -1307,7 +1255,7 @@
 			</plugin>
 		</actor>
 		<actor name="actor_bouncer_77">
-			<pose>-15.669887 11.359698 1.000000 0.000000 -0.000000 -1.583702</pose>
+			<pose>-18.283292 11.369070 1.000000 0.000000 -0.000000 -0.060533</pose>
 			<skin>
 				<filename>model://actor/meshes/SKIN_man_blue_shirt.dae</filename>
 			</skin>
@@ -1333,7 +1281,7 @@
 			</plugin>
 		</actor>
 		<actor name="actor_bouncer_78">
-			<pose>-18.781366 13.643555 1.000000 0.000000 -0.000000 0.761335</pose>
+			<pose>-17.204709 15.763860 1.000000 0.000000 -0.000000 3.122353</pose>
 			<skin>
 				<filename>model://actor/meshes/SKIN_man_blue_shirt.dae</filename>
 			</skin>
@@ -1359,7 +1307,7 @@
 			</plugin>
 		</actor>
 		<actor name="actor_bouncer_79">
-			<pose>-16.687980 17.539480 1.000000 0.000000 -0.000000 1.940244</pose>
+			<pose>-19.298051 10.595191 1.000000 0.000000 -0.000000 -1.082026</pose>
 			<skin>
 				<filename>model://actor/meshes/SKIN_man_blue_shirt.dae</filename>
 			</skin>
@@ -1385,7 +1333,7 @@
 			</plugin>
 		</actor>
 		<actor name="actor_bouncer_80">
-			<pose>-15.942940 15.843218 1.000000 0.000000 -0.000000 2.223370</pose>
+			<pose>-16.862511 6.692376 1.000000 0.000000 -0.000000 1.923237</pose>
 			<skin>
 				<filename>model://actor/meshes/SKIN_man_blue_shirt.dae</filename>
 			</skin>
@@ -1411,7 +1359,7 @@
 			</plugin>
 		</actor>
 		<actor name="actor_bouncer_81">
-			<pose>-18.176454 13.673684 1.000000 0.000000 -0.000000 -2.633548</pose>
+			<pose>-18.164632 15.326233 1.000000 0.000000 -0.000000 -2.220607</pose>
 			<skin>
 				<filename>model://actor/meshes/SKIN_man_blue_shirt.dae</filename>
 			</skin>
@@ -1437,13 +1385,18 @@
 			</plugin>
 		</actor>
 		<include>
-			<name>door_2</name>
-			<pose>-10.775058 12.475000 1.000000 0.000000 -0.000000 1.571000</pose>
+			<name>door_0</name>
+			<pose>-10.987250 16.475000 1.000000 0.000000 -0.000000 1.571000</pose>
 			<uri>model://simple_door2</uri>
 		</include>
 		<include>
-			<name>door_4</name>
-			<pose>6.935080 8.625000 1.000000 0.000000 -0.000000 1.571000</pose>
+			<name>door_1</name>
+			<pose>-14.624989 9.030960 1.000000 0.000000 -0.000000 -3.141185</pose>
+			<uri>model://simple_door2</uri>
+		</include>
+		<include>
+			<name>door_2</name>
+			<pose>-10.775058 12.475000 1.000000 0.000000 -0.000000 1.571000</pose>
 			<uri>model://simple_door2</uri>
 		</include>
 		<include>
@@ -1464,6 +1417,11 @@
 		<include>
 			<name>door_8</name>
 			<pose>15.475004 16.925590 1.000000 0.000000 -0.000000 -3.141185</pose>
+			<uri>model://simple_door2</uri>
+		</include>
+		<include>
+			<name>door_9</name>
+			<pose>-14.625002 6.214056 1.000000 0.000000 -0.000000 -3.141185</pose>
 			<uri>model://simple_door2</uri>
 		</include>
 		<include>
@@ -1517,6 +1475,11 @@
 			<uri>model://simple_door2</uri>
 		</include>
 		<include>
+			<name>door_20</name>
+			<pose>13.031310 5.774995 1.000000 0.000000 -0.000000 1.571000</pose>
+			<uri>model://simple_door2</uri>
+		</include>
+		<include>
 			<name>door_21</name>
 			<pose>10.625002 3.385427 1.000000 0.000000 -0.000000 -3.141185</pose>
 			<uri>model://simple_door2</uri>
@@ -1554,6 +1517,11 @@
 		<include>
 			<name>door_28</name>
 			<pose>13.352706 -14.475002 1.000000 0.000000 -0.000000 1.571000</pose>
+			<uri>model://simple_door2</uri>
+		</include>
+		<include>
+			<name>door_29</name>
+			<pose>12.624998 -7.129598 1.000000 0.000000 -0.000000 -3.141185</pose>
 			<uri>model://simple_door2</uri>
 		</include>
 
