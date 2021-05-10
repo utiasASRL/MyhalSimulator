@@ -1095,7 +1095,9 @@ void TebOptimalPlanner::AddEdgesPredictedCostmap3D()
     int current_prediction_layer = std::ceil(starting_prediction_layer + teb_.TimeDiffSumToIndex(index)); // use ceil as you want to use the closest layer in the future of the teb point
     if(current_prediction_layer >= predictions3D_->getDepth())
     {
-      return; // the predictions cannot affect teb points that are too far ahead in the future wrt to what we predict
+      current_prediction_layer = predictions3D_->getDepth();
+      // TODO: constant velocity projection on layers. This induces a significant error for a 0.3s prefered DT of tebs, 0.1 sec resolution map with the robot moving at 1m/s you get up to 20cm of error!
+       // project on the last layer
     }
     else
     { 
