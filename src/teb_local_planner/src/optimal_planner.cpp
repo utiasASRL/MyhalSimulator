@@ -469,113 +469,111 @@ void TebOptimalPlanner::AddTEBVertices()
   }
 }
 
-
 void TebOptimalPlanner::AddEdgesObstacles(double weight_multiplier)
 {
-  if (cfg_->optim.weight_obstacle==0 || weight_multiplier==0 || obstacles_==nullptr )
+  if (cfg_->optim.weight_obstacle == 0 || weight_multiplier == 0 || obstacles_ == nullptr)
     return; // if weight equals zero skip adding edges!
-    
-  
+
   bool inflated = cfg_->obstacles.inflation_dist > cfg_->obstacles.min_obstacle_dist;
 
-  Eigen::Matrix<double,1,1> information;
+  Eigen::Matrix<double, 1, 1> information;
   information.fill(cfg_->optim.weight_obstacle * weight_multiplier);
-  
-  Eigen::Matrix<double,2,2> information_inflated;
-  information_inflated(0,0) = cfg_->optim.weight_obstacle * weight_multiplier;
-  information_inflated(1,1) = cfg_->optim.weight_inflation;
-  information_inflated(0,1) = information_inflated(1,0) = 0;
+
+  Eigen::Matrix<double, 2, 2> information_inflated;
+  information_inflated(0, 0) = cfg_->optim.weight_obstacle * weight_multiplier;
+  information_inflated(1, 1) = cfg_->optim.weight_inflation;
+  information_inflated(0, 1) = information_inflated(1, 0) = 0;
 
   auto iter_obstacle = obstacles_per_vertex_.begin();
 
-  auto create_edge = [inflated, &information, &information_inflated, this] (int index, const Obstacle* obstacle) {
+  auto create_edge = [inflated, &information, &information_inflated, this](int index, const Obstacle *obstacle)
+  {
     if (inflated)
     {
-      EdgeInflatedObstacle* dist_bandpt_obst = new EdgeInflatedObstacle;
-      dist_bandpt_obst->setVertex(0,teb_.PoseVertex(index));
+      EdgeInflatedObstacle *dist_bandpt_obst = new EdgeInflatedObstacle;
+      dist_bandpt_obst->setVertex(0, teb_.PoseVertex(index));
       dist_bandpt_obst->setInformation(information_inflated);
       dist_bandpt_obst->setParameters(*cfg_, robot_model_.get(), obstacle);
       optimizer_->addEdge(dist_bandpt_obst);
     }
     else
     {
-      EdgeObstacle* dist_bandpt_obst = new EdgeObstacle;
-      dist_bandpt_obst->setVertex(0,teb_.PoseVertex(index));
+      EdgeObstacle *dist_bandpt_obst = new EdgeObstacle;
+      dist_bandpt_obst->setVertex(0, teb_.PoseVertex(index));
       dist_bandpt_obst->setInformation(information);
       dist_bandpt_obst->setParameters(*cfg_, robot_model_.get(), obstacle);
       optimizer_->addEdge(dist_bandpt_obst);
     };
   };
-    
+
   // iterate all teb points, skipping the last and, if the EdgeVelocityObstacleRatio edges should not be created, the first one too
   const int first_vertex = cfg_->optim.weight_velocity_obstacle_ratio == 0 ? 1 : 0;
   for (int i = first_vertex; i < teb_.sizePoses() - 1; ++i)
-  {    
-      double left_min_dist = std::numeric_limits<double>::max();
-      double right_min_dist = std::numeric_limits<double>::max();
-      ObstaclePtr left_obstacle;
-      ObstaclePtr right_obstacle;
-      
-      const Eigen::Vector2d pose_orient = teb_.Pose(i).orientationUnitVec();
-      
-      // iterate obstacles
-      for (const ObstaclePtr& obst : *obstacles_)
-      {
-        // we handle dynamic obstacles differently below
-        if(cfg_->obstacles.include_dynamic_obstacles && obst->isDynamic())
-          continue;
+  {
+    double left_min_dist = std::numeric_limits<double>::max();
+    double right_min_dist = std::numeric_limits<double>::max();
+    ObstaclePtr left_obstacle;
+    ObstaclePtr right_obstacle;
 
-          // calculate distance to robot model
-          double dist = robot_model_->calculateDistance(teb_.Pose(i), obst.get());
-          
-          // force considering obstacle if really close to the current pose
-        if (dist < cfg_->obstacles.min_obstacle_dist*cfg_->obstacles.obstacle_association_force_inclusion_factor)
-          {
-              iter_obstacle->push_back(obst);
-              continue;
-          }
-          // cut-off distance
-          if (dist > cfg_->obstacles.min_obstacle_dist*cfg_->obstacles.obstacle_association_cutoff_factor)
-            continue;
-          
-          // determine side (left or right) and assign obstacle if closer than the previous one
-          if (cross2d(pose_orient, obst->getCentroid()) > 0) // left
-          {
-              if (dist < left_min_dist)
-              {
-                  left_min_dist = dist;
-                  left_obstacle = obst;
-              }
-          }
-          else
-          {
-              if (dist < right_min_dist)
-              {
-                  right_min_dist = dist;
-                  right_obstacle = obst;
-              }
-          }
-      }   
-      
-      if (left_obstacle)
-        iter_obstacle->push_back(left_obstacle);
-      if (right_obstacle)
-        iter_obstacle->push_back(right_obstacle);
+    const Eigen::Vector2d pose_orient = teb_.Pose(i).orientationUnitVec();
 
-      // continue here to ignore obstacles for the first pose, but use them later to create the EdgeVelocityObstacleRatio edges
-      if (i == 0)
+    // iterate obstacles
+    for (const ObstaclePtr &obst : *obstacles_)
+    {
+      // we handle dynamic obstacles differently below
+      if (cfg_->obstacles.include_dynamic_obstacles && obst->isDynamic())
+        continue;
+
+      // calculate distance to robot model
+      double dist = robot_model_->calculateDistance(teb_.Pose(i), obst.get());
+
+      // force considering obstacle if really close to the current pose
+      if (dist < cfg_->obstacles.min_obstacle_dist * cfg_->obstacles.obstacle_association_force_inclusion_factor)
       {
-        ++iter_obstacle;
+        iter_obstacle->push_back(obst);
         continue;
       }
+      // cut-off distance
+      if (dist > cfg_->obstacles.min_obstacle_dist * cfg_->obstacles.obstacle_association_cutoff_factor)
+        continue;
 
-      // create obstacle edges
-      for (const ObstaclePtr obst : *iter_obstacle)
-        create_edge(i, obst.get());
+      // determine side (left or right) and assign obstacle if closer than the previous one
+      if (cross2d(pose_orient, obst->getCentroid()) > 0) // left
+      {
+        if (dist < left_min_dist)
+        {
+          left_min_dist = dist;
+          left_obstacle = obst;
+        }
+      }
+      else
+      {
+        if (dist < right_min_dist)
+        {
+          right_min_dist = dist;
+          right_obstacle = obst;
+        }
+      }
+    }
+
+    if (left_obstacle)
+      iter_obstacle->push_back(left_obstacle);
+    if (right_obstacle)
+      iter_obstacle->push_back(right_obstacle);
+
+    // continue here to ignore obstacles for the first pose, but use them later to create the EdgeVelocityObstacleRatio edges
+    if (i == 0)
+    {
       ++iter_obstacle;
+      continue;
+    }
+
+    // create obstacle edges
+    for (const ObstaclePtr obst : *iter_obstacle)
+      create_edge(i, obst.get());
+    ++iter_obstacle;
   }
 }
-
 
 void TebOptimalPlanner::AddEdgesObstaclesLegacy(double weight_multiplier)
 {
