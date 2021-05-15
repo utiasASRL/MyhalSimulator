@@ -1705,7 +1705,12 @@ void FlowFollower::FlowForce()
     // Get flow at current position
     ignition::math::Vector2d flow;
     if (!flow_fields[current_flow]->SmoothFlowLookup(this->pose.Pos(), flow))
-        throw std::out_of_range("FlowFollower position outside the flow map");
+    {
+        //throw std::out_of_range("FlowFollower position outside the flow map");
+        flow.X() = - this->pose.Pos().X();
+        flow.Y() = - this->pose.Pos().Y();
+        flow.Normalize();
+    }
 
     // Apply flow directly as a force. the flow length on a standard pixel = resolution
     ignition::math::Vector3d steer(flow.X(), flow.Y(), 0);
