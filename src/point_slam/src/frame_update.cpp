@@ -755,6 +755,11 @@ int main(int argc, char **argv)
 	// Start subscribing //
 	///////////////////////
 
+
+	// DEBUG
+	slam_params.filtering = false;
+
+
 	// Subscribe to the lidar topic and the transforms topic
 	//ros::Subscriber tf_sub = nh.subscribe("tf", 1000, mapper.update_transforms);
 	string points_topic;
@@ -762,8 +767,6 @@ int main(int argc, char **argv)
 		points_topic = "/classified_points";
 	else
 		points_topic = "/velodyne_points";
-	
-	points_topic = "/velodyne_points";
 
 	ROS_WARN_STREAM("Subscribing to " << points_topic);
 	ros::Subscriber lidar_sub = nh.subscribe(points_topic, 1, &PointMapSLAM::gotCloud, &mapper);
