@@ -554,6 +554,59 @@ public:
 	}
 
 	// Update map with a set of new points
+	void init_from_3D_map(vector<PointXYZ>& points3D, Plane3D& ground_P, float zMin, float zMax)
+	{
+		////////////////
+		// Init steps //
+		////////////////
+
+		// Initialize variables
+		float inv_dl = 1 / dl;
+		PixKey k0;
+
+		//////////////////////////
+		// Convert to 2D ranges //
+		//////////////////////////
+
+		// Get distances to ground
+		vector<float> distances;
+		ground_P.point_distances(points3D, distances);
+
+		////////////////////////
+		// Update full pixels //
+		////////////////////////
+
+		// Loop over 3D points
+		size_t p_i = 0;
+		for (auto& p : points3D)
+		{
+			// Check height limits
+			if (distances[p_i] < zMin || distances[p_i] > zMax)
+			{
+				p_i++;
+				continue;
+			}
+			
+			// Corresponding key
+			k0.x = (int)floor(p.x * inv_dl);
+			k0.y = (int)floor(p.y * inv_dl);
+
+			// Update the point count
+			if (samples.count(k0) < 1)
+			{
+				// Create a new sample at this location
+				init_sample(k0, PointXY(((float)k0.x + 0.5) * dl, ((float)k0.y + 0.5) * dl), 1.0);
+
+				// Update grid limits
+				update_limits(k0);
+			}
+
+			p_i++;
+		}
+		
+	}
+
+	// Update map with a set of new points
 	void update_from_3D(vector<PointXYZ>& points3D, PointXYZ& center3D, Plane3D& ground_P, float zMin, float zMax)
 	{
 		////////////////

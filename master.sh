@@ -17,20 +17,22 @@ t=$(date +'%Y-%m-%d-%H-%M-%S')
 GTCLASS=false # -g flag 
 VIZ_GAZ=false
 PARAMS="default_params"
+TEB=false # -b flag
 
-while getopts p:t:l:m:n:vfge option
+while getopts p:t:l:m:n:vfgeb option
 do
 case "${option}"
 in
-p) PARAMS=${OPTARG};; # what param file are we using?
-t) TOUR=${OPTARG};; # What tour is being used 
-l) LOADWORLD=${OPTARG};; # do you want to load a prexisting world or generate a new one
-m) MAPPING=${OPTARG};; # use gmapping, AMCL or PointSLAM? (respectively 0, 1, 2)
-n) t=${OPTARG};; # Overwrite the date
-v) GUI=true;; # using gui?
-f) FILTER=true;; # pointcloud filtering?
-g) GTCLASS=true;; # are we using ground truth classifications, or online_classifications
-e) VIZ_GAZ=true;; # are we going to vizualize topics in gazebo
+p) PARAMS=${OPTARG};;       # what param file are we using?
+t) TOUR=${OPTARG};;         # What tour is being used 
+l) LOADWORLD=${OPTARG};;    # do you want to load a prexisting world or generate a new one
+m) MAPPING=${OPTARG};;      # use gmapping, AMCL or PointSLAM? (respectively 0, 1, 2)
+n) t=${OPTARG};;            # Overwrite the date
+v) GUI=true;;               # using gui?
+f) FILTER=true;;            # pointcloud filtering?
+g) GTCLASS=true;;           # are we using ground truth classifications, or online_classifications
+e) VIZ_GAZ=true;;           # are we going to vizualize topics in gazebo
+b) TEB=true;;               # are we using TEB planner
 esac
 done
 
@@ -39,7 +41,7 @@ echo "Folder Name: $t"
 MINSTEP=0.0001
 echo "Min step size: $MINSTEP"
 
-echo -e "TOUR: $TOUR\nGUI: $GUI\nLOADWORLD: $LOADWORLD\nFILTER: $FILTER\nMAPPING: $MAPPING\nGTCLASS: $GTCLASS"
+echo -e "TOUR: $TOUR\nGUI: $GUI\nLOADWORLD: $LOADWORLD\nFILTER: $FILTER\nTEB: $TEB\nMAPPING: $MAPPING\nGTCLASS: $GTCLASS"
 
 sleep 1
 

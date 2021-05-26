@@ -178,7 +178,50 @@ void PointMapSLAM::publish_2D_map()
 // SLAM function
 // *************
 
+void PointMapSLAM::gotLocCloud(const sensor_msgs::PointCloud2::ConstPtr& msg)
+{
+	ROS_WARN_STREAM("Processing Loc Cloud");
+	// Automatically in behavior 1: Using the prediction form the collider
+	// Here we process raw clouds (no prediction so we do not update the map and map2D)
+	processCloud(msg, false, false);
+}
+
 void PointMapSLAM::gotCloud(const sensor_msgs::PointCloud2::ConstPtr& msg)
+{
+	ROS_WARN_STREAM("Processing Cloud");
+
+	if (params.filtering && !params.gt_filter)
+	{
+		// 1. Using the prediction form the collider
+		// Here we process classified clouds so we update the map and map2D)
+		processCloud(msg, params.filtering);
+
+	}
+	else if (params.filtering)
+	{
+		// 2. Using the GT predictions
+		processCloud(msg, params.filtering);
+	}
+	else
+	{
+		// 3. Using raw point clouds
+		processCloud(msg, params.filtering);
+	}
+
+	return;
+}
+
+
+
+
+
+
+
+
+
+
+
+void PointMapSLAM::processCloud(const sensor_msgs::PointCloud2::ConstPtr& msg, bool filtering, bool update_map)
 {
 	//////////////////////
 	// Optional verbose //
@@ -229,7 +272,7 @@ void PointMapSLAM::gotCloud(const sensor_msgs::PointCloud2::ConstPtr& msg)
 	// Loop over points and copy in vector container. Do the filtering if necessary
 	vector<PointXYZ> f_pts;
 	f_pts.reserve(N);
-	if (params.filtering)
+	if (filtering)
 	{
 		sensor_msgs::PointCloud2ConstIterator<float> iter_i(*msg, "intensity"), iter_x(*msg, "x"), iter_y(*msg, "y");
 		for (sensor_msgs::PointCloud2ConstIterator<float> iter_z(*msg, "z");
@@ -403,7 +446,11 @@ void PointMapSLAM::gotCloud(const sensor_msgs::PointCloud2::ConstPtr& msg)
 	H_OdomToMap = icp_results.transform * H_OdomToScanner;
 
 	// Publish tf
-	tfBroadcaster.sendTransform(tf::StampedTransform(eigenMatrixToTransform(H_OdomToMap), stamp, params.map_frame, params.odom_frame));
+	if (stamp > latest_stamp)
+	{
+		tfBroadcaster.sendTransform(tf::StampedTransform(eigenMatrixToTransform(H_OdomToMap), stamp, params.map_frame, params.odom_frame));
+		latest_stamp = stamp;
+	}
 	// ROS_WARN_STREAM("TOdomToMap:\n" << H_OdomToMap);
 
 	t.push_back(std::clock());
@@ -430,8 +477,11 @@ void PointMapSLAM::gotCloud(const sensor_msgs::PointCloud2::ConstPtr& msg)
 
 	t.push_back(std::clock());
 
-	// The update function is called only on subsampled points as the others have no normal
-	map.update(sub_pts, normals, norm_scores);
+	if (update_map)
+	{
+		// The update function is called only on subsampled points as the others have no normal
+		map.update(sub_pts, normals, norm_scores);
+	}
 
 	t.push_back(std::clock());
 
@@ -478,7 +528,10 @@ void PointMapSLAM::gotCloud(const sensor_msgs::PointCloud2::ConstPtr& msg)
 
 	/////////////////////////////////////
 
-	map2D.update_from_3D(f_pts, center, ground_P, params.map2d_zMin, params.map2d_zMax);
+	if (update_map || map2D.size() < 1)
+	{
+		map2D.update_from_3D(f_pts, center, ground_P, params.map2d_zMin, params.map2d_zMax);
+	}
 
 	t.push_back(std::clock());
 
@@ -489,8 +542,11 @@ void PointMapSLAM::gotCloud(const sensor_msgs::PointCloud2::ConstPtr& msg)
 	// Update the last pose for future frames
 	last_H = icp_results.transform;
 
-	// Update number of frames
-	n_frames++;
+	if (update_map)
+	{
+		// Update number of frames
+		n_frames++;
+	}
 
 	// Save all poses
 	all_H.push_back(icp_results.transform);
@@ -755,22 +811,35 @@ int main(int argc, char **argv)
 	// Start subscribing //
 	///////////////////////
 
-
-	// DEBUG
-	slam_params.filtering = false;
-
-
 	// Subscribe to the lidar topic and the transforms topic
 	//ros::Subscriber tf_sub = nh.subscribe("tf", 1000, mapper.update_transforms);
-	string points_topic;
-	if (slam_params.filtering && !slam_params.gt_filter)
-		points_topic = "/classified_points";
-	else
-		points_topic = "/velodyne_points";
+	string velo_topic = "/velodyne_points";
+	string pred_topic = "/classified_points";
 
-	ROS_WARN_STREAM("Subscribing to " << points_topic);
-	ros::Subscriber lidar_sub = nh.subscribe(points_topic, 1, &PointMapSLAM::gotCloud, &mapper);
-	ros::spin();
+	// There are three possible behaviors
+	if (slam_params.filtering && !slam_params.gt_filter)
+	{
+		// 1. Using the prediction form the collider
+		ROS_WARN_STREAM("PointSlam in Collider mode: subscribing to " << pred_topic << " and " << velo_topic);
+		ros::Subscriber pred_sub = nh.subscribe(pred_topic, 1, &PointMapSLAM::gotCloud, &mapper);
+		ros::Subscriber lidar_sub = nh.subscribe(velo_topic, 1, &PointMapSLAM::gotLocCloud, &mapper);
+		ros::spin();
+
+	}
+	else if (slam_params.filtering)
+	{
+		// 2. Using the GT predictions
+		ROS_WARN_STREAM("PointSlam in GT mode: subscribing to " << velo_topic);
+		ros::Subscriber lidar_sub = nh.subscribe(velo_topic, 1, &PointMapSLAM::gotCloud, &mapper);
+		ros::spin();
+	}
+	else
+	{
+		// 3. Using raw point clouds
+		ROS_WARN_STREAM("PointSlam in normal mode: subscribing to " << velo_topic);
+		ros::Subscriber lidar_sub = nh.subscribe(velo_topic, 1, &PointMapSLAM::gotCloud, &mapper);
+		ros::spin();
+	}
 
 	// When shutting down save map and trajectories
 	if (mapper.map.size() > 0 && mapper.n_frames > 1)

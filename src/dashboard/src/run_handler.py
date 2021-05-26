@@ -589,6 +589,21 @@ class RunHandler:
             meta_d['targets_reached'] = -0.01
             meta_d['success_status'] = False
 
+
+
+        # Read proportion of actors/tables
+        line_i0 = -1
+        for line_i, line in enumerate(content):
+            if line.startswith('Scenario: ') and not line.startswith('Scenario: empty'):
+                line_i0 = line_i
+        
+        if line_i0 > 0:
+            meta_d['tables_p'] = float(content[line_i0 + 1].split()[-1])
+            meta_d['actors_p'] = float(content[line_i0 + 2].split()[-1])
+        else:
+            meta_d['tables_p'] = 0
+            meta_d['actors_p'] = 0
+
         self.run_map[name] = Run(name, meta_d)
         self.run_inds.append(name)
         self.run_inds.sort(reverse = True)
@@ -767,8 +782,26 @@ class Dashboard:
         self.display = Display(rows,cols)
 
     def list_runs_helper(self, l):
-        header = [bc.color('Index',bc.BOLD),bc.color('Name',bc.BOLD), bc.color('Filtering',bc.BOLD), bc.color('Classification Method',bc.BOLD), bc.color('Tour Name',bc.BOLD), bc.color('Success',bc.BOLD), bc.color('Targets',bc.BOLD), bc.color('Localization Method',bc.BOLD), bc.color('Scenarios',bc.BOLD) , bc.color('Localization Test',bc.BOLD)]
-        fields = ['filter_status','class_method','tour_names', 'success_status', 'targets_reached', 'localization_technique', 'scenarios', 'localization_test']
+
+        header = [bc.color('Index', bc.BOLD),
+                  bc.color('Name', bc.BOLD),
+                  bc.color('Filtering', bc.BOLD),
+                  bc.color('Classification Method', bc.BOLD),
+                  bc.color('Tour Name', bc.BOLD),
+                  bc.color('Success', bc.BOLD),
+                  bc.color('Targets', bc.BOLD),
+                  bc.color('Localization Method', bc.BOLD),
+                  bc.color('Scenarios', bc.BOLD),
+                  bc.color('Actors_p', bc.BOLD)]
+
+        fields = ['filter_status',
+                  'class_method',
+                  'tour_names',
+                  'success_status',
+                  'targets_reached',
+                  'localization_technique',
+                  'scenarios',
+                  'actors_p']
         res = []
         c = 0
         for name in l:

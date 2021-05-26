@@ -65,7 +65,6 @@
 
       <!-- <param name="base_local_planner" value="base_local_planner/TrajectoryPlannerROS"/> -->
       <param name="base_local_planner" value="teb_local_planner/TebLocalPlannerROS"/>
-      
       <remap from="odom" to="odometry/filtered" />
     </node>
        

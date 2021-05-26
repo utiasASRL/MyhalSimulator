@@ -150,6 +150,7 @@ public:
 	int n_frames;
 
 	// ROS parameters
+	ros::Time latest_stamp;
 	tf::TransformListener tfListener;
 	tf::TransformBroadcaster tfBroadcaster;
 	ros::Publisher sst;
@@ -175,11 +176,18 @@ public:
 		// Dummy first last_H
 		last_H = Eigen::Matrix4d::Identity(4, 4);
 		H_OdomToMap = Eigen::Matrix4d::Identity(4, 4);
+		latest_stamp = ros::Time::now();
+
+		// Optionally init map2D from map3D
+		Plane3D ground_P = extract_ground(init_points, init_normals);
+		map2D.init_from_3D_map(init_points, ground_P, slam_params0.map2d_zMin, slam_params0.map2d_zMax);
 	}
 
 	// Mapping methods
 	void init_map() { return; }
 	void gotCloud(const sensor_msgs::PointCloud2::ConstPtr& msg);
+	void gotLocCloud(const sensor_msgs::PointCloud2::ConstPtr& msg);
+	void processCloud(const sensor_msgs::PointCloud2::ConstPtr& msg, bool filtering, bool update_map = true);
 	void add_new_frame(vector<PointXYZ>& f_pts, Eigen::Matrix4d& init_H, int verbose = 0);
 	void publish_2D_map();
 
