@@ -713,7 +713,9 @@ boost::shared_ptr<Vehicle> Puppeteer::CreateVehicle(gazebo::physics::ActorPtr ac
                                                    collision_entities,
                                                    flow_fields,
                                                    vehicle_params["obstacle_margin"],
-                                                   vehicle_params["actor_margin"]);
+                                                   vehicle_params["actor_margin"],
+                                                   vehicle_params["robot_margin"],
+                                                   vehicle_params["robot_slow_flow"]);
         }
         else if (actor_info["vehicle_type"] == "bouncer")
         {
@@ -772,6 +774,8 @@ void Puppeteer::ReadParams()
         vehicle_params["parse_digits"] = 0;
         vehicle_params["flow_obstacle_range"] = 1.0;
         vehicle_params["flow_obstacle_strength"] = 1.0;
+        vehicle_params["robot_margin"] = 1.0;
+        vehicle_params["robot_slow_flow"] = 0;
     }
 
     if (!nh.getParam("custom_actor_goal", this->custom_actor_goal))

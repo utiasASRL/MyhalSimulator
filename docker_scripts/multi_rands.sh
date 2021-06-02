@@ -33,12 +33,14 @@ fi
 for MAPPING in "2"
 do
   # for PARAMS in "RandBounce_params"
-  #for PARAMS in "RandWand_params"
-  for PARAMS in "RandFlow_params" "RandBounce_params" "RandWand_params"
+  # for PARAMS in "RandWand_params"
+  for PARAMS in "RandFlow_params"
+  # for PARAMS in "RandFlow_params" "RandBounce_params" "RandWand_params"
   do
-    for ARGS in "-fe" "e"
+    # for ARGS in "-fe" "e"
+    for ARGS in "-fge"
     do   
-      for i in {1..2}
+      for i in {1..7}
       do
         #for TOUR in "A_short"
         for TOUR in "A_tour" "B_tour" "C_tour"

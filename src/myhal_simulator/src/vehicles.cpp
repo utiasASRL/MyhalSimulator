@@ -167,6 +167,7 @@ Vehicle::Vehicle(gazebo::physics::ActorPtr _actor,
     this->mass = _mass;
     this->max_force = _max_force;
     this->max_speed = _max_speed;
+    this->slow_factor = 1.0;
     this->pose = initial_pose;
     this->curr_target = initial_pose.Pos();
     this->velocity = initial_velocity;
@@ -225,10 +226,12 @@ void Vehicle::UpdatePosition(double dt)
 {
     this->velocity += this->acceleration * dt;
 
-    if (this->velocity.Length() > this->max_speed)
+    double current_max_speed = this->max_speed * this->slow_factor;
+
+    if (this->velocity.Length() > current_max_speed)
     {
         this->velocity.Normalize();
-        this->velocity *= this->max_speed;
+        this->velocity *= current_max_speed;
     }
 
     ignition::math::Vector3d direction = this->velocity;
@@ -265,12 +268,14 @@ void Vehicle::UpdatePositionContactObstacles(std::vector<gazebo::physics::Entity
     // First predict future to see if there is contact
     // ***********************************************
 
+    double current_max_speed = max_speed * slow_factor;
+
     // Predict the velocity and next position of the actor
     auto predicted_velocity = this->velocity + acceleration * dt;
-    if (predicted_velocity.Length() > max_speed)
+    if (predicted_velocity.Length() > current_max_speed)
     {
         predicted_velocity.Normalize();
-        predicted_velocity *= max_speed;
+        predicted_velocity *= current_max_speed;
     }
 
     // Predict next position
@@ -355,7 +360,7 @@ void Vehicle::Seek(ignition::math::Vector3d target, double weight)
 
     ignition::math::Vector3d desired_v = target - this->pose.Pos();
     desired_v.Normalize();
-    desired_v *= this->max_speed;
+    desired_v *= this->max_speed * this->slow_factor;
 
     ignition::math::Vector3d steer = desired_v - this->velocity;
 
@@ -375,17 +380,19 @@ void Vehicle::Seek(ignition::math::Vector3d target, double weight)
 void Vehicle::Arrival(ignition::math::Vector3d target, double weight)
 {
 
+    double current_max_speed = this->max_speed * this->slow_factor;
+
     ignition::math::Vector3d desired_v = target - this->pose.Pos();
     double dist = desired_v.Length();
     desired_v.Normalize();
 
     if (dist < this->slowing_distance)
     {
-        desired_v *= (dist / this->slowing_distance) * (this->max_speed);
+        desired_v *= (dist / this->slowing_distance) * current_max_speed;
     }
     else
     {
-        desired_v *= this->max_speed;
+        desired_v *= current_max_speed;
     }
 
     ignition::math::Vector3d steer = desired_v - this->velocity;
@@ -469,8 +476,9 @@ void Vehicle::AvoidObstacles(std::vector<gazebo::physics::EntityPtr> objects)
     this->ApplyForce(boundary_force);
 }
 
-void Vehicle::AvoidRobot(std::vector<gazebo::physics::EntityPtr> objects)
+void Vehicle::AvoidRobot(std::vector<gazebo::physics::EntityPtr> objects, double robot_margin_factor, bool slowing)
 {
+    double margin = robot_margin_factor * this->actor_margin;
 
     ignition::math::Vector3d boundary_force = ignition::math::Vector3d(0, 0, 0);
 
@@ -485,13 +493,21 @@ void Vehicle::AvoidRobot(std::vector<gazebo::physics::EntityPtr> objects)
             double dist = rad.Length();
             dist = std::max(0.0, dist - 0.2); // acounting for the radius of the person
 
+            // Update slowing factor and corresponding force if slowing happens
+            double force_factor = 0.4;
+            if (slowing)
+            {
+                slow_factor = std::max(0.5, std::min(0.4 + dist / margin, 1.0));
+                force_factor = 0.3;
+            }
+
             // Compute boundary force
-            if (dist < this->actor_margin)
+            if (dist < margin)
             {
                 rad.Normalize();
-                double exp_term = dist / (actor_margin / 2);
+                double exp_term = dist / (margin / 2);
                 exp_term *= exp_term;
-                boundary_force += rad * (0.4 * max_force * exp(-exp_term));
+                boundary_force += rad * (force_factor * max_force * exp(-exp_term));
             }
         }
     }
@@ -543,7 +559,6 @@ void Vehicle::AvoidActors(std::vector<boost::shared_ptr<Vehicle>> vehicles)
             ignition::math::Vector3d other_flow_force = vehicles[i]->flow_force;
             if (flow_force.Length() > 0 && other_flow_force.Length() > 0)
             {
-
                 auto self_direction(flow_force);
                 self_direction.Normalize();
                 double self_dist = self_direction.Dot(-diff_pos);
@@ -1599,12 +1614,17 @@ FlowFollower::FlowFollower(gazebo::physics::ActorPtr _actor,
                            std::vector<gazebo::physics::EntityPtr> objects,
                            std::vector<boost::shared_ptr<FlowField>> &flow_fields0,
                            double _obstacle_margin,
-                           double _actor_margin)
+                           double _actor_margin,
+                           double _robot_margin,
+                           double _robot_slow)
     : Vehicle(_actor, _mass, _max_force, _max_speed, initial_pose, initial_velocity, objects, _obstacle_margin, _actor_margin)
 {
 
     // Init variables
     // **************
+
+    robot_margin = _robot_margin;
+    robot_slow = _robot_slow;
 
     flow_fields = flow_fields0;
     current_flow = 0;
@@ -1644,7 +1664,8 @@ void FlowFollower::OnUpdate(const gazebo::common::UpdateInfo &_info, double dt, 
     AvoidActors(vehicles);
 
     // 4. Apply force from robot
-    AvoidRobot(objects);
+    double robot_margin_factor = robot_margin / actor_margin;
+    AvoidRobot(objects, robot_margin_factor, robot_slow > 0);
 
     // Get total applied force from the summed acceleration
     //showed_force = acceleration * mass;

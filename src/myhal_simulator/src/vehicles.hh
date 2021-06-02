@@ -149,11 +149,13 @@ protected:
 
     void AvoidObstacles(std::vector<gazebo::physics::EntityPtr> objects);
 
-    void AvoidRobot(std::vector<gazebo::physics::EntityPtr> objects);
+    void AvoidRobot(std::vector<gazebo::physics::EntityPtr> objects, double robot_margin_factor=1.0, bool slowing=false);
 
     double height = 1;
 
 public:
+
+    double slow_factor;
     double max_speed;
 
     double max_force;
@@ -418,6 +420,8 @@ public:
     std::vector<boost::shared_ptr<FlowField>> flow_fields;
     int current_flow;
     double distance_to_goal;
+    double robot_margin;
+    double robot_slow;
 
     // Methods
     FlowFollower(gazebo::physics::ActorPtr _actor,
@@ -429,7 +433,9 @@ public:
                  std::vector<gazebo::physics::EntityPtr> objects,
                  std::vector<boost::shared_ptr<FlowField>> &flow_fields0,
                  double _obstacle_margin,
-                 double _actor_margin);
+                 double _actor_margin,
+                 double _robot_margin,
+                 double _robot_slow);
 
     void CheckGoal();
     void UpdateDistance();
