@@ -1077,34 +1077,43 @@ void TebOptimalPlanner::AddEdgesPredictedCostmap()
 
 void TebOptimalPlanner::AddEdgesPredictedCostmap3D()
 {
+
+  // Init variable
   Eigen::Matrix<double,1,1> information;
   information.fill(1);
+
   // Check timestamp of robot current pose. Identify this timestamp with a costmap layer, associate each teb state to closest layer in time or interpolate?
   double curr_time = ros::Time::now().toSec();
   double prediction_init_time = predictions3D_->getInitialTime();
-  // std::cout << "curr_time: " << curr_time << std::endl; 
-  // std::cout << "proj time: " << prediction_init_time << std::endl; 
-  // std::cout << "Time diff: " << curr_time - prediction_init_time <<" /dt_ " << (curr_time - prediction_init_time) / predictions3D_->getTemporalResolution() <<std::endl; 
-  int starting_prediction_layer = std::floor((curr_time - prediction_init_time) / predictions3D_->getTemporalResolution());
 
   // start iterating at second point on teb, the first being the robot pose
   for(int index = 1; index < teb_.sizePoses() - 1; ++index)
   {
-    int current_prediction_layer = std::ceil(starting_prediction_layer + teb_.TimeDiffSumToIndex(index)); // use ceil as you want to use the closest layer in the future of the teb point
+
+    // Get timestamp for this  point of TEB plan
+    double pt_time = curr_time + teb_.TimeDiffSumToIndex(index);
+
+    // Get corresponding layer index in the costmap
+    int current_prediction_layer = (int)std::round((float)(pt_time -  prediction_init_time)/ predictions3D_->getTemporalResolution()); 
+
+    // Get a attenuation factor for the teb poses out of the predictions 
+    float attenuation = 1.0;
     if(current_prediction_layer >= predictions3D_->getDepth())
     {
+      attenuation = (float)std::pow(0.5, current_prediction_layer - predictions3D_->getDepth());
       current_prediction_layer = predictions3D_->getDepth();
-      // TODO: constant velocity projection on layers. This induces a significant error for a 0.3s prefered DT of tebs, 0.1 sec resolution map with the robot moving at 1m/s you get up to 20cm of error!
-       // project on the last layer
     }
-    else
-    { 
+
+    // TODO: Handle attenuation
+    if(current_prediction_layer < predictions3D_->getDepth())
+    {
       EdgePredictedCostmap3D* edge = new EdgePredictedCostmap3D;
       edge->setVertex(0, teb_.PoseVertex(index));
       edge->setInformation(information);
       edge->setParameters(*cfg_, robot_model_.get(), predictions3D_.get(), current_prediction_layer);
       optimizer_->addEdge(edge);
     }
+
   }
 
 }

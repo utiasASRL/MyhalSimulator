@@ -6,8 +6,8 @@ scenario_names:
 # Scenario random:
 
 Rand_wanderers_rand_tables:
-  pop_rand_range: "0.01" # 0.08 if specified and positive the pop density is random uniform in [pop_density - pop_rand_range, pop_density + pop_rand_range]
-  pop_density: "0.11"    # 0.09
+  pop_rand_range: "0.001" # 0.08 if specified and positive the pop density is random uniform in [pop_density - pop_rand_range, pop_density + pop_rand_range]
+  pop_density: "0.09"    # 0.09
   table_rand_range: "0.45"
   table_percentage: "0.4"
   actor: actor_basic_wanderer

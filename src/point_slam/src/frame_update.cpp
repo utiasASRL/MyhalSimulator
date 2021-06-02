@@ -180,7 +180,7 @@ void PointMapSLAM::publish_2D_map()
 
 void PointMapSLAM::gotLocCloud(const sensor_msgs::PointCloud2::ConstPtr& msg)
 {
-	ROS_WARN_STREAM("Processing Loc Cloud");
+	// ROS_WARN_STREAM("Processing Loc Cloud");
 	// Automatically in behavior 1: Using the prediction form the collider
 	// Here we process raw clouds (no prediction so we do not update the map and map2D)
 	processCloud(msg, false, false);
@@ -188,7 +188,7 @@ void PointMapSLAM::gotLocCloud(const sensor_msgs::PointCloud2::ConstPtr& msg)
 
 void PointMapSLAM::gotCloud(const sensor_msgs::PointCloud2::ConstPtr& msg)
 {
-	ROS_WARN_STREAM("Processing Cloud");
+	// ROS_WARN_STREAM("Processing Cloud");
 
 	if (params.filtering && !params.gt_filter)
 	{
@@ -449,7 +449,6 @@ void PointMapSLAM::processCloud(const sensor_msgs::PointCloud2::ConstPtr& msg, b
 	if (stamp > latest_stamp)
 	{
 		tfBroadcaster.sendTransform(tf::StampedTransform(eigenMatrixToTransform(H_OdomToMap), stamp, params.map_frame, params.odom_frame));
-		latest_stamp = stamp;
 	}
 	// ROS_WARN_STREAM("TOdomToMap:\n" << H_OdomToMap);
 
@@ -549,15 +548,19 @@ void PointMapSLAM::processCloud(const sensor_msgs::PointCloud2::ConstPtr& msg, b
 	}
 
 	// Save all poses
-	all_H.push_back(icp_results.transform);
-	f_times.push_back(stamp);
+	if (stamp > latest_stamp)
+	{
+		all_H.push_back(icp_results.transform);
+		f_times.push_back(stamp);
+		latest_stamp = stamp;
+	}
 
 	////////////////////////
 	// Debugging messages //
 	////////////////////////
 
 	double duration = 1000 * (t[t.size() - 1] - t[0]) / (double)CLOCKS_PER_SEC;
-	ROS_WARN_STREAM("Processed Frame " << msg->header.frame_id << " with stamp " << stamp << " in " <<  duration << " ms");
+	// ROS_WARN_STREAM("Processed Frame " << msg->header.frame_id << " with stamp " << stamp << " in " <<  duration << " ms");
 
 	if (params.verbose)
 	{

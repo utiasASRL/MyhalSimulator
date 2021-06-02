@@ -412,11 +412,43 @@ bool FlowField::SmoothFlowLookup(ignition::math::Vector3d pos, ignition::math::V
         }
     }
     
+    // Return bilinear interpolation of the flow
     if (avg_tot > 0)
         res = avg_flow / avg_tot;
-    else
+        return true;
+
+    // If no flow is available, check the closest flow a little bit further
+    int max_r = value_function.size();
+    int max_c = value_function[0].size();
+    double max_weight = 0;
+    for (int r = r2 - 2; r < r2 + 2; r++)
+    {
+        if (0 <= r < max_r)
+        {
+            for (int c = c2 - 2; c < c2 + 2; c++)
+            {
+                if (0 <= c < max_r && value_function[r][c] < 10e8)
+                {
+                    double pix_x = (double)c * resolution + boundary.Min().X() + resolution / 2;
+                    double pix_y = boundary.Max().Y() - (double)r * resolution - resolution / 2;
+                    double weight = resolution - (pos - ignition::math::Vector3d(pix_x, pix_y, pos.Z())).Length();
+                    if (weight > max_weight)
+                    {
+                        max_weight = weight;
+                        avg_flow = field[r][c];
+                    }
+                }
+            }
+        }
+    }
+
+    // Return closest flow in a larger range
+    if (max_weight > 0)
         res = avg_flow;
         return true;
+
+    // If we could not find closest flow, return out of bound value
+    return false;
 
 }
 
@@ -424,7 +456,7 @@ double FlowField::SmoothValueLookup(ignition::math::Vector3d pos)
 {
     int r2, c2;
     if(!PosToIndicies(pos + ignition::math::Vector3d(0.5 * resolution, -0.5 * resolution, 0), r2, c2))
-        return false;
+        return 10e9;
 
     double avg_tot = 0;
     double avg_value = 0;
@@ -446,10 +478,42 @@ double FlowField::SmoothValueLookup(ignition::math::Vector3d pos)
             }
         }
     }
+
+    // Return bilinear interpolation of the flow
     if (avg_tot > 0)
         return avg_value / avg_tot;
-    else
-        return  10e9;
+
+    // If no flow is available, check the closest flow a little bit further
+    int max_r = value_function.size();
+    int max_c = value_function[0].size();
+    double max_weight = 0;
+    for (int r = r2 - 2; r < r2 + 2; r++)
+    {
+        if (0 <= r < max_r)
+        {
+            for (int c = c2 - 2; c < c2 + 2; c++)
+            {
+                if (0 <= c < max_r && value_function[r][c] < 10e8)
+                {
+                    double pix_x = (double)c * resolution + boundary.Min().X() + resolution / 2;
+                    double pix_y = boundary.Max().Y() - (double)r * resolution - resolution / 2;
+                    double weight = resolution - (pos - ignition::math::Vector3d(pix_x, pix_y, pos.Z())).Length();
+                    if (weight > max_weight)
+                    {
+                        max_weight = weight;
+                        avg_value = value_function[r][c];
+                    }
+                }
+            }
+        }
+    }
+
+    // Return closest flow in a larger range
+    if (max_weight > 0)
+        return avg_value;
+
+    // If we could not find closest flow, return out of bound value
+    return  10e9;
 
 }
 

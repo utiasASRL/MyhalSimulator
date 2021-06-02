@@ -127,7 +127,9 @@ fi
 
 cp $WORLDFILE "/home/$USER/Myhal_Simulation/simulated_runs/$t/logs-$t/"
 
-rosbag record -O "/home/$USER/Myhal_Simulation/simulated_runs/$t/raw_data.bag" /clock /shutdown_signal /velodyne_points /move_base/local_costmap/costmap /move_base/global_costmap/costmap /ground_truth/state /map /move_base/NavfnROS/plan /amcl_pose /tf /tf_static /move_base/result /tour_data /optimal_path /classified_points &
+rosbag record -O "/home/$USER/Myhal_Simulation/simulated_runs/$t/raw_data.bag" /clock /shutdown_signal /velodyne_points /move_base/local_costmap/costmap \
+/move_base/global_costmap/costmap /ground_truth/state /map /move_base/NavfnROS/plan /amcl_pose /tf /tf_static /move_base/result /tour_data /optimal_path \
+/classified_points /plan_costmap_3D /move_base/TebLocalPlannerROS/local_plan /move_base/TebLocalPlannerROS/teb_markers &
 rosrun dashboard assessor.py &
 echo -e "\033[1;4;34mRUNNING SIM\033[0m"
 sleep 2.5

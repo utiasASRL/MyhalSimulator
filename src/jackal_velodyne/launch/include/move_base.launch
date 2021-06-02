@@ -57,7 +57,7 @@
       <rosparam file="$(find jackal_velodyne)/params/map_nav_params/global_costmap_params.yaml" command="load" />
 
       <!-- <rosparam file="$(find jackal_velodyne)/params/base_local_planner_params.yaml" command="load" /> -->
-      <rosparam file="$(find jackal_velodyne)/params/teb_local_planner_params_old.yaml" command="load" />
+      <rosparam file="$(find jackal_velodyne)/params/teb_local_planner_params.yaml" command="load" />
 
       <rosparam file="$(find jackal_velodyne)/params/move_base_params.yaml" command="load" />
       

@@ -16,7 +16,10 @@ from utilities import plot_utilities as pu
 
 
 if __name__ == "__main__":
-
+    
+    ######
+    # Init
+    ######
 
     start_time = RealTime.time()
     
@@ -57,6 +60,10 @@ if __name__ == "__main__":
             exit()
         
     pickle_dict = {}
+    
+    ##############
+    # Lidar frames
+    ##############
 
     print "Reading lidar frames"
 
@@ -114,10 +121,26 @@ if __name__ == "__main__":
         time = "{:.6f}".format(time)
         
         ply.PlyData([el]).write(path +  dir_name + "/" + time + ".ply")
+    
+    ####################
+    # Collider / planner
+    ####################
 
+    collider_preds = bt.read_collider_preds("/plan_costmap_3D", bag)
 
+    print "Saving collider to", logs_path + "collider_data.pickle"
+    with open(logs_path + 'collider_data.pickle', 'wb') as handle:
+        pickle.dump(collider_preds, handle)
+ 
+    teb_local_plans = bt.read_local_plans("/move_base/TebLocalPlannerROS/local_plan", bag)
 
+    print "Saving teb plans to", logs_path + "teb_local_plans.pickle"
+    with open(logs_path + 'teb_local_plans.pickle', 'wb') as handle:
+        pickle.dump(teb_local_plans, handle)
 
+    ##############
+    # Trajectories
+    ##############
 
     print "Reading trajectories"
 
@@ -180,6 +203,10 @@ if __name__ == "__main__":
     with open(logs_path + 'processed_data.pickle', 'wb') as handle:
         pickle.dump(pickle_dict, handle, protocol=pickle.HIGHEST_PROTOCOL)
     
+    #######
+    # Video
+    #######
+
     # TODO: convert image files to .mp4 and save 
 
     duration = bt.bag_metadata(bag)['duration']

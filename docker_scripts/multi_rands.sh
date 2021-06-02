@@ -30,18 +30,18 @@ fi
 # Loop Tours #
 ##############
 
-for i in {1..7}
+for MAPPING in "2"
 do
-  for MAPPING in "2"
+  # for PARAMS in "RandBounce_params"
+  #for PARAMS in "RandWand_params"
+  for PARAMS in "RandFlow_params" "RandBounce_params" "RandWand_params"
   do
-    for ARGS in "-fg"
-    do
-      # for PARAMS in "RandBounce_params"
-      for PARAMS in "RandWand_params"
-      # for PARAMS in "RandFlow_params"
+    for ARGS in "-fe" "e"
+    do   
+      for i in {1..2}
       do
-        for TOUR in "A_tour" "B_tour" "C_tour"
         #for TOUR in "A_short"
+        for TOUR in "A_tour" "B_tour" "C_tour"
         do
 
           echo ""
@@ -68,10 +68,13 @@ do
           if [ "$(docker ps -aq -f status=exited -f name=hth-melodic-$ROSPORT_USED)" ]; then
               docker rm hth-melodic-$ROSPORT_USED
           fi
+          if [ "$(docker ps -aq -f status=exited -f name=hth-collider-$ROSPORT_USED)" ]; then
+              docker rm hth-collider-$ROSPORT_USED
+          fi
 
           # Start new one
           if [ "$ARGS" == "-fe" ] ; then
-            ./classification_test.sh -c "./master.sh $ARGS -m $MAPPING -t $TOUR -p $PARAMS"
+            ./test_colli_doc.sh $nohup_arg -c "./master.sh $ARGS -m $MAPPING -t $TOUR -p $PARAMS"
           else
             ./melodic_docker.sh $nohup_arg -c "./master.sh $ARGS -m $MAPPING -t $TOUR -p $PARAMS"
           fi
