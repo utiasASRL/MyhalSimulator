@@ -233,9 +233,14 @@ install(PROGRAMS
   scripts/export_to_mat.py
   scripts/export_to_svg.py
   scripts/publish_dynamic_obstacle.py
+  scripts/publish_costmap.py
   scripts/publish_test_obstacles.py
   scripts/publish_viapoints.py
   scripts/visualize_velocity_profile.py
+  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
+catkin_install_python(PROGRAMS scripts/publish_costmap.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 

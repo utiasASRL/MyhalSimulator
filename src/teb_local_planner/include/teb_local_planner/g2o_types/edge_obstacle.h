@@ -185,6 +185,7 @@ public:
     robot_model_ = robot_model;
     _measurement = obstacle;
   }
+
   
 protected:
 
@@ -287,6 +288,19 @@ public:
     cfg_ = &cfg;
     robot_model_ = robot_model;
     _measurement = obstacle;
+  }
+  
+  void getGradient(double& dx, double& dy, double& dz)
+  {
+
+    // auto test = _jacobianOplusXi;
+    // linearizeOplus();
+
+    dx = _jacobianOplusXi(0, 0);
+    dy = _jacobianOplusXi(0, 1);
+    dz = _jacobianOplusXi(0, 2);
+
+    return;
   }
   
 protected:

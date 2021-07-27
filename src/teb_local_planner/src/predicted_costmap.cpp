@@ -137,7 +137,7 @@ void PredictedCostmap3D::initialize(const teb_local_planner::VoxGrid voxel_grid)
   // data_ is a flattened array 3D in row-major order
   data_.reserve(width_ * height_ * depth_);
   for (std::vector<uint8_t>::const_iterator i = voxel_grid.data.begin(); i != voxel_grid.data.end(); ++i)
-      data_.push_back(unsigned(*i));
+      data_.push_back(((float)unsigned(*i)) / 255);
 
   // grid3D_ = boost::make_shared<Grid3D>(Grid3D(voxel_grid.data));
 
@@ -213,27 +213,54 @@ void PredictedCostmap3D::initialize(const teb_local_planner::VoxGrid voxel_grid)
   initialized_ = true;
 }
 
-void PredictedCostmap3D::interpolateCostmapValue(VertexPose pos, double *interpolation, int layer)
+void PredictedCostmap3D::interpolateCostmapValue(VertexPose pos, double *interpolation, double layer)
 {
-  PoseSE2 pos_SE2(pos.x(), pos.y(), pos.theta());
-  int r2 = 0, c2 = 0;
-  int v00, v10, v01, v11;
-  double tx, ty, a, b;
-  PoseSE2 pos2(pos_SE2.x() + 0.5, pos_SE2.y() + 0.5, pos_SE2.theta());
+
+  // Get pose of the point and offset by 0.5 * grid_dl
+  double offset = dl_ * 0.5;
+  PoseSE2 pos2(pos.x() + offset, pos.y() + offset, pos.theta());
   
-  this->posToIndices(pos_SE2, &r2, &c2);
+  // Get corresponding row and column of the bottom right pixel of the interpolation
+  int r2 = 0, c2 = 0;
+  this->posToIndices(pos2, &r2, &c2);
 
-  v00 = this->get(r2-1, c2-1, layer);
-  v01 = this->get(r2-1, c2, layer);
-  v10 = this->get(r2, c2-1, layer);
-  v11 = this->get(r2, c2, layer);
+  if (r2 < 1 || r2 > height_ - 1 || c2 < 1 || c2 > width_ - 1)
+  {
+    // std::cout << "      L=" << layer << "      pos=(" << pos.x() << ", " << pos.y() << ") -  c2="  << c2 << ", r2=" << r2 << ", v=" << v11  << std::endl;
+    *interpolation = 0;
+    return;
+  }
 
+  // // Get the inds of the two layer between which we interpolate
+  // int layer1 = (int)std::floor(layer);
+  // int layer0 = layer1 - 1;
+
+  // For now we use closest interpolation
+  int closest_layer = (int)std::round(layer) - 1;
+
+  if (closest_layer < 1 || closest_layer > depth_ - 1)
+  {
+    *interpolation = 0;
+    return;
+  }
+
+  // Get the 4 value to interpolate from
+  double v00, v10, v01, v11;
+  v00 = (double)(this->get(r2-1, c2-1, closest_layer));
+  v01 = (double)(this->get(r2, c2-1, closest_layer));
+  v10 = (double)(this->get(r2-1, c2, closest_layer));
+  v11 = (double)(this->get(r2, c2, closest_layer));
+
+  // Interpolate
+  double tx, ty, a, b;
   tx = (pos.x() - grid_origin_x) / dl_ + 0.5 - c2;
   ty = (pos.y() - grid_origin_y) / dl_ + 0.5 - r2;
   a = v00 + tx * (v10 - v00);
   b = v01 + tx * (v11 - v01);
 
   *interpolation = a + ty * (b - a); 
+  
+  return;
 }
 
 void PredictedCostmap3D::posToIndices(PoseSE2 pos, int *row, int *col)
@@ -242,19 +269,19 @@ void PredictedCostmap3D::posToIndices(PoseSE2 pos, int *row, int *col)
   *col = (int) floor((pos.x() - grid_origin_x) / dl_);
 }
 
-void PredictedCostmap3D::computeDerivativePos(PoseSE2 pos, int layer, int *dx, int *dy)
+void PredictedCostmap3D::computeDerivativePos(PoseSE2 pos, int layer, double *dx, double *dy)
 {
   int row_pos = 0, col_pos = 0, row_subgrid = 0, col_subgrid = 0; 
   this->posToIndices(pos, &row_pos, &col_pos);
 
   // convolve on 3x3 neighbouring grid poses with the sobel operators
-  int sum_x = 0, sum_y = 0; 
+  double sum_x = 0, sum_y = 0; 
   for(int irow = row_pos - 1; irow <= row_pos + 1; irow++)
   {
     for(int icol = col_pos - 1; icol <= col_pos + 1; icol++)
     {
-      sum_x += sobel_x(row_subgrid, col_subgrid) * this->get(irow, icol, layer);
-      sum_y += sobel_y(row_subgrid, col_subgrid) * this->get(irow, icol, layer);
+      sum_x += (double)(sobel_x(row_subgrid, col_subgrid)) * (double)(this->get(irow, icol, layer));
+      sum_y += (double)(sobel_y(row_subgrid, col_subgrid)) * (double)(this->get(irow, icol, layer));
       col_subgrid++;
     }
     row_subgrid++;
@@ -264,28 +291,5 @@ void PredictedCostmap3D::computeDerivativePos(PoseSE2 pos, int layer, int *dx, i
   *dy = sum_y; 
 }
 
-
-// Grid3D::Grid3D()
-// {
-// }
-
-// Grid3D::Grid3D(const std::vector<uint8_t> grid_flattened)
-// {
-//   for (std::vector<uint8_t>::const_iterator i = grid_flattened.begin(); i != grid_flattened.end(); ++i)
-//       data.push_back(unsigned(*i));
-// }
-
-// Grid3D::~Grid3D()
-// {
-// }
-
-// int Grid3D::get(int row, int col, int dt)
-// {
-//   std::cout << "row:" << row<< std::endl; 
-//   std::cout << "init: " << this->isInitialized() << std::endl; 
-//   std::cout << this->getDepth() << std::endl; 
-//   std::cout << "coord: " <<(row * this->width_ + col)*this->depth_ + dt << std::endl; 
-//   return data[(row * width_ + col)*depth_ + dt];
-// }
 
 } // end namespace

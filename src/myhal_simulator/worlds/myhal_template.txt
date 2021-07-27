@@ -87,7 +87,9 @@
     
     <gui fullscreen='0'>
       <camera name='user_camera'>
+        <!-- Original camera position <pose frame=''>0 -30 35 0 1 1.571</pose> -->
         <!-- Custom camera position for screenshots in the paper <pose frame=''>-7 -3 23 0 1 1.571</pose> -->
+        <!-- Custom camera position for screenshots in the paper CoRL <pose frame=''>-4 -17 26 0 1.05 2.05</pose> -->
         <pose frame=''>0 -30 35 0 1 1.571</pose>
         <view_controller>orbit</view_controller>
         <projection_type>perspective</projection_type>

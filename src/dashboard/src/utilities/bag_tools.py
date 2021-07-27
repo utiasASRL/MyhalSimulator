@@ -7,7 +7,6 @@ from nav_msgs.msg import Odometry, Path
 from tf2_msgs.msg import TFMessage
 from geometry_msgs.msg import PoseStamped
 from move_base_msgs.msg import MoveBaseActionResult
-from teb_local_planner.msg import VoxGrid
 import yaml
 
 
@@ -50,6 +49,9 @@ def read_pointcloud_frames(topic_name, bagfile):
 
 def read_collider_preds(topic_name, bagfile):
     '''returns list of Voxgrid message'''
+
+    
+    #from teb_local_planner.msg import VoxGrid
 
     all_header_stamp = []
     all_dims = []

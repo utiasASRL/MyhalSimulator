@@ -227,6 +227,7 @@ bool TebOptimalPlanner::optimizeTEB(int iterations_innerloop, int iterations_out
       teb_.autoResize(cfg_->trajectory.dt_ref, cfg_->trajectory.dt_hysteresis, cfg_->trajectory.min_samples, cfg_->trajectory.max_samples, fast_mode);
 
     }
+    
 
     success = buildGraph(weight_multiplier);
     if (!success) 
@@ -244,11 +245,13 @@ bool TebOptimalPlanner::optimizeTEB(int iterations_innerloop, int iterations_out
     
     if (compute_cost_afterwards && i==iterations_outerloop-1) // compute cost vec only in the last iteration
       computeCurrentCost(obst_cost_scale, viapoint_cost_scale, alternative_time_cost);
+
       
     clearGraph();
     
     weight_multiplier *= cfg_->optim.weight_adapt_factor;
   }
+  
 
   return true;
 }
@@ -425,6 +428,15 @@ bool TebOptimalPlanner::optimizeGraph(int no_iterations,bool clear_after)
 	return false;
   }
 
+
+  // TODO
+  // HERE
+  // DEBUG
+  //optimizer_->edges
+
+
+
+
   if (clear_after) clearGraph();	
     
   return true;
@@ -445,8 +457,6 @@ void TebOptimalPlanner::clearGraph()
     optimizer_->clear();
   }
 }
-
-
 
 void TebOptimalPlanner::AddTEBVertices()
 {
@@ -667,7 +677,6 @@ void TebOptimalPlanner::AddEdgesObstaclesLegacy(double weight_multiplier)
     
   }
 }
-
 
 void TebOptimalPlanner::AddEdgesDynamicObstacles(double weight_multiplier)
 {
@@ -1080,37 +1089,61 @@ void TebOptimalPlanner::AddEdgesPredictedCostmap3D()
 
   // Init variable
   Eigen::Matrix<double,1,1> information;
-  information.fill(1);
+  information.fill(cfg_->optim.weight_predicted_costmap);
+
+  // Stride varaible (only one edge per N band pose)
+  int edge_0 = 2;
+  int edge_stride = 1;
+  
+  //Eigen::Matrix<double,2,2> information;
+  //information(0,0) = cfg_->optim.weight_dynamic_obstacle * weight_multiplier;
+  //information(1,1) = cfg_->optim.weight_dynamic_obstacle_inflation;
+  //information(0,1) = information(1,0) = 0;
 
   // Check timestamp of robot current pose. Identify this timestamp with a costmap layer, associate each teb state to closest layer in time or interpolate?
   double curr_time = ros::Time::now().toSec();
   double prediction_init_time = predictions3D_->getInitialTime();
 
+  if (prediction_init_time < 0)
+    prediction_init_time = curr_time;
+
   // start iterating at second point on teb, the first being the robot pose
-  for(int index = 1; index < teb_.sizePoses() - 1; ++index)
+  for(int index = edge_0; index < teb_.sizePoses() - 1; ++index += edge_stride)
   {
 
     // Get timestamp for this  point of TEB plan
     double pt_time = curr_time + teb_.TimeDiffSumToIndex(index);
 
-    // Get corresponding layer index in the costmap
-    int current_prediction_layer = (int)std::round((float)(pt_time -  prediction_init_time)/ predictions3D_->getTemporalResolution()); 
+    // Get the layer value (continuous value for interpolation)
+    double continuous_layer = (pt_time -  prediction_init_time) / predictions3D_->getTemporalResolution();
 
-    // Get a attenuation factor for the teb poses out of the predictions 
-    float attenuation = 1.0;
-    if(current_prediction_layer >= predictions3D_->getDepth())
-    {
-      attenuation = (float)std::pow(0.5, current_prediction_layer - predictions3D_->getDepth());
-      current_prediction_layer = predictions3D_->getDepth();
-    }
+    // // TODO: Handle attenuation -----------------------------------------
 
-    // TODO: Handle attenuation
-    if(current_prediction_layer < predictions3D_->getDepth())
+    // // Get corresponding layer index in the costmap
+    // int current_prediction_layer = (int)std::round(continuous_layer);
+
+    // // Get a attenuation factor for the teb poses out of the predictions 
+    // double attenuation = 1.0;
+    // if(current_prediction_layer >= predictions3D_->getDepth())
+    // {
+    //   attenuation = (double)std::pow(0.5, current_prediction_layer - predictions3D_->getDepth());
+    //   current_prediction_layer = predictions3D_->getDepth();
+    // }
+
+    // // TODO: Handle attenuation -----------------------------------------
+    
+    // if (index == teb_.sizePoses() - 2)
+    // {
+    //   std::cout << "diff = " << (pt_time -  prediction_init_time) << std::endl;
+    //   std::cout << "current_prediction_layer = " << current_prediction_layer << std::endl;
+    // }
+
+    if(0 < continuous_layer && continuous_layer < (double)predictions3D_->getDepth())
     {
       EdgePredictedCostmap3D* edge = new EdgePredictedCostmap3D;
       edge->setVertex(0, teb_.PoseVertex(index));
       edge->setInformation(information);
-      edge->setParameters(*cfg_, robot_model_.get(), predictions3D_.get(), current_prediction_layer);
+      edge->setParameters(*cfg_, robot_model_.get(), predictions3D_.get(), continuous_layer);
       optimizer_->addEdge(edge);
     }
 

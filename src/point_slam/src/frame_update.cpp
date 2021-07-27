@@ -569,9 +569,7 @@ void PointMapSLAM::processCloud(const sensor_msgs::PointCloud2::ConstPtr& msg, b
 			double duration = 1000 * (t[i + 1] - t[i]) / (double)CLOCKS_PER_SEC;
 			cout << clock_str[i] << duration << " ms" << endl;
 		}
-		cout << endl
-			 << "***********************" << endl
-			 << endl;
+		cout << endl << "***********************" << endl << endl;
 	}
 
 	return;

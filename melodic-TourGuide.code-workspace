@@ -77,7 +77,9 @@
 			"typeindex": "cpp",
 			"typeinfo": "cpp",
 			"core": "cpp",
-			"numericaldiff": "cpp"
+			"numericaldiff": "cpp",
+			"nonlinearoptimization": "cpp",
+			"*.txx": "cpp"
 		},
 		"python.autoComplete.extraPaths": [
 			"/opt/ros/melodic/lib/python2.7/dist-packages"

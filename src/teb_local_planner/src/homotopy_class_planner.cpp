@@ -486,6 +486,7 @@ void HomotopyClassPlanner::optimizeAllTEBs(int iter_innerloop, int iter_outerloo
     // requested, as this can lead to multiple threads operating on the same
     // TEB, which leads to SIGSEGV
     boost::this_thread::disable_interruption di;
+    
 
     boost::thread_group teb_threads;
     for (TebOptPlannerContainer::iterator it_teb = tebs_.begin(); it_teb != tebs_.end(); ++it_teb)
@@ -494,9 +495,11 @@ void HomotopyClassPlanner::optimizeAllTEBs(int iter_innerloop, int iter_outerloo
       // this updates the pointer reference for each teb
       it_teb->get()->updatePredictedCostmap(predictions_);
       it_teb->get()->updatePredictedCostmap3D(predictions3D_);
+
       teb_threads.create_thread( boost::bind(&TebOptimalPlanner::optimizeTEB, it_teb->get(), iter_innerloop, iter_outerloop,
                                              true, cfg_->hcp.selection_obst_cost_scale, cfg_->hcp.selection_viapoint_cost_scale,
                                              cfg_->hcp.selection_alternative_time_cost) );
+
     }
     teb_threads.join_all();
   }

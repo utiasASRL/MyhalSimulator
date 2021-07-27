@@ -90,7 +90,7 @@ public:
       return width_;
     }
 
-  float getResolution()
+  double getResolution()
     {
       return resolution_;
     }
@@ -100,7 +100,7 @@ public:
       return initialized_;
     }
 
-  void setResolution(float resolution)
+  void setResolution(double resolution)
     {
       resolution_ = resolution;
     }
@@ -121,7 +121,7 @@ private:
   // std::vector<double> farid_5_k = {0.030320, 0.249724, 0.439911, 0.249724, 0.030320}; //!< See Farid and Simocelly derivation filters
   // std::vector<double> farid_5_d = {0.104550, 0.292315, 0.000000, -0.292315, -0.104550}; //!< See Farid and Simocelly derivation filters
   // std::vector<double> farid_5_dd = {-0.104550, -0.292315, 0.000000, 0.292315, 0.104550}; //!< See Farid and Simocelly derivation filters
-  float resolution_; 
+  double resolution_; 
   int32_t width_;
   int32_t height_; 
   std::vector<std::vector<int8_t>> grid_;
@@ -167,7 +167,7 @@ public:
     * @param interpolation pointer to the double storing interpolated value
     * @param layer indicates which layer (depth) in the costmap we are interpolating on
     */
-  void interpolateCostmapValue(VertexPose pos, double *interpolation, int layer);
+  void interpolateCostmapValue(VertexPose pos, double *interpolation, double layer);
 
   /**
    * @brief Find grid coordinates (row, col) for position pos (x, y)
@@ -177,7 +177,7 @@ public:
   /**
    * @brief Compute 2D Sobel derivatives on a 3x3 subgrid around position pos (x, y) on the 3D costmap at depth (layer)
    */
-  void computeDerivativePos(PoseSE2 pos, int layer, int *dx, int *dy);
+  void computeDerivativePos(PoseSE2 pos, int layer, double *dx, double *dy);
 
   /**
     * @brief Get the initial time of the predictions. This is the time of the first layer of the 3D costmap. 
@@ -218,7 +218,7 @@ public:
   /**
    * @brief Return data_ value at position [row, col, dt] from the flattened array in row-major order.
    */
-  int get(int row, int col, int dt)
+  float get(int row, int col, int dt)
   {
     //return data_[(row * width_ + col)*depth_ + dt];
     return data_[(dt * height_ + row) * width_ + col];
@@ -235,15 +235,15 @@ public:
 protected:
   double initial_time_; //<! Initial time of the costmap corresponding to the ros::Time of the first layer of the costmap. 
   double stamped_time_; //<! Stamped time of the ros message at publication.
-  float dl_; //!< Spatial resolution (m)
-  float dt_; //!< Temporal resolution (s)
+  double dl_; //!< Spatial resolution (m)
+  double dt_; //!< Temporal resolution (s)
   int width_; //!< Width of the costmap
   int height_; //!< Height of the costmap
   int depth_; //!< Depth of the costmap. Each layer represented predictions at a time. For example, layer 4 of depth 4 correspond to the collision prediction for time (initial_time + 4*dl_)
   double grid_origin_x; //!< Grid origin of the testing environment
   double grid_origin_y; //!< Grid origin of the testing environment
-  float theta_; //!< Orientation of the map in the 2D plane [rad]
-  std::vector<int> data_; //<! Dump data from VoxGrid ros message into this vector of int
+  double theta_; //!< Orientation of the map in the 2D plane [rad]
+  std::vector<float> data_; //<! Dump data from VoxGrid ros message into this vector of int
   Eigen::Matrix3f sobel_x; //!< Sobel operator for x derivative
   Eigen::Matrix3f sobel_y; //!< Sobel operator for y derivative
   // Grid3DPtr grid3D_;

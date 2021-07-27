@@ -56,16 +56,19 @@ ViaPointContainer via_points;
 TebConfig config;
 boost::shared_ptr< dynamic_reconfigure::Server<TebLocalPlannerReconfigureConfig> > dynamic_recfg;
 ros::Subscriber custom_obst_sub;
+ros::Subscriber custom_pred3D_sub;
 ros::Subscriber via_points_sub;
 ros::Subscriber clicked_points_sub;
 std::vector<ros::Subscriber> obst_vel_subs;
 unsigned int no_fixed_obstacles;
+PredictedCostmap3DPtr predictions3D_ = boost::make_shared<PredictedCostmap3D>(PredictedCostmap3D());
 
 // =========== Function declarations =============
 void CB_mainCycle(const ros::TimerEvent& e);
 void CB_publishCycle(const ros::TimerEvent& e);
 void CB_reconfigure(TebLocalPlannerReconfigureConfig& reconfig, uint32_t level);
 void CB_customObstacle(const costmap_converter::ObstacleArrayMsg::ConstPtr& obst_msg);
+void CB_PredictedCostmap3D(const teb_local_planner::VoxGrid& pred_msg);
 void CreateInteractiveMarker(const double& init_x, const double& init_y, unsigned int id, std::string frame, interactive_markers::InteractiveMarkerServer* marker_server, interactive_markers::InteractiveMarkerServer::FeedbackCallback feedback_cb);
 void CB_obstacle_marker(const visualization_msgs::InteractiveMarkerFeedbackConstPtr &feedback);
 void CB_clicked_points(const geometry_msgs::PointStampedConstPtr& point_msg);
@@ -93,6 +96,9 @@ int main( int argc, char** argv )
   
   // setup callback for custom obstacles
   custom_obst_sub = n.subscribe("obstacles", 1, CB_customObstacle);
+  
+  // setup callback for predicted 
+  custom_pred3D_sub = n.subscribe("plan_costmap_3D", 1, CB_PredictedCostmap3D);
   
   // setup callback for clicked points (in rviz) that are considered as via-points
   clicked_points_sub = n.subscribe("/clicked_point", 5, CB_clicked_points);
@@ -165,7 +171,15 @@ int main( int argc, char** argv )
 // Planning loop
 void CB_mainCycle(const ros::TimerEvent& e)
 {
-  planner->plan(PoseSE2(-4,0,0), PoseSE2(4,0,0)); // hardcoded start and goal for testing purposes
+	std::vector<clock_t> t;
+  t.push_back(std::clock());
+  planner->plan(PoseSE2(0,0,0), PoseSE2(3.5,0,0)); // hardcoded start and goal for testing purposes
+	t.push_back(std::clock());
+
+  double duration = 1000 * (t[1] - t[0]) / (double)CLOCKS_PER_SEC;
+  std::cout << "Planning done in " << duration << " ms" << std::endl;
+  std::cout << std::endl << "***********************" << std::endl << std::endl;
+
 }
 
 // Visualization loop
@@ -291,6 +305,16 @@ void CB_customObstacle(const costmap_converter::ObstacleArrayMsg::ConstPtr& obst
   }
 }
 
+void CB_PredictedCostmap3D(const teb_local_planner::VoxGrid& pred_msg)
+{
+  PredictedCostmap3D tmp; 
+  tmp.initialize(pred_msg);
+
+  predictions3D_ = boost::make_shared<PredictedCostmap3D>(tmp);
+  // update pointer in planner class
+  planner->updatePredictedCostmap3D(predictions3D_);
+
+}
 
 void CB_clicked_points(const geometry_msgs::PointStampedConstPtr& point_msg)
 {
